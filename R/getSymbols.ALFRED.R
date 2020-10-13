@@ -11,7 +11,7 @@
 #' @param env where to create objects. (.GlobalEnv)
 #' @param return.class class of returned object
 #' @param vintages.per.query number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.
-#' @param look.back from the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
+#' @param look.back how deep in periods to look back for the lastest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
 #' @param fullOldestVintageData if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
 #' @param datasheet if TRUE, then also return all of the vintages in an xts attribute 'datasheet'. Default is FALSE.  Useful for debugging.
 #' @param allowParallel if TRUE, then collect groups of 'sheets of vintages.per.query vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
@@ -102,7 +102,7 @@ getSymbols.ALFRED <- function(Symbols,
                               return.class = "xts",
                               look.back = 3,
                               vintages.per.query = 12,
-                              fullOldestVintageData = 12,
+                              fullOldestVintageData = F,
                               datasheet = F,
                               allowParallel = F,
                               ...) {
@@ -130,13 +130,13 @@ tryCatchLog::tryCatchLog({
   # how deep in periods to look back in all of the non-oldest vintages
   # meant for datasets with a wide range of time between
   #   the Measurement interval and the Validity interval
-  if (!methods::hasArg("look.back"))
-    look.back <- 3
+  # if (!methods::hasArg("look.back"))
+  #   look.back <- 3
 
-  if (!methods::hasArg("vintages.per.query"))     vintages.per.query <- 12
-  if (!methods::hasArg("fullOldestVintageData"))  fullOldestVintageData <- FALSE
-  if (!methods::hasArg("datasheet"))              datasheet <- FALSE
-  if (!methods::hasArg("allowParallel"))          allowParallel <- FALSE
+  # if (!methods::hasArg("vintages.per.query"))     vintages.per.query <- 12
+  # if (!methods::hasArg("fullOldestVintageData"))  fullOldestVintageData <- FALSE
+  # if (!methods::hasArg("datasheet"))              datasheet <- FALSE
+  # if (!methods::hasArg("allowParallel"))          allowParallel <- FALSE
 
   ALFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
   returnSym <- Symbols
