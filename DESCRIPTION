@@ -1,0 +1,25 @@
+Package: econModel
+Type: Package
+Title: Meaningful Social and Economic Data
+Version: 0.1.0
+Authors@R: c(
+  person("Andre", "Mikulec", email = "Andre_Mikulec@Hotmail.com", role = c("aut", "cre"))
+ )
+Description: Collect and display meaningful social and economic data
+BugReports: https://github.com/AndreMikulec/econModel/issues
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends:
+    xts
+Imports:
+    tryCatchLog,
+    foreach,
+    doParallel,
+    zoo,
+    quantmod
+Enhances: 
+    quantmod
+RoxygenNote: 7.1.1
+Suggests: 
+    testthat

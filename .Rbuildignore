@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.*NOTES\.txt
+^\.RData[.]*
+^\.Rhistory
+dump.*
+tryCatchLog\.logged\.txt

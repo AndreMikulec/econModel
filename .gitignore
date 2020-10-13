@@ -1,0 +1,12 @@
+/.Rproj.user/
+.Rhistory
+.RData
+/.RData*
+.Ruserdata
+/.RDataTmp*
+.Rproj.user
+/*NOTES.txt
+dump*
+tryCatchLog.logged.txt
+USFedPhilForecastersData/
+tradeModel_SCRATCH.txt
