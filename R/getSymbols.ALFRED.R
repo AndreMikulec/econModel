@@ -21,7 +21,7 @@
 #'
 #' library(quantmod)
 #'
-#' # Smoothed U.S. Recession Probabilities
+#' # Smoothed U.S. Recession Probabilities (RECPROUSM156N)
 #' # Source: Piger, Jeremy Max, Chauvet, Marcelle
 #' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #' #
@@ -59,15 +59,20 @@
 #' # Use R CRAN package doParallel to query simultaneously
 #' getSymbols("RECPROUSM156N", src = "ALFRED", allowParallel = T)
 #'
-#' # very large (that was back-loaded to 1991) and "quarter" series
+#' # quarterly
+#' # very large (that was back-loaded from 1991)
+#' # Gross Domestic Product (GDP)
 #' getSymbols("GDP", src = "ALFRED")
 #' # noticably faster
 #' getSymbols("GDP", src = "ALFRED", allowParallel = T)
 #'
+#' # weekly
 #' # Weekly, Ending Friday (reported during the following Wednesday)
+#' # Chicago Fed National Financial Conditions Index (NFCI)
 #' getSymbols("NFCI", src = "ALFRED")
 #'
 #' # daily
+#' # Effective Federal Funds Rate (EFFR)
 #' getSymbols("EFFR", src = "ALFRED")
 #' # better
 #' getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
@@ -77,6 +82,9 @@
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom foreach foreach `%do%` `%dopar%`
 #' @importFrom doParallel registerDoParallel  stopImplicitCluster
+#' @importFrom utils read.csv
+#' @importFrom methods hasArg
+#' @importFrom curl curl
 #' @importFrom zoo as.Date as.yearmon as.yearqtr
 #' @importFrom quantmod importDefaults getSymbols
 getSymbols.ALFRED <- function(Symbols,
@@ -99,21 +107,21 @@ tryCatchLog::tryCatchLog({
   for (var in names(list(...))) {
     assign(var, list(...)[[var]], this.env)
   }
-  if (!hasArg("verbose"))
+  if (!methods::hasArg("verbose"))
     verbose <- FALSE
-  if (!hasArg("auto.assign"))
+  if (!methods::hasArg("auto.assign"))
     auto.assign <- TRUE
 
   # how deep in periods to look back in all of the non-oldest vintages
   # meant for datasets with a wide range of time between
   #   the Measurement interval and the Validity interval
-  if (!hasArg("look.back"))
+  if (!methods::hasArg("look.back"))
     look.back <- 3
 
-  if (!hasArg("vintages.per.query"))     vintages.per.query <- 12
-  if (!hasArg("fullOldestVintageData"))  fullOldestVintageData <- FALSE
-  if (!hasArg("datasheet"))              datasheet <- FALSE
-  if (!hasArg("allowParallel"))          allowParallel <- FALSE
+  if (!methods::hasArg("vintages.per.query"))     vintages.per.query <- 12
+  if (!methods::hasArg("fullOldestVintageData"))  fullOldestVintageData <- FALSE
+  if (!methods::hasArg("datasheet"))              datasheet <- FALSE
+  if (!methods::hasArg("allowParallel"))          allowParallel <- FALSE
 
   ALFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
   returnSym <- Symbols
@@ -252,7 +260,7 @@ tryCatchLog::tryCatchLog({
         if (verbose)
           writeLines(URL)
         # go for it
-        fr <- read.csv(curl::curl(URL), na.string = ".")
+        fr <- utils::read.csv(curl::curl(URL), na.string = ".")
         ColnamesFR <- colnames(fr)
 
         if (verbose)

@@ -6,6 +6,11 @@
 \usage{
 quantmod___convert.time.series(fr, return.class)
 }
+\arguments{
+\item{fr}{see R CRAN package quantmod private function convert.time.series}
+
+\item{return.class}{see R CRAN package quantmod private function convert.time.series}
+}
 \description{
 Used internally by the function getSymbols.ALFRED
 }

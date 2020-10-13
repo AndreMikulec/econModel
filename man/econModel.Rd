@@ -6,7 +6,7 @@
 \alias{econModel-package}
 \title{econModel: Meaningful Social and Economic Data}
 \description{
-Collect and display meaningful social and economic data
+Collect and display meaningful social and economic data.
 }
 \seealso{
 Useful links:

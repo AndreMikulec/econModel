@@ -7,6 +7,10 @@
 #'
 #' Code is repeated here because it is private code in the R CRAN package quantmod.  CRAN rules do not allow private functions in other packages to be called directly.
 #'
+#' @param fr see R CRAN package quantmod private function convert.time.series
+#' @param return.class see R CRAN package quantmod private function convert.time.series
+#' @importFrom stats as.ts
+#' @importFrom timeSeries timeSeries
 quantmod___convert.time.series <- function (fr, return.class)
 {
   if ("quantmod.OHLC" %in% return.class) {
@@ -20,7 +24,7 @@ quantmod___convert.time.series <- function (fr, return.class)
     return(as.zoo(fr))
   }
   else if ("ts" %in% return.class) {
-    fr <- as.ts(fr)
+    fr <- stats::as.ts(fr)
     return(fr)
   }
   else if ("data.frame" %in% return.class) {

@@ -8,6 +8,8 @@ getVintages(Symbol, src = "ALFRED")
 }
 \arguments{
 \item{Symbol}{specifying the name of the symbol to be loaded}
+
+\item{src}{see R CRAN package quantmod function getSymbols}
 }
 \description{
 Downloads vintage dates of the published tail dates of 'Date Range' of the specified Symbol from 'research.stlouisfed.org'.

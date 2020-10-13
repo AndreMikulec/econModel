@@ -38,7 +38,7 @@ The St. Louis Federal Reserve Bank's FRED allows a specific data series to be re
 
 library(quantmod)
 
-# Smoothed U.S. Recession Probabilities
+# Smoothed U.S. Recession Probabilities (RECPROUSM156N)
 # Source: Piger, Jeremy Max, Chauvet, Marcelle
 # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #
@@ -76,15 +76,20 @@ getSymbols("RECPROUSM156N", src = "ALFRED", , look.back = 4, fullOldestVintageDa
 # Use R CRAN package doParallel to query simultaneously
 getSymbols("RECPROUSM156N", src = "ALFRED", allowParallel = T)
 
-# very large (that was back-loaded to 1991) and "quarter" series
+# quarterly
+# very large (that was back-loaded from 1991)
+# Gross Domestic Product (GDP)
 getSymbols("GDP", src = "ALFRED")
 # noticably faster
 getSymbols("GDP", src = "ALFRED", allowParallel = T)
 
+# weekly
 # Weekly, Ending Friday (reported during the following Wednesday)
+# Chicago Fed National Financial Conditions Index (NFCI)
 getSymbols("NFCI", src = "ALFRED")
 
 # daily
+# Effective Federal Funds Rate (EFFR)
 getSymbols("EFFR", src = "ALFRED")
 # better
 getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)

@@ -8,6 +8,7 @@
 #' Note, this function does not use the official API.  The official API usage can be performed using the R CRAN package alfred function get_alfred_series.  In some cases, this function getVintages may be faster.
 #'
 #' @param Symbol specifying the name of the symbol to be loaded
+#' @param src see R CRAN package quantmod function getSymbols
 #' @examples
 #' \dontrun{
 #'
