@@ -42,6 +42,10 @@
 #' Beginning Vintage: . . . 2020-10-01
 #' [1] "RECPROUSM156N.vin"
 #'
+#' # Note, the distance between the graphic date and the 'Last Updated' date
+#' # is about two(2) months, so one may shift the graphic to the right
+#' # by two(2) months to get the real story.  (The now proposed shift
+#' # is not done/shown here.)
 #' dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
 #'
 #' # if too much time in periods exists between the
