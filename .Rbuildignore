@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.*NOTES\.txt
+^\.*SCRATCH\.txt
 ^\.RData[.]*
 ^\.Rhistory
 dump.*
