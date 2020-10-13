@@ -71,8 +71,13 @@ Beginning Vintage: . . . 2020-10-01
 
 # Note, the distance between the graphic date and the 'Last Updated' date
 # is about two(2) months, so one may shift the graphic to the right
-# by two(2) months to get the real story.  (The now proposed shift
-# is not done/shown here.)
+# by two(2) months to get the real story.
+#
+# See: 'Date Range' and 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
+#
+# rough way to get the real story based on 'Date Range' and 'Last Updated'
+index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
+index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
 dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
 
 # if too much time in periods exists between the
