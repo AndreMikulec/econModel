@@ -23,7 +23,7 @@ getSymbols.ALFRED(
 
 \item{return.class}{class of returned object}
 
-\item{look.back}{how deep in periods to look back for the lastest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
+\item{look.back}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
 
 \item{vintages.per.query}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.}
 
@@ -36,7 +36,7 @@ getSymbols.ALFRED(
 \item{...}{additional parameters}
 }
 \description{
-R access to over 11,000 data series accessible via the St. Louis Federal Reserve Bank's ALFRED system.
+R access to thousands of data series accessible via the St. Louis Federal Reserve Bank's ALFRED system.
 }
 \details{
 Downloads Symbols to specified env from 'research.stlouisfed.org'. This method is not to be called directly, instead a call to R CRAN packages quantmod function getSymbols(Symbols,src='ALFRED') will in turn call this method.
@@ -115,4 +115,18 @@ getSymbols("EFFR", src = "ALFRED")
 getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
 
 }
+}
+\references{
+\cite{Blame of R CRAN package quantmod function getSymbols and getSymbols.FRED
+\url{https://github.com/joshuaulrich/quantmod/blame/master/R/getSymbols.R}
+}
+
+\cite{Replicability, Real-Time Data, and the Science of Economic Research: FRED, ALFRED, and VDC, Richard G. Anderson, FEDERAL RESERVE BANK OF ST. LOUIS REVIEW JANUARY/FEBRUARY 2006, page 87-88
+\url{https://files.stlouisfed.org/files/htdocs/publications/review/06/01/Anderson.pdf}
+}
+}
+\author{
+Andre Mikulec   (adapted from the original code)
+
+Jeffrey A. Ryan (original code from the R CRAN package quantmod function getSymbols.FRED)
 }

@@ -1,7 +1,7 @@
 
 #' Download Federal Reserve Economic Data - ALFRED(R)
 #'
-#' R access to over 11,000 data series accessible via the St. Louis Federal Reserve Bank's ALFRED system.
+#' R access to thousands of data series accessible via the St. Louis Federal Reserve Bank's ALFRED system.
 #'
 #' Downloads Symbols to specified env from 'research.stlouisfed.org'. This method is not to be called directly, instead a call to R CRAN packages quantmod function getSymbols(Symbols,src='ALFRED') will in turn call this method.
 #'
@@ -11,11 +11,23 @@
 #' @param env where to create objects. (.GlobalEnv)
 #' @param return.class class of returned object
 #' @param vintages.per.query number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.
-#' @param look.back how deep in periods to look back for the lastest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
+#' @param look.back how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
 #' @param fullOldestVintageData if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
 #' @param datasheet if TRUE, then also return all of the vintages in an xts attribute 'datasheet'. Default is FALSE.  Useful for debugging.
 #' @param allowParallel if TRUE, then collect groups of 'sheets of vintages.per.query vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
 #' @param ... additional parameters
+#'
+#' @author Andre Mikulec   (adapted from the original code)
+#' @author Jeffrey A. Ryan (original code from the R CRAN package quantmod function getSymbols.FRED)
+#' @references
+#' \cite{Blame of R CRAN package quantmod function getSymbols and getSymbols.FRED
+#' \url{https://github.com/joshuaulrich/quantmod/blame/master/R/getSymbols.R}
+#' }
+#' @references
+#' \cite{Replicability, Real-Time Data, and the Science of Economic Research: FRED, ALFRED, and VDC, Richard G. Anderson, FEDERAL RESERVE BANK OF ST. LOUIS REVIEW JANUARY/FEBRUARY 2006, page 87-88
+#' \url{https://files.stlouisfed.org/files/htdocs/publications/review/06/01/Anderson.pdf}
+#' }
+#'
 #' @examples
 #' \dontrun{
 #'
@@ -127,17 +139,6 @@ tryCatchLog::tryCatchLog({
   if (!methods::hasArg("auto.assign"))
     auto.assign <- TRUE
 
-  # how deep in periods to look back in all of the non-oldest vintages
-  # meant for datasets with a wide range of time between
-  #   the Measurement interval and the Validity interval
-  # if (!methods::hasArg("look.back"))
-  #   look.back <- 3
-
-  # if (!methods::hasArg("vintages.per.query"))     vintages.per.query <- 12
-  # if (!methods::hasArg("fullOldestVintageData"))  fullOldestVintageData <- FALSE
-  # if (!methods::hasArg("datasheet"))              datasheet <- FALSE
-  # if (!methods::hasArg("allowParallel"))          allowParallel <- FALSE
-
   ALFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
   returnSym <- Symbols
   noDataSym <- NULL
@@ -160,7 +161,7 @@ tryCatchLog::tryCatchLog({
 
       # to help determine how far to look back (minimze CPU)
       # from package xts
-      # e.g. quarterly data e.g. GDP periodicy is "quarter" but re-reported each "month"
+      # e.g. quarterly data e.g. GDP periodicity is "quarter" but re-reported each "month"
       # Often <- periodicity(as.Date(AllLastUpdatedDates))$label
       #
       # peek at current data to get an idea of the periodicity: "quarter", "month", "week", "day"
@@ -262,6 +263,7 @@ tryCatchLog::tryCatchLog({
         URL <- paste(URL, "&cosd=", paste0(CoStartDates, collapse = ","), sep = "")
 
         # Replicability, Real-Time Data, and the Science of Economic Research: FRED, ALFRED, and VDC
+        # Richard G. Anderson
         # FEDERAL RESERVE BANK OF ST. LOUIS REVIEW JANUARY/FEBRUARY 2006
         # page 87-88
         # https://files.stlouisfed.org/files/htdocs/publications/review/06/01/Anderson.pdf
