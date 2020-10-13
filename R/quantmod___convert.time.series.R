@@ -9,6 +9,7 @@
 #'
 #' @param fr see R CRAN package quantmod private function convert.time.series
 #' @param return.class see R CRAN package quantmod private function convert.time.series
+#' @return R CRAN quantmod compatible time series
 #' @importFrom stats as.ts
 #' @importFrom timeSeries timeSeries
 quantmod___convert.time.series <- function (fr, return.class)

@@ -9,6 +9,7 @@
 #'
 #' @param Symbol specifying the name of the symbol to be loaded
 #' @param src see R CRAN package quantmod function getSymbols
+#' @return character vector of 'Last Updated' vintage dates
 #' @examples
 #' \dontrun{
 #'

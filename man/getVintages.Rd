@@ -11,6 +11,9 @@ getVintages(Symbol, src = "ALFRED")
 
 \item{src}{see R CRAN package quantmod function getSymbols}
 }
+\value{
+character vector of 'Last Updated' vintage dates
+}
 \description{
 Downloads vintage dates of the published tail dates of 'Date Range' of the specified Symbol from 'research.stlouisfed.org'.
 }

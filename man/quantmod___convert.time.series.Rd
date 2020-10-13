@@ -11,6 +11,9 @@ quantmod___convert.time.series(fr, return.class)
 
 \item{return.class}{see R CRAN package quantmod private function convert.time.series}
 }
+\value{
+R CRAN quantmod compatible time series
+}
 \description{
 Used internally by the function getSymbols.ALFRED
 }

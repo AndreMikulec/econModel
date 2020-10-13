@@ -4,7 +4,17 @@
 \alias{getSymbols.ALFRED}
 \title{Download Federal Reserve Economic Data - ALFRED(R)}
 \usage{
-getSymbols.ALFRED(Symbols, env, return.class = "xts", ...)
+getSymbols.ALFRED(
+  Symbols,
+  env,
+  return.class = "xts",
+  look.back = 3,
+  vintages.per.query = 12,
+  fullOldestVintageData = 12,
+  datasheet = F,
+  allowParallel = F,
+  ...
+)
 }
 \arguments{
 \item{Symbols}{a character vector specifying the names of each symbol to be loaded}
@@ -13,17 +23,17 @@ getSymbols.ALFRED(Symbols, env, return.class = "xts", ...)
 
 \item{return.class}{class of returned object}
 
-\item{...}{additional parameters}
+\item{look.back}{from the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
 
 \item{vintages.per.query}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.   The maximum may be different during different times of the day or night. This parameter exists to enhance performance by limiting the number of trips to the server.}
-
-\item{look.back}{from the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
 
 \item{fullOldestVintageData}{if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.}
 
 \item{datasheet}{if TRUE, then also return all of the vintages in an xts attribute 'datasheet'. Default is FALSE.  Useful for debugging.}
 
 \item{allowParallel}{if TRUE, then collect groups of 'sheets of vintages.per.query vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.}
+
+\item{...}{additional parameters}
 }
 \description{
 R access to over 11,000 data series accessible via the St. Louis Federal Reserve Bank's ALFRED system.

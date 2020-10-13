@@ -90,6 +90,11 @@
 getSymbols.ALFRED <- function(Symbols,
                               env,
                               return.class = "xts",
+                              look.back = 3,
+                              vintages.per.query = 12,
+                              fullOldestVintageData = 12,
+                              datasheet = F,
+                              allowParallel = F,
                               ...) {
 tryCatchLog::tryCatchLog({
 
@@ -273,7 +278,7 @@ tryCatchLog::tryCatchLog({
         # IF NO DATA FOUND, then it RETURNS EVERYTHING (TOO MUCH DATA)
 
         trueCoStartDate <- CoStartDates[1]
-        # (FROM ABOVE) cosd is the DAY AFTER cosd AND THEN cosd is in the 'start period
+        # (FROM ABOVE) cosd is the DAY AFTER cosd AND THEN cosd is in the 'start period'
         if(Often == "quarter") {
           trueCoStartDate <- zoo::as.Date(zoo::as.yearqtr(zoo::as.Date(CoStartDates[1]) + 1))
         }
