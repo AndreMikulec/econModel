@@ -55,7 +55,7 @@ library(quantmod)
 getSymbols("RECPROUSM156N", src =   "FRED")
 [1] "RECPROUSM156N"
 
-getSymbols("RECPROUSM156N", src = "ALFRED")
+getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4)
 
 Read 2002 items
 Beginning Vintage: . . . 2012-09-04
@@ -81,14 +81,14 @@ dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
 getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4)
 
 # for debugging, include the vintages
-getSymbols("RECPROUSM156N", src = "ALFRED", datasheet = T)
+getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, datasheet = T)
 View(data.frame(xtsAttributes(RECPROUSM156N.vin)$datasheet))
 
 # prepend (include) the data of the very first vintage in the head of the data
-getSymbols("RECPROUSM156N", src = "ALFRED", , look.back = 4, fullOldestVintageData = T)
+getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, fullOldestVintageData = T)
 
 # Use R CRAN package doParallel to query simultaneously
-getSymbols("RECPROUSM156N", src = "ALFRED", allowParallel = T)
+getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, allowParallel = T)
 
 # quarterly
 # very large (that was back-loaded from 1991)
