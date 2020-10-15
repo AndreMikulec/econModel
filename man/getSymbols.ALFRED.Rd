@@ -8,7 +8,7 @@ getSymbols.ALFRED(
   Symbols,
   env,
   return.class = "xts",
-  earlLastUpdDate,
+  earlLastUpdDate = NULL,
   look.back = 3,
   vintages.per.query = 12,
   fullOldestVintageData = F,
