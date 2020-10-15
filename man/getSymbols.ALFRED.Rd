@@ -8,36 +8,36 @@ getSymbols.ALFRED(
   Symbols,
   env,
   return.class = "xts",
-  earlLastUpdDate = NULL,
-  look.back = 3,
-  vintages.per.query = 12,
-  fullOldestVintageData = F,
-  datasheet = F,
+  EarliestLastUpdDate = NULL,
+  LookBack = 3,
+  VintagesPerQuery = 12,
+  FullOldestVintageData = F,
+  DataSheet = F,
   allowParallel = F,
   MaxParallel = NULL,
   ...
 )
 }
 \arguments{
-\item{Symbols}{a character vector specifying the names of each symbol to be loaded}
+\item{Symbols}{a character vector specifying the names of each symbol to be loaded (from R CRAN package quantmod function getSymbols)}
 
-\item{env}{where to create objects. (.GlobalEnv)}
+\item{env}{where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)}
 
-\item{return.class}{class of returned object}
+\item{return.class}{class of returned object (from R CRAN package quantmod function getSymbols)}
 
-\item{earlLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.}
+\item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.}
 
-\item{look.back}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
+\item{LookBack}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
 
-\item{vintages.per.query}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes better than the parameter allowParallel,  but often when using this parameter, requested data is missing from the returned data.}
+\item{VintagesPerQuery}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes better than the parameter allowParallel,  but often when using this parameter, requested data is missing from the returned data.}
 
-\item{fullOldestVintageData}{if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.}
+\item{FullOldestVintageData}{If TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.}
 
-\item{datasheet}{If TRUE, then also return all of the vintages in an xts attribute 'datasheet'. Default is FALSE.  Useful for debugging.}
+\item{DataSheet}{If TRUE, then also return all of the vintages in an xts attribute 'DataSheet'. Default is FALSE.  Useful for debugging.}
 
-\item{allowParallel}{If TRUE, then collect groups of 'sheets of vintages.per.query vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.}
+\item{allowParallel}{If TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.}
 
-\item{MaxParallel}{If allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/vintages.per.query)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using earlLastUpdDate. Good choices of this parameter may depend on, the amount of the client host harware CPU and memory.}
+\item{MaxParallel}{If allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/VintagesPerQuery)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host harware CPU and memory.}
 
 \item{...}{additional parameters}
 }
@@ -52,8 +52,6 @@ The St. Louis Federal Reserve Bank's FRED allows a specific data series to be re
 \examples{
 \dontrun{
 
-library(quantmod)
-
 # Smoothed U.S. Recession Probabilities (RECPROUSM156N)
 # Source: Piger, Jeremy Max, Chauvet, Marcelle
 # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
@@ -61,7 +59,7 @@ library(quantmod)
 getSymbols("RECPROUSM156N", src =   "FRED")
 [1] "RECPROUSM156N"
 
-getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4)
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 
 Read 2002 items
 Beginning Vintage: . . . 2012-09-04
@@ -89,18 +87,19 @@ dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
 
 # if too much time in periods exists between the
 # tail date of  the 'Date Range' and 'Last Updated' date,
-# then increase look.back from three(3) (default) to four(4) or greater.
-getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4)
+# then increase LookBack from three(3) (default) to four(4) or greater.
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 
 # for debugging, include the vintages
-getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, datasheet = T)
-View(data.frame(xtsAttributes(RECPROUSM156N.vin)$datasheet))
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, DataSheet = T)
+# note: the 'viewer' may have a limit on the number of columns displayed
+View(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
 
 # prepend (include) the data of the very first vintage in the head of the data
-getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, fullOldestVintageData = T)
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, FullOldestVintageData = T)
 
-# Use R CRAN package doParallel to query simultaneously
-getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, allowParallel = T)
+# use R CRAN package doParallel to query simultaneously
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, allowParallel = T)
 
 # quarterly
 # very large (that was back-loaded from 1991)
@@ -118,14 +117,14 @@ getSymbols("NFCI", src = "ALFRED")
 # Effective Federal Funds Rate (EFFR)
 getSymbols("EFFR", src = "ALFRED")
 # sometimes better (but often requested data is missing from the return data)
-getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
+getSymbols("EFFR", src = "ALFRED", VintagesPerQuery = 192)
 # often better
 getSymbols("EFFR", src = "ALFRED", allowParallel = T, MaxParallel = 8)
 
 # the user does not want to query upon vintages before vintage 'Last Updated' date of "2020-01-01"
-getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = "2020-01-01")
-#better (just recent data)
-getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = Sys.Date() - 35)
+getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = "2020-01-01")
+# better (just recent data)
+getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 
 }
 }

@@ -7,16 +7,16 @@
 #'
 #' The St. Louis Federal Reserve Bank's FRED allows a specific data series to be revised(overwritten) with different data while using the same published tail date of 'Date Range'.  This revision is called the 2nd vintage. This function collects and displays data from the 1st vintage that only contains non-revised data (that means the original data) per published tail date of 'Date Range'.
 #'
-#' @param Symbols a character vector specifying the names of each symbol to be loaded
-#' @param env where to create objects. (.GlobalEnv)
-#' @param return.class class of returned object
-#' @param earlLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.
-#' @param vintages.per.query number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes better than the parameter allowParallel,  but often when using this parameter, requested data is missing from the returned data.
-#' @param look.back how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
-#' @param fullOldestVintageData If TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
-#' @param datasheet If TRUE, then also return all of the vintages in an xts attribute 'datasheet'. Default is FALSE.  Useful for debugging.
-#' @param allowParallel If TRUE, then collect groups of 'sheets of vintages.per.query vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
-#' @param MaxParallel If allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/vintages.per.query)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using earlLastUpdDate. Good choices of this parameter may depend on, the amount of the client host harware CPU and memory.
+#' @param Symbols a character vector specifying the names of each symbol to be loaded (from R CRAN package quantmod function getSymbols)
+#' @param env where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)
+#' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
+#' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.
+#' @param VintagesPerQuery number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes better than the parameter allowParallel,  but often when using this parameter, requested data is missing from the returned data.
+#' @param LookBack how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
+#' @param FullOldestVintageData If TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
+#' @param DataSheet If TRUE, then also return all of the vintages in an xts attribute 'DataSheet'. Default is FALSE.  Useful for debugging.
+#' @param allowParallel If TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
+#' @param MaxParallel If allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/VintagesPerQuery)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host harware CPU and memory.
 #' @param ... additional parameters
 #'
 #' @author Andre Mikulec   (adapted from the original code)
@@ -33,8 +33,6 @@
 #' @examples
 #' \dontrun{
 #'
-#' library(quantmod)
-#'
 #' # Smoothed U.S. Recession Probabilities (RECPROUSM156N)
 #' # Source: Piger, Jeremy Max, Chauvet, Marcelle
 #' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
@@ -42,7 +40,7 @@
 #' getSymbols("RECPROUSM156N", src =   "FRED")
 #' [1] "RECPROUSM156N"
 #'
-#' getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4)
+#' getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 #'
 #' Read 2002 items
 #' Beginning Vintage: . . . 2012-09-04
@@ -70,18 +68,19 @@
 #'
 #' # if too much time in periods exists between the
 #' # tail date of  the 'Date Range' and 'Last Updated' date,
-#' # then increase look.back from three(3) (default) to four(4) or greater.
-#' getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4)
+#' # then increase LookBack from three(3) (default) to four(4) or greater.
+#' getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 #'
 #' # for debugging, include the vintages
-#' getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, datasheet = T)
-#' View(data.frame(xtsAttributes(RECPROUSM156N.vin)$datasheet))
+#' getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, DataSheet = T)
+#' # note: the 'viewer' may have a limit on the number of columns displayed
+#' View(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
 #'
 #' # prepend (include) the data of the very first vintage in the head of the data
-#' getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, fullOldestVintageData = T)
+#' getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, FullOldestVintageData = T)
 #'
-#' # Use R CRAN package doParallel to query simultaneously
-#' getSymbols("RECPROUSM156N", src = "ALFRED", look.back = 4, allowParallel = T)
+#' # use R CRAN package doParallel to query simultaneously
+#' getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, allowParallel = T)
 #'
 #' # quarterly
 #' # very large (that was back-loaded from 1991)
@@ -99,14 +98,14 @@
 #' # Effective Federal Funds Rate (EFFR)
 #' getSymbols("EFFR", src = "ALFRED")
 #' # sometimes better (but often requested data is missing from the return data)
-#' getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
+#' getSymbols("EFFR", src = "ALFRED", VintagesPerQuery = 192)
 #' # often better
 #' getSymbols("EFFR", src = "ALFRED", allowParallel = T, MaxParallel = 8)
 #'
 #' # the user does not want to query upon vintages before vintage 'Last Updated' date of "2020-01-01"
-#' getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = "2020-01-01")
-#' #better (just recent data)
-#' getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = Sys.Date() - 35)
+#' getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = "2020-01-01")
+#' # better (just recent data)
+#' getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 #'
 #' }
 #' @export
@@ -121,11 +120,11 @@
 getSymbols.ALFRED <- function(Symbols,
                               env,
                               return.class = "xts",
-                              earlLastUpdDate = NULL,
-                              look.back = 3,
-                              vintages.per.query = 12,
-                              fullOldestVintageData = F,
-                              datasheet = F,
+                              EarliestLastUpdDate = NULL,
+                              LookBack = 3,
+                              VintagesPerQuery = 12,
+                              FullOldestVintageData = F,
+                              DataSheet = F,
                               allowParallel = F,
                               MaxParallel = NULL,
                               ...) {
@@ -164,12 +163,12 @@ tryCatchLog::tryCatchLog({
       AllLastUpdatedDates <- getVintages(Symbols[[i]])
       #
       # just subtracts off some 'Last Updated' dates from the results of calling the function getVintages
-      if(!is.null(earlLastUpdDate)) {
-        AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(earlLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
+      if(!is.null(EarliestLastUpdDate)) {
+        AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(EarliestLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
       }
 
-      if(vintages.per.query == "Max") {
-        vintages.per.query <- length(AllLastUpdatedDates)
+      if(VintagesPerQuery == "Max") {
+        VintagesPerQuery <- length(AllLastUpdatedDates)
       }
 
       # It has deep history.  Others (may) have shallow history.
@@ -183,11 +182,11 @@ tryCatchLog::tryCatchLog({
       # peek at current data to get an idea of the periodicity: "quarter", "month", "week", "day"
       Often <- periodicity(index(quantmod::getSymbols(Symbols[[i]], src = "FRED", auto.assign = FALSE)))$label
 
-      # ALFRED limits 'vintages.per.query' (default 12) (groups of 'sheets of 'vintages.per.query' vintages')
+      # ALFRED limits 'VintagesPerQuery' (default 12) (groups of 'sheets of 'VintagesPerQuery' vintages')
       # Split a vector into chunks in R
       # https://stackoverflow.com/questions/3318333/split-a-vector-into-chunks-in-r
       #
-      SplittedLastUpdatedDates <- split(AllLastUpdatedDates, ceiling(seq_along(AllLastUpdatedDates)/vintages.per.query))
+      SplittedLastUpdatedDates <- split(AllLastUpdatedDates, ceiling(seq_along(AllLastUpdatedDates)/VintagesPerQuery))
 
       FR <- xts()
 
@@ -206,7 +205,7 @@ tryCatchLog::tryCatchLog({
 
         LengthOfLastUpdatedDates <- length(LastUpdatedDates)
 
-        cat(paste0("Processing Vintages: . . . ", LastUpdatedDates[1], " . . . ", LastUpdatedDates[LengthOfLastUpdatedDates]), "\n")
+        cat(paste0("Processing vintages: . . . ", LastUpdatedDates[1], " . . . ", LastUpdatedDates[LengthOfLastUpdatedDates]), "\n")
 
         # vintages
         URL <- paste(ALFRED.URL, "?id=",           paste0(rep(Symbols[[i]], LengthOfLastUpdatedDates), collapse = ","), sep = "")
@@ -260,7 +259,7 @@ tryCatchLog::tryCatchLog({
         # https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=NFCI&cosd=2020-09-25&coed=2020-10-02&vintage_date=2020-10-02
 
         # daily
-        # daily (see look.back is increased to at least four(4)
+        # daily (see LookBack is increased to at least four(4)
         # this is reported during the next day (and does not report during weekends)
         # cosd is the DAY without modification
         # Monday reports the previous Friday
@@ -270,15 +269,15 @@ tryCatchLog::tryCatchLog({
 
 
         if(Often == "day") {
-          # need enough look.back, such that, Tuesday and after a three(3) day holiday weekend can see behind to the previous Friday.
-          look.back <- max(4, look.back)
+          # need enough LookBack, such that, Tuesday and after a three(3) day holiday weekend can see behind to the previous Friday.
+          LookBack <- max(4, LookBack)
         }
 
         # do not look back more than three periods ago.  This limits server CPU and disk I/O.
-        CoStartDates <- sapply(LastUpdatedDates, function(x) {as.character(seq(as.Date(x), length = 2, by = paste0("-", as.character(look.back), " ", Often, "s")))[2]})
+        CoStartDates <- sapply(LastUpdatedDates, function(x) {as.character(seq(as.Date(x), length = 2, by = paste0("-", as.character(LookBack), " ", Often, "s")))[2]})
 
         # exception to the "do not look back too far" is the oldest Vintage
-        if(fullOldestVintageData && OldestVintageDate == names(CoStartDates[1])) {
+        if(FullOldestVintageData && OldestVintageDate == names(CoStartDates[1])) {
           # part i of 2
           CoStartDates[1] <- "1776-07-04"
         }
@@ -322,7 +321,7 @@ tryCatchLog::tryCatchLog({
         }
         if(Often == "week") {
           trueCoStartDate <- zoo::as.Date(CoStartDates[1]) + 1
-          # since weeklies are reported often weekly, then look.back == 3' should (hopefully) cover this date range
+          # since weeklies are reported often weekly, then LookBack == 3' should (hopefully) cover this date range
           # CODE MAY BE FRAGILE HERE
           # stop("Truncation test of . . . Often = \"week\" is not yet implemented.")
         }
@@ -336,7 +335,7 @@ tryCatchLog::tryCatchLog({
         frNROW.orig <- NROW(fr)
         fr <- fr[paste(trueCoStartDate, "::", sep = ""),]
         if(frNROW.orig != NROW(fr)) {
-          writeLines(paste(frNROW.orig - NROW(fr), " old records truncated.  \n  Possibly zero(0) records returned, so possibly TOO MUCH DATA is returned.  \n    Consider INCREASING PARAMETER look.back to be GREATER THAN ", look.back,".", sep = ""))
+          writeLines(paste(frNROW.orig - NROW(fr), " old records truncated.  \n  Possibly zero(0) records returned, so possibly TOO MUCH DATA is returned.  \n    Consider INCREASING PARAMETER LookBack to be GREATER THAN ", LookBack,".", sep = ""))
         }
 
         # NOTE: return.class must be able to handle mult-dimensional
@@ -360,8 +359,8 @@ tryCatchLog::tryCatchLog({
       FR <- do.call(cbind, ListFR)
 
       fr <- FR
-      xtsAttributes(fr)$oldestvintage <- OldestVintageDate
-      # keep FR.  I later attach the datasheet to xtsAttributes
+      xtsAttributes(fr)$OldestVintage <- OldestVintageDate
+      # keep FR.  I later attach the DataSheet to xtsAttributes
       FR <- fr
 
       # How to implement coalesce efficiently in R
@@ -392,8 +391,8 @@ tryCatchLog::tryCatchLog({
       colnames(fr)[1] <- Symbols[[i]]
 
       # debugging
-      if(datasheet == T) {
-        xtsAttributes(fr)$datasheet <- list(FR)
+      if(DataSheet == T) {
+        xtsAttributes(fr)$DataSheet <- FR
       }
 
       if (auto.assign)
