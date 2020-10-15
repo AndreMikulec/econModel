@@ -28,7 +28,7 @@ getSymbols.ALFRED(
 
 \item{look.back}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
 
-\item{vintages.per.query}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.}
+\item{vintages.per.query}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes better than the parameter allowParallel,  but often when using this parameter, requested data is missing from the returned data.}
 
 \item{fullOldestVintageData}{if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.}
 
@@ -114,7 +114,7 @@ getSymbols("NFCI", src = "ALFRED")
 # daily
 # Effective Federal Funds Rate (EFFR)
 getSymbols("EFFR", src = "ALFRED")
-# better
+# sometimes better (but often requested data is missing from the return data)
 getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
 
 # the user does not want to query upon vintages before vintage 'Last Updated' date of "2020-01-01"
