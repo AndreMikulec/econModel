@@ -8,6 +8,7 @@ getSymbols.ALFRED(
   Symbols,
   env,
   return.class = "xts",
+  earlLastUpdDate,
   look.back = 3,
   vintages.per.query = 12,
   fullOldestVintageData = F,
@@ -22,6 +23,8 @@ getSymbols.ALFRED(
 \item{env}{where to create objects. (.GlobalEnv)}
 
 \item{return.class}{class of returned object}
+
+\item{earlLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is null (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.}
 
 \item{look.back}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
 
@@ -113,6 +116,11 @@ getSymbols("NFCI", src = "ALFRED")
 getSymbols("EFFR", src = "ALFRED")
 # better
 getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
+
+# the user does not want to query upon vintages before vintage 'Last Updated' date of "2020-01-01"
+getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = "2020-01-01")
+#better (just recent data)
+getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = Sys.Date() - 35)
 
 }
 }

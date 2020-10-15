@@ -10,6 +10,7 @@
 #' @param Symbols a character vector specifying the names of each symbol to be loaded
 #' @param env where to create objects. (.GlobalEnv)
 #' @param return.class class of returned object
+#' @param earlLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is null (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.
 #' @param vintages.per.query number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.
 #' @param look.back how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'look.back' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter look.back is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the look.back period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.
 #' @param fullOldestVintageData if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
@@ -99,6 +100,11 @@
 #' # better
 #' getSymbols("EFFR", src = "ALFRED", vintages.per.query = 192)
 #'
+#' # the user does not want to query upon vintages before vintage 'Last Updated' date of "2020-01-01"
+#' getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = "2020-01-01")
+#' #better (just recent data)
+#' getSymbols("EFFR", src = "ALFRED", earlLastUpdDate = Sys.Date() - 35)
+#'
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
@@ -112,6 +118,7 @@
 getSymbols.ALFRED <- function(Symbols,
                               env,
                               return.class = "xts",
+                              earlLastUpdDate,
                               look.back = 3,
                               vintages.per.query = 12,
                               fullOldestVintageData = F,
@@ -151,6 +158,11 @@ tryCatchLog::tryCatchLog({
     test <- try({
 
       AllLastUpdatedDates <- getVintages(Symbols[[i]])
+      #
+      # just subtracts off some 'Last Updated' dates from the results of calling the function getVintages
+      if(!is.null(earlLastUpdDate)) {
+        AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(earlLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
+      }
 
       if(vintages.per.query == "Max") {
         vintages.per.query <- length(AllLastUpdatedDates)
