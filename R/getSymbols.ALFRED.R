@@ -394,22 +394,80 @@ tryCatchLog::tryCatchLog({
       # keep FR.  I later attach the DataSheet to xtsAttributes
       FR <- fr
 
-      # How to implement coalesce efficiently in R
-      # https://stackoverflow.com/questions/19253820/how-to-implement-coalesce-efficiently-in-r
-
-      # need to
-      # Rotate a Matrix in R
-      # https://stackoverflow.com/questions/16496210/rotate-a-matrix-in-r
+      # # How to implement coalesce efficiently in R
+      # # https://stackoverflow.com/questions/19253820/how-to-implement-coalesce-efficiently-in-r
       #
-      rotate <- function(x) t(apply(x, 2, rev))
+      # # need to
+      # # Rotate a Matrix in R
+      # # https://stackoverflow.com/questions/16496210/rotate-a-matrix-in-r
+      # #
+      # rotate <- function(x) t(apply(x, 2, rev))
+      #
+      # # need to pull data the new vintage data to the left (into to the oldest vintage column NA entries),
+      # # This ruins OTHER columns (non-oldest-vintage)
+      # # note "na.locf" is from package xts
+      # NewCoreData <- rotate(na.locf(rotate(rotate(rotate((fr))))))
 
-      # need to pull data the new vintage data to the left (into to the oldest vintage column NA entries),
-      # This ruins OTHER columns (non-oldest-vintage)
-      # note "na.locf" is from package xts
-      NewCoreData <- rotate(na.locf(rotate(rotate(rotate((fr))))))
+      # debugged by using "GDP" and EarliestLastUpdDate "Sys.Date() - 300" during OCT 17 2020
+      #
+      # Finding the 'first available datam per specific date' of all vintages
+      #
+      FrMatrix <- as.matrix(fr)
+      #
+      # now reversed: rows are now vintages, columns are now observation dates
+      FrMatrixTransposed <- t(FrMatrix)
+      #
+      # of the row values (keep) highest value rows(latest in time) (vintage 'Last Updated')
+      #   are at the right (no change)
+      # of the column values, highest value columns(latest in time) (observation dates)
+      #   are at top (change)
+      FrMatrixTransposedUpsideDown <- FrMatrixTransposed[rev(seq_along(rownames(FrMatrixTransposed))), ]
+      #
+      # Browse[2]> FrMatrixTransposedUpsideDown
+      #              2019-04-01 2019-07-01 2019-10-01 2020-01-01 2020-04-01
+      # GDP_20200930         NA         NA   21747.39   21561.14   19520.11
+      # GDP_20200827         NA         NA   21747.39   21561.14   19486.51
+      # GDP_20200730         NA         NA   21747.39   21561.14   19408.76
+      # GDP_20200625         NA   21542.54   21729.12   21539.69         NA
+      # GDP_20200528         NA   21542.54   21729.12   21534.91         NA
+      # GDP_20200429         NA   21542.54   21729.12   21537.94         NA
+      # GDP_20200326   21340.27   21542.54   21729.12         NA         NA
+      # GDP_20200227   21340.27   21542.54   21726.78         NA         NA
+      # GDP_20200130   21340.27   21542.54   21734.27         NA         NA
+      #
+      # # of the 'first available datam per specific date' of all vintages,
+      # #   pull its datum down into the last row(na.locf)
+      # # discard all other rows (they are now garbage)
+      # # of the last (only) row, discard the meaningless 'rowname' (now garage)
+      # #   by redefining as a one-row-matrix with no rowname (matrix)
+      # # format the data into an acceptable form that can input into coredata (t)
+      # NewCoreData <- t(matrix(last(na.locf(FrMatrixTransposedUpsideDown)), nrow = 1, dimnames = list(NULL, colnames(FrMatrixTransposedUpsideDown))))
+      #
+      # of the 'first available datam per specific date' of all vintages,
+      #   pull its datum down into a single vector
+      #   and format that data as input into package xts function as.xts
+      NewCoreData <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) last(na.omit(x))), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
+      # note list rownames is just for display here (just below).
+      #      Rownames will be later discarded by '<- index(fr)'
+      #
+      # Browse[2]> NewCoreData
+      # [,1]
+      # 2019-04-01 21340.27
+      # 2019-07-01 21542.54
+      # 2019-10-01 21734.27
+      # 2020-01-01 21537.94
+      # 2020-04-01 19408.76
+
       # redefine (seems must be the same size)
-      coredata(fr) <- NewCoreData
-      # need to just keep the oldest vintage column
+      # coredata(fr) <- NewCoreData
+      #
+      # not the same size
+      frNew <- as.xts(NewCoreData)
+      index(frNew) <- index(fr)
+      xtsAttributes(frNew) <- xtsAttributes(fr)
+      fr <- frNew
+
+      # need to just keep the oldest vintage column (useless op if ran 'not the same size')
       fr <- fr[,1]
       # need to rename (the ONE column)
       colnames(fr)[1] <- Symbols[[i]]
