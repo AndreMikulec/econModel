@@ -25,7 +25,7 @@ getSymbols.ALFRED(
 
 \item{return.class}{class of returned object (from R CRAN package quantmod function getSymbols)}
 
-\item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.}
+\item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.  Note, if this paramter is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".}
 
 \item{LookBack}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.}
 
@@ -148,6 +148,10 @@ getSymbols("EFFR", src = "ALFRED", VintagesPerQuery = 192)
 getSymbols("EFFR", src = "ALFRED", allowParallel = T, MaxParallel = 8)
 
 # the user does not want to query upon vintages before vintage at the 'Last Updated' date of "2020-01-01"
+# Note, if this paramter is used, the tail the returned data (older data)
+# is not expected to be correct.  The reason is that, not all vintages can bee seen,
+# so the clause is no longer true:
+# "the first available datam per specific date of all vintages".
 getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = "2020-01-01")
 # better (just recent data)
 getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
