@@ -27,33 +27,37 @@ getSymbols.ALFRED(
 
 \item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.}
 
-\item{LookBack}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize CPU and disk I/O.}
+\item{LookBack}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.}
 
-\item{VintagesPerQuery}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different times of the day or night.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes better than the parameter allowParallel,  but often when using this parameter, requested data is missing from the returned data.}
+\item{VintagesPerQuery}{number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different with not-a-known reason.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes (but not often) better than the parameter allowParallel. On many occasions  when using this parameter with values greater than 12, the requested data is missing from the returned data set.}
 
-\item{FullOldestVintageData}{If TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.}
+\item{FullOldestVintageData}{if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.}
 
-\item{DataSheet}{If TRUE, then also return all of the vintages in an xts attribute 'DataSheet'. Default is FALSE.  Useful for debugging.}
+\item{DataSheet}{if TRUE, then also return all of the vintages in an xts attribute 'DataSheet'. Default is FALSE.  Useful for debugging.  Useful as a tool of doing more (future) coding or user-end research.}
 
-\item{allowParallel}{If TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.}
+\item{allowParallel}{if TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.}
 
-\item{MaxParallel}{If allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/VintagesPerQuery)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host harware CPU and memory.}
+\item{MaxParallel}{if allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/VintagesPerQuery)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host hardware CPU and memory.}
 
 \item{...}{additional parameters}
 }
 \description{
-R access to thousands of data series accessible via the St. Louis Federal Reserve Bank's ALFRED system.
+R access to the latest observation(s) of the vintages of thousands of data series accessible via the St. Louis Federal Reserve Bank's ALFRED (Archival FRED:  Federal Reserve Bank of St. Louis's _Archiva_L  _Federal _Reserve _Economic _Data) system; collects and displays data from the ALFRED vintages that (as seen by a public user during a zone of time at FRED), 'per observation date', are the 1st appearance of an observation date (and its datum).
 }
 \details{
-Downloads Symbols to specified env from 'research.stlouisfed.org'. This method is not to be called directly, instead a call to R CRAN packages quantmod function getSymbols(Symbols,src='ALFRED') will in turn call this method.
+Downloads Symbols to specified environment (variable env) from 'research.stlouisfed.org'. This method is not to be called directly, instead a call to R CRAN packages quantmod function getSymbols(Symbols,src='ALFRED') will in turn call this method.
 
-The St. Louis Federal Reserve Bank's FRED allows a specific data series to be revised(overwritten) with different data while using the same published tail date of 'Date Range'.  This revision is called the 2nd vintage. This function collects and displays data from the 1st vintage that only contains non-revised data (that means the original data) per published tail date of 'Date Range'.
+The St. Louis Federal Reserve Bank's FRED allows a specific data series to be revised(overwritten) called vintages with different data while and displaying new objservation dates and re-using the same observation dates of the same observations from a 'Date Range'.  The series author very often replaces the each data series with a new one. This replacement activity is data obscurity.  The past data series of FRED is not easily accessible. The past data series are accessible through ALFRED. The current data series of FRED and the past data series (that are no longer seen in FRED) are called vintages.  The original non-rewritten data is called the 1st vintage.  The (first) revision is called the 2nd vintage.  The (second) next revision is called the 3rd vintage and so-on.  The last revision is displayed at FRED. This function collects and displays data from the ALFRED vintages that 'per observation date', are the 1st appearance of an observation date (and its datum).
+
+The functions is a tool in the process of examining a FRED data series of interest and identifying FRED data series that 'per observation' date and its datam, have much change compared to the next vintage's (same) 'per observation' date and its (potentially different) datum.  The process is looking for FRED data series that have vintages with highly volatile data, relative to the (same) 'per observation' date and its (potentially different) datum.
 }
 \examples{
 \dontrun{
 
 # Smoothed U.S. Recession Probabilities (RECPROUSM156N)
 # Source: Piger, Jeremy Max, Chauvet, Marcelle
+# https://fred.stlouisfed.org/series/RECPROUSM156N
+# and
 # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #
 getSymbols("RECPROUSM156N", src =   "FRED")
@@ -90,9 +94,25 @@ dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
 # then increase LookBack from three(3) (default) to four(4) or greater.
 getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 
-# for debugging, include the vintages
+# for debugging, or further work one may include the vintages
 getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, DataSheet = T)
-# note: the 'viewer' may have a limit on the number of columns displayed
+# note: the user-chosen 'viewer' may have a limit on the number of columns displayed
+View(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
+# see the names of all columns
+#   The column names format are the same names and formate as returned
+#   by ALFRED (and unmodified) '(old)FRED series identifier'_YYYYMMDD.
+#   YYYYMMDD is the 'Last Updated' date;
+#     YYYY is the year and
+#     MM is the month in number values of 01 through 12 representing January through December.
+#     DD is the daty of the month from 01 through the last day of that month.
+colnames(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
+
+# From (above) https://fred.stlouisfed.org/data/RECPROUSM156N.txt
+#    one knows that Frequency is 'Monthly'.
+# To get  all of the data (in all of the vintages), set the
+#   LookBack to be a 'high value' e.g. perhaps, 100 years (1200: 12 months x 100 years)
+#   (In this specific FRED series case, observation dates start in 1967)
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 1200, DataSheet = T)
 View(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
 
 # prepend (include) the data of the very first vintage in the head of the data
@@ -102,8 +122,12 @@ getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, FullOldestVintageData 
 getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4, allowParallel = T)
 
 # quarterly
-# very large (that was back-loaded from 1991)
+# ALFRED was still in development in 2006;
+#   moreover, not all FRED data series were being placed into ALFRED.
+# Some FRED data series were/is popular enough and important enough
+#   to be worth the effort to back-load its data into ALFRED.
 # Gross Domestic Product (GDP)
+#   is in ALFRED with 'Last Updated' dates that start in the year of 1991.
 getSymbols("GDP", src = "ALFRED")
 # noticably faster
 getSymbols("GDP", src = "ALFRED", allowParallel = T)
@@ -116,12 +140,14 @@ getSymbols("NFCI", src = "ALFRED")
 # daily
 # Effective Federal Funds Rate (EFFR)
 getSymbols("EFFR", src = "ALFRED")
-# sometimes better (but often requested data is missing from the return data)
+# sometimes better
+# In the case of  using a large 'VintagesPerQuery',
+#   very often much requested data is missing from the returned data.
 getSymbols("EFFR", src = "ALFRED", VintagesPerQuery = 192)
 # often better
 getSymbols("EFFR", src = "ALFRED", allowParallel = T, MaxParallel = 8)
 
-# the user does not want to query upon vintages before vintage 'Last Updated' date of "2020-01-01"
+# the user does not want to query upon vintages before vintage at the 'Last Updated' date of "2020-01-01"
 getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = "2020-01-01")
 # better (just recent data)
 getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
@@ -129,11 +155,16 @@ getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 }
 }
 \references{
-\cite{Blame of R CRAN package quantmod function getSymbols and getSymbols.FRED
+\cite{Blame of the code of the R CRAN package quantmod function getSymbols and getSymbols.FRED
 \url{https://github.com/joshuaulrich/quantmod/blame/master/R/getSymbols.R}
 }
 
-\cite{Replicability, Real-Time Data, and the Science of Economic Research: FRED, ALFRED, and VDC, Richard G. Anderson, FEDERAL RESERVE BANK OF ST. LOUIS REVIEW JANUARY/FEBRUARY 2006, page 87-88
+\cite{ALFRED: Capturing data as it happens, Katrina Stierholz, Director of Library and Information Services, Federal Reserve Bank of St. Louis,
+\url{https://alfred.stlouisfed.org/docs/alfred_capturing_data.pdf}
+}
+
+\cite{Richard G. Anderson, "Replicability, Real-Time Data, and the Science of Economic Research: FRED, ALFRED, and VDC," Federal Reserve Bank of St. Louis Review, January/February 2006, pp. 81-94.
+\url{https://doi.org/10.20955/r.88.81-94}
 \url{https://files.stlouisfed.org/files/htdocs/publications/review/06/01/Anderson.pdf}
 }
 }
