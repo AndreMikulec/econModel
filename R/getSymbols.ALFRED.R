@@ -1,7 +1,7 @@
 
 #' Download Federal Reserve Economic Data - ALFRED(R)
 #'
-#' R access to the latest observation(s) of the vintages of thousands of data series accessible via the St. Louis Federal Reserve Bank's ALFRED (Archival FRED:  Federal Reserve Bank of St. Louis's _Archiva_L  _Federal _Reserve _Economic _Data) system; collects and displays data from the ALFRED vintages that (as seen by a public user during a zone of time at FRED), 'per observation date', are the 1st appearance of an observation date (and its datum).
+#' R access to the latest observation(s) of the vintages of over seven hundred thousand data series accessible via the St. Louis Federal Reserve Bank's ALFRED (Archival FRED:  Federal Reserve Bank of St. Louis's _Archiva_L  _Federal _Reserve _Economic _Data) system \url{https://alfred.stlouisfed.org/}; collects and displays data from the ALFRED vintages that (as seen by a public user during a zone of time at FRED), 'per observation date', are the 1st appearance of an observation date (and its datum).
 #'
 #' Downloads Symbols to specified environment (variable env) from 'research.stlouisfed.org'. This method is not to be called directly, instead a call to R CRAN packages quantmod function getSymbols(Symbols,src='ALFRED') will in turn call this method.
 #'
@@ -12,6 +12,7 @@
 #' @param Symbols a character vector specifying the names of each symbol to be loaded (from R CRAN package quantmod function getSymbols)
 #' @param env where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)
 #' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
+#' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}
 #' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.  Note, if this paramter is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
 #' @param VintagesPerQuery number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different with not-a-known reason.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes (but not often) better than the parameter allowParallel. On many occasions  when using this parameter with values greater than 12, the requested data is missing from the returned data set.
 #' @param LookBack how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.
@@ -69,10 +70,18 @@
 #' # See: 'Date Range' and 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #' # See: getVintages("RECPROUSM156N")
 #' #
-#' # rough way to get the real story based on 'Date Range' and 'Last Updated'
+#' # rough way to get the real story based on 'Date Range' and "Last Updated"
+#' # after the last observation date the "Last Updated" published date is two(2) months later
+#' # the returnIndex paramter (default) is "ObservationDate (row/element date)
 #' index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
 #' index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
 #' dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
+#'
+#' # better way to get the real story
+#' # instead make observation dates to be the "Last Updated" published date.
+#' # the returnIndex parameter is "LastUpdatedDate" (vintage published date)
+#' getSymbols("RECPROUSM156N", src = "ALFRED", returnIndex = "LastUpdatedDate", LookBack = 4)
+#' dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner")
 #'
 #' # if too much time in periods exists between the
 #' # tail date of  the 'Date Range' and 'Last Updated' date,
@@ -149,11 +158,12 @@
 #' @importFrom utils read.csv
 #' @importFrom methods hasArg
 #' @importFrom curl curl
-#' @importFrom zoo as.Date as.yearmon as.yearqtr
+#' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim
 #' @importFrom quantmod importDefaults getSymbols
 getSymbols.ALFRED <- function(Symbols,
                               env,
                               return.class = "xts",
+                              returnIndex = "ObservationDate",
                               EarliestLastUpdDate = NULL,
                               LookBack = 3,
                               VintagesPerQuery = 12,
@@ -451,8 +461,8 @@ tryCatchLog::tryCatchLog({
       #   pull its datum down into a single vector
       #   and format that data as input into package xts function as.xts
       NewCoreData <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) last(na.omit(x))), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
-      # note list rownames is just for display here (just below).
-      #      Rownames will be later discarded by '<- index(fr)'
+      # note list colnames is sometimes just for display here (just below).
+      #      Colnames MAY SOMETIMES later discarded by "index(fr) <-"
       #
       # Browse[2]> NewCoreData
       # [,1]
@@ -465,9 +475,20 @@ tryCatchLog::tryCatchLog({
       # redefine (seems must be the same size)
       # coredata(fr) <- NewCoreData
       #
-      # not the same size
+      if(returnIndex == "ObservationDate") {
+        # no change
+        NewIndex <- index(fr)
+      }
+      if(returnIndex == "LastUpdatedDate") {
+        # NewIndexMatrix: not used in default parameter returnCoreData = "ObservationDate"
+        NewIndexMatrix <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) { rownames(FrMatrixTransposedUpsideDown)[length(zoo::na.trim(x, sides = "right"))] }  ), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
+        NewIndex       <- zoo::as.Date(sapply(strsplit(as.vector(coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+      }
+
+      # not the same size ( so can not do "coredata(fr) <- NewCoreData")
       frNew <- as.xts(NewCoreData)
-      index(frNew) <- index(fr)
+      # index(frNew) <- index(fr)
+      index(frNew) <- NewIndex
       xtsAttributes(frNew) <- xtsAttributes(fr)
       fr <- frNew
 

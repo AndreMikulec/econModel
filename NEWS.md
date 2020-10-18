@@ -1,4 +1,4 @@
-# econModel 0.1.0 - OCT 15 2020
+# econModel 0.1.0 - OCT 17 2020
 
 * Initial submission.
 

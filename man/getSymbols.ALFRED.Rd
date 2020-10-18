@@ -8,6 +8,7 @@ getSymbols.ALFRED(
   Symbols,
   env,
   return.class = "xts",
+  returnIndex = "ObservationDate",
   EarliestLastUpdDate = NULL,
   LookBack = 3,
   VintagesPerQuery = 12,
@@ -24,6 +25,8 @@ getSymbols.ALFRED(
 \item{env}{where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)}
 
 \item{return.class}{class of returned object (from R CRAN package quantmod function getSymbols)}
+
+\item{returnIndex}{one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}}
 
 \item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.  Note, if this paramter is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".}
 
@@ -42,7 +45,7 @@ getSymbols.ALFRED(
 \item{...}{additional parameters}
 }
 \description{
-R access to the latest observation(s) of the vintages of thousands of data series accessible via the St. Louis Federal Reserve Bank's ALFRED (Archival FRED:  Federal Reserve Bank of St. Louis's _Archiva_L  _Federal _Reserve _Economic _Data) system; collects and displays data from the ALFRED vintages that (as seen by a public user during a zone of time at FRED), 'per observation date', are the 1st appearance of an observation date (and its datum).
+R access to the latest observation(s) of the vintages of over seven hundred thousand data series accessible via the St. Louis Federal Reserve Bank's ALFRED (Archival FRED:  Federal Reserve Bank of St. Louis's _Archiva_L  _Federal _Reserve _Economic _Data) system \url{https://alfred.stlouisfed.org/}; collects and displays data from the ALFRED vintages that (as seen by a public user during a zone of time at FRED), 'per observation date', are the 1st appearance of an observation date (and its datum).
 }
 \details{
 Downloads Symbols to specified environment (variable env) from 'research.stlouisfed.org'. This method is not to be called directly, instead a call to R CRAN packages quantmod function getSymbols(Symbols,src='ALFRED') will in turn call this method.
@@ -84,10 +87,18 @@ Beginning Vintage: . . . 2020-10-01
 # See: 'Date Range' and 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 # See: getVintages("RECPROUSM156N")
 #
-# rough way to get the real story based on 'Date Range' and 'Last Updated'
+# rough way to get the real story based on 'Date Range' and "Last Updated"
+# after the last observation date the "Last Updated" published date is two(2) months later
+# the returnIndex paramter (default) is "ObservationDate (row/element date)
 index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
 index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
 dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
+
+# better way to get the real story
+# instead make observation dates to be the "Last Updated" published date.
+# the returnIndex parameter is "LastUpdatedDate" (vintage published date)
+getSymbols("RECPROUSM156N", src = "ALFRED", returnIndex = "LastUpdatedDate", LookBack = 4)
+dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner")
 
 # if too much time in periods exists between the
 # tail date of  the 'Date Range' and 'Last Updated' date,
