@@ -1,6 +1,6 @@
 Package: econModel
 Type: Package
-Title: Meaningful Social and Economic Data
+Title: Meaningful Social and Economic Data from ALFRED and elsewhere
 Version: 0.1.0
 Authors@R: c(
   person("Andre", "Mikulec", email = "Andre_Mikulec@Hotmail.com", role = c("aut", "cre"))

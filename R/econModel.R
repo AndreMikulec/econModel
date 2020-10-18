@@ -1,4 +1,4 @@
-#' econModel: Meaningful Social and Economic Data
+#' econModel: Meaningful Social and Economic Data from ALFRED and elsewhere
 #'
 #' @docType package
 #' @name econModel
