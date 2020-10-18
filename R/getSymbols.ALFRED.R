@@ -21,6 +21,7 @@
 #' @param allowParallel if TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
 #' @param MaxParallel if allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/VintagesPerQuery)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host hardware CPU and memory.
 #' @param ... additional parameters
+#' @return as R CRAN package quantmod function getSymbols. See the parameter returnIndex for a user-choice the xts objects returned index
 #'
 #' @author Andre Mikulec   (adapted from the original code)
 #' @author Jeffrey A. Ryan (original code from the R CRAN package quantmod function getSymbols.FRED)
@@ -532,11 +533,12 @@ getSymbols.ALFRED <- function(Symbols,
       if (auto.assign)
         assign(Symbols[[i]], fr, env)
     # }, silent = TRUE)
-    }, error = function(e) { test <- 0L; class(test) <- "try-error"; test  })
+    }, error = function(e) { Sys.setenv(TZ=oldtz); test <- 0L; class(test) <- "try-error"; test  })
 
     Sys.setenv(TZ=oldtz)
 
     if (inherits(test, "try-error")) {
+
       msg <- paste0("Unable to import ", dQuote(returnSym[[i]]),
                     ".\n", attr(test, "condition")$message)
       if (hasArg(".has1sym.") && match.call(expand.dots = TRUE)$.has1sym.) {
