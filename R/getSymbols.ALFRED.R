@@ -174,7 +174,6 @@ getSymbols.ALFRED <- function(Symbols,
                               MaxParallel = NULL,
                               ...) {
 
-
   # if not done elsewhere
   #correct for TZ
   oldtz <- Sys.getenv("TZ")
