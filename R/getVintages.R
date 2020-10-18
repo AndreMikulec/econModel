@@ -25,6 +25,7 @@
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
 getVintages <- function(Symbol, src = "ALFRED") {
 tryCatchLog::tryCatchLog({
 
@@ -34,7 +35,21 @@ tryCatchLog::tryCatchLog({
   if(src == "ALFRED") {
     URL <- paste0("https://alfred.stlouisfed.org/series/downloaddata?seid=", Symbol)
     # scrape
-    Page <- paste0(scan(URL, what = character()), collapse = " ")
+    h <- curl::new_handle()
+    useragent <- paste("curl/", curl::curl_version()$version, " function getVintages of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+    # debug in Fiddler 4
+    # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+    # Body dropped from POST request when using proxy with NTLM authentication #146
+    # https://github.com/jeroen/curl/issues/146
+    # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
+    curl::handle_setopt(h, .list = list(useragent = useragent))
+    # go for it
+    # Page <- paste0(scan(URL, what = character()), collapse = " ")
+    con <- curl::curl(URL, handle = h)
+    Page <- paste0(readLines(con), collapse = " ")
+    # docs say that it does not do much
+    curl::handle_reset(h)
+    close(con)
     # coords of area of interest and non-greedy regex (.*?)
     SubPageCoords <- regexpr("<select id=\"form_selected_vintage_dates\".*?</option></select>", Page)
     # area

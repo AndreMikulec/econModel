@@ -44,6 +44,9 @@ getSymbols.ALFRED(
 
 \item{...}{additional parameters}
 }
+\value{
+as R CRAN package quantmod function getSymbols. See the parameter returnIndex for a user-choice the xts objects returned index
+}
 \description{
 R access to the latest observation(s) of the vintages of over seven hundred thousand data series accessible via the St. Louis Federal Reserve Bank's ALFRED (Archival FRED:  Federal Reserve Bank of St. Louis's _Archiva_L  _Federal _Reserve _Economic _Data) system \url{https://alfred.stlouisfed.org/}; collects and displays data from the ALFRED vintages that (as seen by a public user during a zone of time at FRED), 'per observation date', are the 1st appearance of an observation date (and its datum).
 }

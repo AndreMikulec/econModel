@@ -156,7 +156,7 @@
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom foreach foreach `%do%` `%dopar%`
 #' @importFrom doParallel registerDoParallel  stopImplicitCluster
-#' @importFrom utils read.csv
+### #' @importFrom utils read.csv
 #' @importFrom methods hasArg
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
 #' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim
@@ -350,13 +350,17 @@ getSymbols.ALFRED <- function(Symbols,
         h <- curl::new_handle()
         useragent <- paste("curl/", curl::curl_version()$version, " function getSymbols.ALFRED of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
         # debug in Fiddler 4
-        # works at R command line.  Inside a package, this does not work well.
-        # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1:8888", useragent = useragent))
+        # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+        # Body dropped from POST request when using proxy with NTLM authentication #146
+        # https://github.com/jeroen/curl/issues/146
+        # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
         curl::handle_setopt(h, .list = list(useragent = useragent))
         # go for it
-        fr <- utils::read.csv(curl::curl(URL), na.string = ".")
+        con <- curl::curl(URL, handle = h)
+        fr <- utils::read.csv(con, na.string = ".")
         # docs say that it does not do much
         curl::handle_reset(h)
+        # close(con) # DO NOT CLOSE INSIDE foreach::foreach
 
         ColnamesFR <- colnames(fr)
 
