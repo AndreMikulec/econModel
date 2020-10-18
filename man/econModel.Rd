@@ -4,7 +4,7 @@
 \name{econModel}
 \alias{econModel}
 \alias{econModel-package}
-\title{econModel: Meaningful Social and Economic Data}
+\title{econModel: Meaningful Social and Economic Data from ALFRED and elsewhere}
 \description{
 Collect and display meaningful social and economic data.
 }

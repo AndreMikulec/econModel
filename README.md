@@ -10,3 +10,4 @@ You can install econModel from github with:
 # install.packages("devtools")
 devtools::install_github("AndreMikulec/econModel")
 ```
+
