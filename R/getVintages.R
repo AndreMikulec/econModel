@@ -29,8 +29,6 @@
 getVintages <- function(Symbol, src = "ALFRED") {
 tryCatchLog::tryCatchLog({
 
-  if(!length(Symbol)) stop("Must provide the Symbol.")
-
   if(length(Symbol) && !class(src) %in% "character") {
     stop("Symbol must be of class \"character\".")
   } else if(!length(src)){
