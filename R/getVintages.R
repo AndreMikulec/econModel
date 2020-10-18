@@ -30,7 +30,18 @@ getVintages <- function(Symbol, src = "ALFRED") {
 tryCatchLog::tryCatchLog({
 
   if(!length(Symbol)) stop("Must provide the Symbol.")
-  if(!length(src))    stop("Invalid source (src).  Default is \"ALFRED\".")
+
+  if(length(Symbol) && !class(src) %in% "character") {
+    stop("Symbol must be of class \"character\".")
+  } else if(!length(src)){
+    stop("src can not be NULL")
+  }
+
+  if(length(src) && !src %in% "ALFRED") {
+    stop("src must be \"ALFRED\". Default is \"ALFRED\".")
+  } else if(!length(src)){
+    stop("src can not be NULL")
+  }
 
   if(src == "ALFRED") {
     URL <- paste0("https://alfred.stlouisfed.org/series/downloaddata?seid=", Symbol)

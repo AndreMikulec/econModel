@@ -14,8 +14,8 @@
 #' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
 #' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}
 #' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.  Note, if this paramter is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
-#' @param VintagesPerQuery number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different with not-a-known reason.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes (but not often) better than the parameter allowParallel. On many occasions  when using this parameter with values greater than 12, the requested data is missing from the returned data set.
 #' @param LookBack how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.
+#' @param VintagesPerQuery number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different with not-a-known reason.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes (but not often) better than the parameter allowParallel. On many occasions  when using this parameter with values greater than 12, the requested data is missing from the returned data set.
 #' @param FullOldestVintageData if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
 #' @param DataSheet if TRUE, then also return all of the vintages in an xts attribute 'DataSheet'. Default is FALSE.  Useful for debugging.  Useful as a tool of doing more (future) coding or user-end research.
 #' @param allowParallel if TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
@@ -192,6 +192,61 @@ getSymbols.ALFRED <- function(Symbols,
     verbose <- FALSE
   if (!methods::hasArg("auto.assign"))
     auto.assign <- TRUE
+
+  if(length(returnIndex) && !returnIndex %in% c("ObservationDate", "LastUpdatedDate")) {
+    stop("returnIndex must be just one of \"ObservationDate\" or \"LastUpdatedDate\"")
+  } else if(!length(returnIndex)) {
+    stop("LookBack can not be NULL")
+  }
+
+  if(length(EarliestLastUpdDate) && !class(EarliestLastUpdDate) %in% c("Date", "character")) {
+    stop("EarliestLastUpdDate must be NULL or of class \"Date\" or \"character\"")
+  } else if(length(EarliestLastUpdDate) && class(try( {zoo::as.Date(EarliestLastUpdDate)}, silent = F)) == "try-error") {
+    stop("EarliestLastUpdDate must be NULL or convertible to a Date-like")
+  }
+
+  if(length(LookBack) && !class(LookBack) %in% c("numeric", "integer")) {
+    stop("LookBack must be of class \"numeric\" or \"integer\"")
+  } else if(length(LookBack) && LookBack < 1) {
+    stop("LookBack must be of value 1 or greater")
+  } else if(!length(LookBack)) {
+    stop("LookBack can not be NULL")
+  }
+  LookBack <- floor(LookBack)
+
+  if(length(VintagesPerQuery) && !class(VintagesPerQuery) %in% c("numeric", "integer")) {
+    stop("VintagesPerQuery must be of class \"numeric\" or \"integer\"")
+  } else if(length(VintagesPerQuery) && VintagesPerQuery < 1) {
+    stop("VintagesPerQuery must be of value 1 or greater")
+  } else if(!length(VintagesPerQuery)) {
+    stop("VintagesPerQuery can not be NULL")
+  }
+  VintagesPerQuery <- floor(VintagesPerQuery)
+
+  if(length(FullOldestVintageData) &&!class(FullOldestVintageData) %in% c("logical")) {
+    stop("FullOldestVintageData must be of class \"logical\"")
+  } else if(!length(FullOldestVintageData)) {
+    stop("FullOldestVintageData can not be NULL")
+  }
+
+  if(length(DataSheet) && !class(DataSheet) %in% c("logical")) {
+    stop("DataSheet must be of class \"logical\"")
+  } else if(!length(DataSheet)) {
+    stop("DataSheet can not be NULL")
+  }
+
+  if(length(allowParallel) && !class(allowParallel) %in% c("logical")) {
+    stop("allowParallel must be of class \"logical\"")
+  } else if(!length(allowParallel)) {
+    stop("allowParallel can not be NULL")
+  }
+
+  if(length(MaxParallel) && !class(MaxParallel) %in% c("numeric", "integer")) {
+    stop("MaxParallel must be NULL or of class \"numeric\" or \"integer\"")
+  } else if(length(MaxParallel) && MaxParallel < 1) {
+    stop("MaxParallel must be NULL or of value 1 or greater")
+  }
+  if(length(MaxParallel)) MaxParallel <- floor(MaxParallel)
 
   ALFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
   returnSym <- Symbols
