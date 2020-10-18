@@ -157,7 +157,7 @@
 #' @importFrom doParallel registerDoParallel  stopImplicitCluster
 #' @importFrom utils read.csv
 #' @importFrom methods hasArg
-#' @importFrom curl curl
+#' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
 #' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim
 #' @importFrom quantmod importDefaults getSymbols
 getSymbols.ALFRED <- function(Symbols,
@@ -172,7 +172,7 @@ getSymbols.ALFRED <- function(Symbols,
                               allowParallel = F,
                               MaxParallel = NULL,
                               ...) {
-tryCatchLog::tryCatchLog({
+
 
   # if not done elsewhere
   #correct for TZ
@@ -202,7 +202,9 @@ tryCatchLog::tryCatchLog({
     # Later I may want to change to _VIN
     # update (1 of 2 places)
     returnSym <- returnSym[returnSym %in% Symbols] <- paste0(Symbols[[i]], ".vin")
-    test <- try({
+
+    test <- tryCatchLog::tryCatchLog({
+    # test <- try({
 
       AllLastUpdatedDates <- getVintages(Symbols[[i]])
       #
@@ -343,8 +345,18 @@ tryCatchLog::tryCatchLog({
 
         if (verbose)
           writeLines(URL)
+
+        h <- curl::new_handle()
+        useragent <- paste("curl/", curl::curl_version()$version, " function getSymbols.ALFRED of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+        # debug in Fiddler 4
+        # works at R command line.  Inside a package, this does not work well.
+        # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1:8888", useragent = useragent))
+        curl::handle_setopt(h, .list = list(useragent = useragent))
         # go for it
         fr <- utils::read.csv(curl::curl(URL), na.string = ".")
+        # docs say that it does not do much
+        curl::handle_reset(h)
+
         ColnamesFR <- colnames(fr)
 
         if (verbose)
@@ -457,9 +469,17 @@ tryCatchLog::tryCatchLog({
       # # format the data into an acceptable form that can input into coredata (t)
       # NewCoreData <- t(matrix(last(na.locf(FrMatrixTransposedUpsideDown)), nrow = 1, dimnames = list(NULL, colnames(FrMatrixTransposedUpsideDown))))
       #
-      # of the 'first available datam per specific date' of all vintages,
+      # of the 'first available datum per specific date' of all vintages,
       #   pull its datum down into a single vector
       #   and format that data as input into package xts function as.xts
+
+      # remove columns that only have NAs seen in EFFR on Holidays
+      # if the all-NA columns are not removed then NewCoreData will have problems: "Numeric,0" elements
+      # This problem did not happend using na.locf.
+      # CLEAN
+      NewIndexControl <- apply(FrMatrixTransposedUpsideDown, MARGIN = 2,  function(x) !all(is.na(x)))
+      FrMatrixTransposedUpsideDown <- FrMatrixTransposedUpsideDown[, NewIndexControl, drop = F]
+      #
       NewCoreData <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) last(na.omit(x))), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
       # note list colnames is sometimes just for display here (just below).
       #      Colnames MAY SOMETIMES later discarded by "index(fr) <-"
@@ -476,8 +496,8 @@ tryCatchLog::tryCatchLog({
       # coredata(fr) <- NewCoreData
       #
       if(returnIndex == "ObservationDate") {
-        # no change
-        NewIndex <- index(fr)
+        # (almost) no change
+        NewIndex <- index(fr)[NewIndexControl]
       }
       if(returnIndex == "LastUpdatedDate") {
         # NewIndexMatrix: not used in default parameter returnCoreData = "ObservationDate"
@@ -511,7 +531,8 @@ tryCatchLog::tryCatchLog({
 
       if (auto.assign)
         assign(Symbols[[i]], fr, env)
-    }, silent = TRUE)
+    # }, silent = TRUE)
+    }, error = function(e) { test <- 0L; class(test) <- "try-error"; test  })
 
     Sys.setenv(TZ=oldtz)
 
@@ -528,4 +549,4 @@ tryCatchLog::tryCatchLog({
   if (auto.assign)
     return(setdiff(returnSym, noDataSym))
   return(fr)
-})}
+}
