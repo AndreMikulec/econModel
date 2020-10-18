@@ -29,13 +29,15 @@
 getVintages <- function(Symbol, src = "ALFRED") {
 tryCatchLog::tryCatchLog({
 
-  if(length(Symbol) && !class(src) %in% "character") {
+  if(length(Symbol) && !class(Symbol) %in% "character") {
     stop("Symbol must be of class \"character\".")
-  } else if(!length(src)){
-    stop("src can not be NULL")
+  } else if(!length(Symbol)){
+    stop("Symbol can not be NULL")
   }
 
-  if(length(src) && !src %in% "ALFRED") {
+  if(length(src) && !class(src) %in% "character") {
+    stop("src must be of class \"character\".")
+  } else if(length(src) && !src %in% "ALFRED") {
     stop("src must be \"ALFRED\". Default is \"ALFRED\".")
   } else if(!length(src)){
     stop("src can not be NULL")
