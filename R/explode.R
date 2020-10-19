@@ -232,10 +232,18 @@ pairWise <- function(x, y) {
 #' }
 #'
 #' @param x object with the old column names
+#' @param Fun literally written function or the function name inside a string
+#' @param isCharFun hint as to Fun being a function or the function name inside of a string
+#' @param x1 object providing part of the new colum name
+#' @param x2 object providing (yet another) part of the the new column name
+#' @param WhichCombo list with named elements and their values to (eventually) become part of the new column name
+#' @param AltName column new root name.  Default is NULL. Unless a string is provided then the root name will not be replaced.
+#' @param Prefix place the new addition to the column name at the front instead of the end. Default is NULL. Internally the default is FALSE.
+#' @param FixedSep replacement for "[.]|::" that was found in the function name
 #' @return object with the new column names
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-newColNames <- function(xTs = NULL, Fun =  NULL, isCharFun = NULL, xTs1 = NULL, xTs2 = NULL, WhichCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
+newColName <- function(x = NULL, Fun =  NULL, isCharFun = NULL, x1 = NULL, x2 = NULL, WhichCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
 tryCatchLog::tryCatchLog({
 
   if(is.null(isCharFun)) stop("newColNames need actual paramter isCharFun")
@@ -252,8 +260,8 @@ tryCatchLog::tryCatchLog({
 
   paste0(
     c(
-      if(!is.null(xTs1) && (NCOL(xTs1) > 0)) { colnames(xTs1)[1] } else { NULL },
-      if(!is.null(xTs2) && (NCOL(xTs2) > 0)) { colnames(xTs2)[1] } else { NULL }
+      if(!is.null(x1) && (NCOL(x1) > 0)) { colnames(x1)[1] } else { NULL },
+      if(!is.null(x2) && (NCOL(x2) > 0)) { colnames(x2)[1] } else { NULL }
     ), collapse = FixedSep) -> Colnames
 
   if(length(WhichCombo)) {
@@ -270,9 +278,9 @@ tryCatchLog::tryCatchLog({
     PreName  <- NewNameWhichCombo
   }
   NewName <- paste0(c(PreName, Colnames, PostName), collapse = FixedSep)
-  colnames(xTs)[1] <-NewName
+  colnames(x)[1] <-NewName
 
-  xTs
+  x
 
 })}
 
@@ -383,7 +391,7 @@ tryCatchLog::tryCatchLog({
       if(NVAR(xTs2)) { xTs2List <- list(xTs2) } else { xTs2List <- NULL }
       Temp <- DescTools::DoCall(Fun, args = c(list(), list(xTs1), xTs2List, WhichCombo, list(...)), quote = quote, envir = envir)
 
-      Temp <- newColNames( Temp, Fun = Fun, isCharFun = isCharFun, xTs1 = xTs1, xTs2 = xTs2, WhichCombo = WhichCombo
+      Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = xTs1, x2 = xTs2, WhichCombo = WhichCombo
                              , AltName = AltName, Prefix = Prefix, FixedSep = FixedSep)
 
       assign("xTs", merge(xTs, Temp), envir = FunctionEnv)
