@@ -303,8 +303,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' }
 #'
-#' @param xTs1 xts object
-#' @param xTs2 xts object
+#' @param x1 two dimensional object
+#' @param x2 Optionally, second two dimensional object.
 #' @param Fun function name in the "bare" or in literal quotes("")
 #' @param Whiches list of possible varying parameters that are expanded
 #' to all possible combinations by expand.grid
@@ -327,8 +327,9 @@ tryCatchLog::tryCatchLog({
 #' library(quantmod)
 #' ibm <- getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
 #'
-#' explodeXts(ibm[,c("IBM.Open")], Fun = "TTR::SMA", Whiches = list(n = 2:3))
-#' # IBM.Open.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3
+#'   explode(ibm[,c("IBM.Open")], Fun = "TTR::SMA", Whiches = list(n = 2:3))
+#'
+#' #           IBM.Open.TTR.SMA.n.2  IBM.Open.TTR.SMA.n.3
 #' # 1970-01-02                   NA                   NA
 #' # 1970-01-05               18.262                   NA
 #' # 1970-01-06               18.356               18.312
@@ -337,7 +338,7 @@ tryCatchLog::tryCatchLog({
 #' # 1970-01-09               18.456               18.446
 #' # 1970-01-12               18.463               18.454
 #'
-#'   explodeXts(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Whiches = list(n = 2:3))
+#'   explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Whiches = list(n = 2:3))
 #' #
 #' #            IBM.Open.TTR.SMA.n.2 IBM.Close.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3 IBM.Close.TTR.SMA.n.3
 #' # 1970-01-02                   NA                    NA                   NA                    NA
@@ -353,7 +354,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom plyr llply
 #' @importFrom DescTools DoCall
 #' @export
-explodeXts <- function(  xTs1 = NULL, xTs2 = NULL, Fun = NULL
+explode <- function(  x1 = NULL, x2 = NULL, Fun = NULL
                          , Whiches   = NULL
                          , AltName   = NULL, Prefix = NULL, FixedSep  = NULL
                          , quote     = FALSE, envir = parent.frame(2)
@@ -361,8 +362,8 @@ explodeXts <- function(  xTs1 = NULL, xTs2 = NULL, Fun = NULL
 tryCatchLog::tryCatchLog({
 
 
-  xTs1  <- as.xts(xTs1)
-  if(!is.null(xTs2)) xTs2 <- as.xts(xTs2)
+  x1  <- as.xts(x1)
+  if(!is.null(x2)) x2 <- as.xts(x2)
   if(is.null(FixedSep)) FixedSep = "."
 
   DescTools::DoCall(expand.grid, Whiches) %>%
@@ -382,7 +383,7 @@ tryCatchLog::tryCatchLog({
 
   plyr::llply(WhichesCombinations, function(WhichCombo) {
 
-    plyr::llply(pairWise(xTs1, xTs2), function(xTsColumnSet) {
+    plyr::llply(pairWise(x1, x2), function(xTsColumnSet) {
 
       xTs1 <- xTsColumnSet[[1]]
       xTs2 <- xTsColumnSet[[2]]
