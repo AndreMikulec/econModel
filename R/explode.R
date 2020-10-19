@@ -233,14 +233,14 @@ pairWise <- function(x, y) {
 #' @param isCharFun hint as to Fun being a function or the function name inside of a string
 #' @param x1 object providing part of the new colum name
 #' @param x2 object providing (yet another) part of the the new column name
-#' @param WhichCombo list with named elements and their values to (eventually) become part of the new column name
+#' @param FlagsCombo list with named elements and their values to (eventually) become part of the new column name
 #' @param AltName column new root name.  Default is NULL. Unless a string is provided then the root name will not be replaced.
 #' @param Prefix place the new addition to the column name at the front instead of the end. Default is NULL. Internally the default is FALSE.
 #' @param FixedSep replacement for "[.]|::" that was found in the function name
 #' @return object with the new column names
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-newColName <- function(x = NULL, Fun =  NULL, isCharFun = NULL, x1 = NULL, x2 = NULL, WhichCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
+newColName <- function(x = NULL, Fun =  NULL, isCharFun = NULL, x1 = NULL, x2 = NULL, FlagsCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
 tryCatchLog::tryCatchLog({
 
   if(is.null(isCharFun)) stop("newColNames need actual paramter isCharFun")
@@ -261,14 +261,14 @@ tryCatchLog::tryCatchLog({
       if(!is.null(x2) && (NCOL(x2) > 0)) { colnames(x2)[1] } else { NULL }
     ), collapse = FixedSep) -> Colnames
 
-  if(length(WhichCombo)) {
-    WhichCombo <-  paste0(c(interleave(names(WhichCombo), unlist(WhichCombo))), collapse = FixedSep)
+  if(length(FlagsCombo)) {
+    FlagsCombo <-  paste0(c(interleave(names(FlagsCombo), unlist(FlagsCombo))), collapse = FixedSep)
   } else {
-    WhichCombo <- NULL
+    FlagsCombo <- NULL
   }
 
   PreName <- NULL; PostName <- NULL
-  NewNameWhichCombo <- paste0(c(NewName, WhichCombo), collapse = FixedSep)
+  NewNameWhichCombo <- paste0(c(NewName, FlagsCombo), collapse = FixedSep)
   if(is.null(Prefix) || (Prefix == FALSE)) {
     PostName <- NewNameWhichCombo
   } else {
@@ -360,9 +360,9 @@ tryCatchLog::tryCatchLog({
 
   # if do.call(rlist::list.zip, ) ever fails then
   # then purrr::transpose is an acceptable replacement
-  do.call(rlist::list.zip,as.list(DescTools::DoCall(expand.grid, Flags))) -> WhichesCombinations
+  do.call(rlist::list.zip,as.list(DescTools::DoCall(expand.grid, Flags))) -> FlagsCombinations
 
-  if(!NCOL(WhichesCombinations)){ return(xts()) }
+  if(!NCOL(FlagsCombinations)){ return(xts()) }
 
   if(mode(Fun) == "function") {
     Fun = match.fun(Fun)
@@ -371,22 +371,20 @@ tryCatchLog::tryCatchLog({
     isCharFun <- TRUE
   }
 
-  xTs <- xts()
+  xTs <- eval(parse(text = paste0(class(x1)[1], "()")))
   FunctionEnv <- environment()
 
-  lapply(WhichesCombinations, function(WhichCombo) {
+  lapply(FlagsCombinations, function(FlagsCombo) {
 
-    lapply(pairWise(x1, x2), function(xTsColumnSet) {
+    lapply(pairWise(x1, x2), function(ObjectColumnSet) {
 
-      xTs1 <- xTsColumnSet[[1]]
-      xTs2 <- xTsColumnSet[[2]]
-      # will no longer happen: pairWise always returns a 'list of pairs'
-      # if(length(xTsColumnSet) >= 2) { xTs2 <- xTsColumnSet[[2]] } else { xTs2 <- NULL }
+      x11 <- ObjectColumnSet[[1]]
+      x21 <- ObjectColumnSet[[2]]
 
-      if(NVAR(xTs2)) { xTs2List <- list(xTs2) } else { xTs2List <- NULL }
-      Temp <- DescTools::DoCall(Fun, args = c(list(), list(xTs1), xTs2List, WhichCombo, list(...)), quote = quote, envir = envir)
+      if(NVAR(x21)) { x21List <- list(x21) } else { x21List <- NULL }
+      Temp <- DescTools::DoCall(Fun, args = c(list(), list(x11), x21List, FlagsCombo, list(...)), quote = quote, envir = envir)
 
-      Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = xTs1, x2 = xTs2, WhichCombo = WhichCombo
+      Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = x11, x2 = x21, FlagsCombo = FlagsCombo
                              , AltName = AltName, Prefix = Prefix, FixedSep = FixedSep)
 
       assign("xTs", merge(xTs, Temp), envir = FunctionEnv)

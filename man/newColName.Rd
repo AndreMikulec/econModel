@@ -10,7 +10,7 @@ newColName(
   isCharFun = NULL,
   x1 = NULL,
   x2 = NULL,
-  WhichCombo = NULL,
+  FlagsCombo = NULL,
   AltName = NULL,
   Prefix = NULL,
   FixedSep = NULL
@@ -27,7 +27,7 @@ newColName(
 
 \item{x2}{object providing (yet another) part of the the new column name}
 
-\item{WhichCombo}{list with named elements and their values to (eventually) become part of the new column name}
+\item{FlagsCombo}{list with named elements and their values to (eventually) become part of the new column name}
 
 \item{AltName}{column new root name.  Default is NULL. Unless a string is provided then the root name will not be replaced.}
 
