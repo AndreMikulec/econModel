@@ -13,6 +13,14 @@ LazyData: true
 Depends:
     xts
 Imports:
+    magrittr,
+    rlang,
+    logging,
+    futile.logger,
+    purrr,
+    DescTools,
+    plyr,
+    stringr,
     tryCatchLog,
     utils,
     stats,
