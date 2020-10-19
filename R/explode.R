@@ -301,7 +301,7 @@ tryCatchLog::tryCatchLog({
 #' @param quote boolean passed to package DescTools function DoCall
 #' @param envir calling environment
 #' @param ... additional parameters
-#' @return two dimensional object with different columns
+#' @return two dimensional object with new and different columns
 #'
 #' @references
 #' \cite{Zachary Mayer, "Time series cross-validation 5"

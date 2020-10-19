@@ -39,7 +39,7 @@ explode(
 \item{...}{additional parameters}
 }
 \value{
-two dimensional object with different columns
+two dimensional object with new and different columns
 }
 \description{
 From one(1) or two(2) two dimension objects, apply a function(3) upon the two objects.
