@@ -286,12 +286,12 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' expland out xts
+#' expland out a two dimensional object
 #'
 #' @description
 #' \preformatted{
 #'
-#' from an xts function stub, create an xts object of derived columns
+#' from an function stub, create an two dimensional object of derived columns
 #'
 #' Meant to create many package TTR/PerformanceAnalytics column results
 #'
@@ -301,9 +301,7 @@ tryCatchLog::tryCatchLog({
 #' January 24, 2013
 #' By Deane-Mayer
 #' http://www.r-bloggers.com/time-series-cross-validation-5/
-#' http://moderntoolmaking.blogspot.com/2013/01
-#'       /time-series-cross-validation-5.html?utm_source=feedburner
-#'       &utm_medium=feed&utm_campaign=Feed%3A+ModernToolMaking+%28Modern+Tool+Making%29
+#' http://moderntoolmaking.blogspot.com/2013/01/time-series-cross-validation-5.html
 #'
 #' NOTE: if any xTs2, then xTs1 and xTs2 are paired/matched column position to column position.
 #'
@@ -317,7 +315,7 @@ tryCatchLog::tryCatchLog({
 #' @param AltName string alternate name for "Fun"
 #' @param Prefix boolan default is FALSE.  TRUE would place the column meta before the column name.
 #' @param FixedSep string divider of meta items
-#' @param quote boolean passed to DescTools DoCall
+#' @param quote boolean passed to package DescTools function DoCall
 #' @param envir calling environment
 #' @return new xts object of new derived columns
 #' @examples
