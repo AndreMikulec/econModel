@@ -1,256 +1,10 @@
 
 
-#' sets the enviroment
-#'
-#' @description
-#' \preformatted{
-#'
-#' This is a space-saver that is meant to be used at the beginning of a function.
-#'
-#' Variable ops from the calling environment sets R options.
-#' Environment variable TZ using the calling environment variable oldtz sets.
-#'
-#' }
-#'
-#' @return envi, options, and TZ are set
-#' @examples
-#' \dontrun{
-#' # > options(max.print=88888L)
-#' # initEnv()
-#' # > getOption("max.print")
-#' # [1] 99999
-#' }
-#' @export
-#' @importFrom futile.logger flog.threshold ERROR flog.appender appender.tee
-#' @importFrom logging basicConfig
-#' @importFrom rlang parse_expr eval_bare caller_env
-#' @importFrom magrittr %>%
-#' @importFrom tryCatchLog tryCatchLog
-initEnv <- function(init = NULL) {
-  # tryCatchLog: what level to activate
-  futile.logger::flog.threshold(futile.logger::ERROR)
-  futile.logger::flog.appender(futile.logger::appender.tee("tryCatchLog.logged.txt"))
-  logging::basicConfig()
-  tryCatchLog::tryCatchLog({
-    # so I have one
-    action <- rlang::parse_expr("assign(\"envi\", environment())")
-    envii  <- rlang::caller_env()
-    rlang::eval_bare(action, env = envii)
-
-    # LATER MOVE THIS DOWN INTO FUNCTIONS
-    assign("%>%",  magrittr::`%>%` , envir = envii)
-
-    # LATER MOVE THESE DOWN INTO FUNCTIONS
-    if(!"quantmod" %in% search())                 require(quantmod)
-    if(!"PerformanceAnalytics" %in% search())     require(PerformanceAnalytics)
-
-    # TOO MUCH INFORMATION ( BUT DOES WORK )
-    # action <- rlang::parse_expr("assign(\"ssc\", toString(sys.calls()[[length(sys.calls())]]) )")
-    # rlang::eval_bare(action, env = envii)
-    # action <- rlang::parse_expr("print(ssc)")
-    # rlang::eval_bare(action, env = envii)
-
-    # options(warn=2L)
-    options(warn=1L) # 1L # so, I can use BELOW: options(tryCatchLog.write.error.dump.file = TRUE)
-    options(width=10000L) # LIMIT # Note: set Rterm(64 bit) as appropriate
-    # options(digits=if(is.null(init[["digits"]])) { 22L } else {init[["digits"]]})
-    options(digits = 5L)
-    options(max.print=99999L)
-    options(scipen=255L) # Try these = width
-
-    # BECAUSE MY "WARNINGS ARE CONVERTED TO ERRORS" ( ABOVE: options(warn=2L) )
-    # I can not directly use this feature
-    # Error in save(list = names(.GlobalEnv), file = outfile, version = version,  :
-    # (converted from warning) 'package:stats' may not be available when loading
-    options(tryCatchLog.write.error.dump.file = TRUE)
-
-    # ops <- options()
-    # # pre-save options to ignore
-    # ops <- ops[!names(ops) %in% ignore_ops]
-    # options(ops)
-    # assign("ops", ops, envir = envii)
-
-    # pre-save options to not-ignore
-    # ops_not_ignored <- options()[!names(options()) %in% ignore_ops]
-    # assign("ops", options(ops_not_ignored), envir = envii)
-
-    ops <- options()
-    options(ops)
-    assign("ops", ops, envir = envii)
-
-    #correct for TZ
-    oldtz <- Sys.getenv("TZ")
-    if(oldtz!="UTC") {
-      Sys.setenv(TZ="UTC")
-    }
-    #
-    assign("oldtz", oldtz, envir = envii)
-
-    invisible()
-
-})}
 
 
 
 
-#' unsets the enviroment
-#'
-#' @description
-#' \preformatted{
-#'
-#' This is a space-saver that is meant to be used at the beginning of a function.
-#'
-#' Variable ops from the calling environment resets R options.
-#' Environment variable TZ using the calling environment variable oldtz resets.
-#'
-#' }
-#'
-#' @return options, and TZ are un-set
-#' @examples
-#' \dontrun{
-#' # > uninitEnv()
-#' # getOption("digits")
-#' # [1] 5
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom rlang caller_env
-uninitEnv <- function() {
-tryCatchLog::tryCatchLog({
 
-  # eventually calling envir will NOT BE the lexically calling environment
-  envii <- rlang::caller_env()
-  Sys.setenv(TZ=get("oldtz", envir = envii))
-
-  # ops <- get("ops", envir = envii)
-  # # post-save options to ignore
-  # ops <- ops[!names(ops) %in% ignore_ops]
-  # options(ops)
-
-  # # post-save options to ignore
-  # ops_ignored <- options()[names(options()) %in% ignore_ops]
-  #
-  # ops_temp <- get("ops", envir = envii)
-  # # remove
-  # ops <- ops_temp[!names(ops_temp)  %in% ignore_ops]
-  # options(ops)
-  #
-  # # add back
-  # options(ops_ignored)
-
-  ops <- get("ops", envir = envii)
-  options(ops)
-
-  invisible()
-
-})}
-
-
-
-
-#' garantee a passed xts object or a zero length xts object
-#'
-#' @description
-#' \preformatted{
-#'
-#' }
-#'
-#' @param xTs xts object
-#' @return xts object
-#' @examples
-#' \dontrun{
-#' # > initXts(xTs = NULL)
-#' # Data:
-#' # numeric(0)
-#' #
-#' # Index:
-#' # Date of length 0
-#' #
-#' # > initXts(zoo::as.Date(0)[0])
-#' # Data:
-#' # numeric(0)
-#' #
-#' # Index:
-#' # Date of length 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom zoo as.Date
-initXts <- function(xTs = NULL) {
-tryCatchLog::tryCatchLog({
-  initEnv();on.exit({uninitEnv()})
-
-  if(is.null(xTs)) {
-    # empty xts
-    xTs <-  xts(, zoo::as.Date(0)[0])
-  } else if (is.timeBased(xTs)) {
-    xTs <-  xts(, xTs)
-  } else {}
-  xTs
-
-})}
-
-
-
-
-#' number of variables
-#'
-#' @description
-#' \preformatted{
-#'
-#' NCOL wrongly returns value one(1)
-#' on non-data.frame 2nd dimension objects
-#' with a 2nd dimension size of zero(0).
-#'
-#' }
-#'
-#' @param x object
-#' @return integer number of variables
-#' @rdname NVAR
-#' @export
-NVAR <- function(x = NULL) {
-  # tryCatchLog is not allowed here
-  UseMethod("NVAR")
-}
-
-
-
-#' @rdname NVAR
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.default <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(is.null(x)) return(0L)
-  NCOL(x)
-
-})}
-
-
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
-#' # > require(xts)
-#' # > NVAR(xts(, zoo::as.Date("1970-01-12")))
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.xts <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-  initEnv();on.exit({uninitEnv()})
-
-  x <- initXts(x)
-
-  if(length(coredata(x))) {
-    res <- NCOL(coredata(x))
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
 
 
 
@@ -261,7 +15,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' from R CRAN package rmngb
 #' }
-#' @parm x index-able objet by `[` and the same index length as y.  Compatible type with y and combinable(c)
+#' @param x index-able objet by `[` and the same index length as y.  Compatible type with y and combinable(c)
 #' @param y index-able object by `[` and the same index length as x. Compatible type with x and combinable(c)
 #' @return new combined object
 #'
@@ -275,28 +29,22 @@ interleave <- function (x, y)
 
 
 
-#' pairwise interleave of index-able objects
+#' pairwise interleave of two two dimensional index-able objects
 #'
 #' @description
 #' \preformatted{
 #'
-#' This works better on xts objects.
-#' (lapply or plyr::llply structure is held together.)
-#'
 #' If one or the other has one index element while the other
 #' has N index elements, then the one will be recycled to N index elements.
 #'
-#' Helper to eXplode.
-#'
 #' }
-#'
-#' @param x1 data.frame or xts object
-#' @param x2 data.frame or xts object
-#' @return list of length two of two data.frames or xts objects
+#' @param x two dimension index-able object
+#' @param y two dimension index-able object
+#' @return list of length two of two interleaved two dimensional index-able  objects
 #' @examples
 #' \dontrun{
 #'#
-#'# list(iris[1:2,1:2], airquality[1:2,1:2])
+#'  list(iris[1:2,1:2], airquality[1:2,1:2])
 #'# [[1]]
 #'#   Sepal.Length Sepal.Width
 #'# 1          5.1         3.5
@@ -307,7 +55,7 @@ interleave <- function (x, y)
 #'# 1    41     190
 #'# 2    36     118
 #'#
-#'# > str( pairWise( iris[1:2,1:2], airquality[1:2,1:2] ) )
+#'  str( pairWise( iris[1:2,1:2], airquality[1:2,1:2] ) )
 #'# List of 2
 #'#  $ :List of 2
 #'#   ..$ Sepal.Length: num [1:2] 5.1 4.9
@@ -318,7 +66,7 @@ interleave <- function (x, y)
 #'#
 #'# # 1 by N recycling
 #'# #
-#'#  > str( pairWise( iris[1:2,1:2], airquality[1:2,1, drop = F] ) )
+#'   str( pairWise( iris[1:2,1:2], airquality[1:2,1, drop = F] ) )
 #'#  List of 2
 #'#   $ :List of 2
 #'#    ..$ Sepal.Length: num [1:2] 5.1 4.9
@@ -327,9 +75,9 @@ interleave <- function (x, y)
 #'#    ..$ Sepal.Width: num [1:2] 3.5 3
 #'#    ..$ Ozone      : int [1:2] 41 36
 #'#
-#'# > require(xts)
-#'# > data("sample_matrix", package = "xts")
-#'# > str( pairWise(as.xts(sample_matrix)[,1:2], as.xts(sample_matrix)[,3:4] ) )
+#'  library(xts)
+#'  data("sample_matrix", package = "xts")
+#'  str( pairWise(as.xts(sample_matrix)[,1:2], as.xts(sample_matrix)[,3:4] ) )
 #'# List of 2
 #'#  $ :List of 2
 #'#   ..$ Open:An 'xts' object on 2007-01-02/2007-06-30 containing:
@@ -366,9 +114,10 @@ interleave <- function (x, y)
 #'#   xts Attributes:
 #'#  NULL
 #'#
-#'# > ibm <- quantmod::getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
-#'#
-#'# > pairWise(tail(ibm[,c("IBM.Open","IBM.Close")]), xts(, zoo::as.Date(0)[0]))
+#'  library(quantmod)
+#'  ibm <- quantmod::getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
+#'  pairWise(tail(ibm[,c("IBM.Open","IBM.Close")]), xts(, zoo::as.Date(0)[0]))
+#'
 #'# [[1]]
 #'# [[1]]$IBM.Open
 #'# IBM.Open
@@ -384,8 +133,7 @@ interleave <- function (x, y)
 #'#   numeric(0)
 #'#
 #'# Index:
-#'#   Date of length 0
-#'#
+#'#   integer(0)
 #'#
 #'# [[2]]
 #'# [[2]]$IBM.Close
@@ -402,9 +150,9 @@ interleave <- function (x, y)
 #'#   numeric(0)
 #'#
 #'# Index:
-#'#   Date of length 0
+#'#   integer(0)
 #'#
-#'# > pairWise(tail(ibm[,c("IBM.Open")]), initXts())
+#'  pairWise(tail(ibm[,c("IBM.Open")]), xts())
 #'# [[1]]
 #'# [[1]]$IBM.Open
 #'# IBM.Open
@@ -420,75 +168,46 @@ interleave <- function (x, y)
 #'#   numeric(0)
 #'#
 #'# Index:
-#'#   Date of length 0
+#'#   integer(0)
 #'#
 #'#
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
-#' @importFrom plyr llply
-pairWise <- function(x1, x2) {
-
-  # # recycling 1 to N recycling
-  # #
-  # if((NVAR(x1) != NVAR(x2)) && NVAR(x2) == 1) {
-  #
-  #   x2 <- DescTools::DoCall(cbind, rep(list(x2),NVAR(x1)))
-  #   Names(x2) <- rep(Names(x2)[1], NVAR(x2))
-  #
-  # }
-  # if((NVAR(x1) != NVAR(x2)) && NVAR(x1) == 1) {
-  #
-  #   x1 <- DescTools::DoCall(cbind, rep(list(x1),NVAR(x2)))
-  #   Names(x1) <- rep(Names(x1)[1], NVAR(x1))
-  # }
+pairWise <- function(x, y) {
 
   # recycling 1 to N recycling
   #
   RepDone <- FALSE
-  if(!RepDone && NVAR(x1) != NVAR(x2) && NVAR(x1) > 0 && NVAR(x2) == 1) {
+  if(!RepDone && NVAR(x) != NVAR(y) && NVAR(x) > 0 && NVAR(y) == 1) {
 
-    x2 <- DescTools::DoCall(cbind, rep(list(x2),NVAR(x1)))
-    Names(x2) <- rep(Names(x2)[1], NVAR(x2))
+    y <- DescTools::DoCall(cbind, rep(list(y),NVAR(x)))
+    Names(y) <- rep(Names(y)[1], NVAR(y))
     RepDone <- TRUE
   }
-  if(!RepDone && NVAR(x1) != NVAR(x2) && NVAR(x2) > 0 && NVAR(x1) == 1) {
+  if(!RepDone && NVAR(x) != NVAR(y) && NVAR(y) > 0 && NVAR(x) == 1) {
 
-    x1 <- DescTools::DoCall(cbind, rep(list(x1),NVAR(x2)))
-    Names(x1) <- rep(Names(x1)[1], NVAR(x1))
+    x <- DescTools::DoCall(cbind, rep(list(x),NVAR(y)))
+    Names(x) <- rep(Names(x)[1], NVAR(x))
     RepDone <- TRUE
   }
-  #
-  # if(!RepDone && NVAR(x1) != NVAR(x2) && (NVAR(x2) == 0 || NVAR(x1) == 0)) {
-  #
-  #   if(NVAR(x1) == 0) {
-  #     x1 <- NULL
-  #   }
-  #
-  #   if(NVAR(x2) == 0) {
-  #     x2 <- NULL
-  #   }
-  #
-  #   RepDone <- TRUE
-  # }
 
+  if(!RepDone && NVAR(x) != NVAR(y) && (NVAR(y) == 0 || NVAR(x) == 0)) {
 
-  if(!RepDone && NVAR(x1) != NVAR(x2) && (NVAR(x2) == 0 || NVAR(x1) == 0)) {
-
-    if(!RepDone && NVAR(x1) == 0 && NVAR(x2) > 0) {
-      x1 <- rep(list(x1), NVAR(x2))
+    if(!RepDone && NVAR(x) == 0 && NVAR(y) > 0) {
+      x <- rep(list(x), NVAR(y))
       RepDone <- TRUE
     }
 
-    if(!RepDone && NVAR(x1) > 0  && NVAR(x2) == 0) {
-      x2 <- rep(list(x2), NVAR(x1))
+    if(!RepDone && NVAR(x) > 0  && NVAR(y) == 0) {
+      y <- rep(list(y), NVAR(x))
       RepDone <- TRUE
     }
 
   }
 
-  List <- c(list(),plyr::llply(x1, identity), plyr::llply(x2, identity))
+  List <- c(list(),lapply(x, identity), lapply(y, identity))
 
   if(length(List) > 2 ) { # e.g. 4, 6, 8, ...
     L1coord <- seq(from = 1, by = 2, length.out = 0.5*length(List))
@@ -505,22 +224,22 @@ pairWise <- function(x1, x2) {
 
 
 
-#' generate a good xts column name
+#' generate a good column name
 #'
 #' @description
 #' \preformatted{
 #'
 #' }
 #'
-#' @param x single column xts with the old column name
-#' @return single column xts with  the new column name
+#' @param x object with the old column names
+#' @return object with the old column names
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom stringr str_c
 #' @importFrom stringr str_replace_all
 newXtsColName <- function(xTs = NULL, Fun =  NULL, isCharFun = NULL, xTs1 = NULL, xTs2 = NULL, WhichCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
 tryCatchLog::tryCatchLog({
-  initEnv();on.exit({uninitEnv()})
+
 
   if(is.null(isCharFun)) stop("newXtsColName need actual paramter isCharFun")
 
@@ -534,26 +253,26 @@ tryCatchLog::tryCatchLog({
     NewName <- AltName
   }
 
-  stringr::str_c(
+  paste0(
     c(
       if(!is.null(xTs1) && (NCOL(xTs1) > 0)) { colnames(xTs1)[1] } else { NULL },
       if(!is.null(xTs2) && (NCOL(xTs2) > 0)) { colnames(xTs2)[1] } else { NULL }
     ), collapse = FixedSep) -> Colnames
 
   if(length(WhichCombo)) {
-    WhichCombo <-  stringr::str_c(c(interleave(names(WhichCombo), unlist(WhichCombo))), collapse = FixedSep)
+    WhichCombo <-  paste0(c(interleave(names(WhichCombo), unlist(WhichCombo))), collapse = FixedSep)
   } else {
     WhichCombo <- NULL
   }
 
   PreName <- NULL; PostName <- NULL
-  NewNameWhichCombo <- stringr::str_c(c(NewName, WhichCombo), collapse = FixedSep)
+  NewNameWhichCombo <- paste0(c(NewName, WhichCombo), collapse = FixedSep)
   if(is.null(Prefix) || (Prefix == FALSE)) {
     PostName <- NewNameWhichCombo
   } else {
     PreName  <- NewNameWhichCombo
   }
-  NewName <- stringr::str_c(c(PreName, Colnames, PostName), collapse = FixedSep)
+  NewName <- paste0(c(PreName, Colnames, PostName), collapse = FixedSep)
   colnames(xTs)[1] <-NewName
 
   xTs
@@ -634,16 +353,16 @@ explodeXts <- function(  xTs1 = NULL, xTs2 = NULL, Fun = NULL
                          , quote     = FALSE, envir = parent.frame(2)
                          , ...){
 tryCatchLog::tryCatchLog({
-  initEnv();on.exit({uninitEnv()})
 
-  xTs1  <- initXts(xTs1)
-  xTs2  <- initXts(xTs2)
+
+  xTs1  <- as.xts(xTs1)
+  if(!is.null(xTs2)) xTs2 <- as.xts(xTs2)
   if(is.null(FixedSep)) FixedSep = "."
 
   DescTools::DoCall(expand.grid, Whiches) %>%
     as.list %>%
     { purrr::transpose(.) } -> WhichesCombinations
-  if(!NCOL(WhichesCombinations)){ return(initXts()) }
+  if(!NCOL(WhichesCombinations)){ return(xts()) }
 
   if(mode(Fun) == "function") {
     Fun = match.fun(Fun)
@@ -652,7 +371,7 @@ tryCatchLog::tryCatchLog({
     isCharFun <- TRUE
   }
 
-  xTs <- initXts()
+  xTs <- xts()
   FunctionEnv <- environment()
 
   plyr::llply(WhichesCombinations, function(WhichCombo) {

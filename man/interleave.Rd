@@ -7,6 +7,8 @@
 interleave(x, y)
 }
 \arguments{
+\item{x}{index-able objet by `[` and the same index length as y.  Compatible type with y and combinable(c)}
+
 \item{y}{index-able object by `[` and the same index length as x. Compatible type with x and combinable(c)}
 }
 \value{

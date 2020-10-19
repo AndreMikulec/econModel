@@ -2,35 +2,30 @@
 % Please edit documentation in R/explode.R
 \name{pairWise}
 \alias{pairWise}
-\title{pairwise interleave of index-able objects}
+\title{pairwise interleave of two two dimensional index-able objects}
 \usage{
-pairWise(x1, x2)
+pairWise(x, y)
 }
 \arguments{
-\item{x1}{data.frame or xts object}
+\item{x}{two dimension index-able object}
 
-\item{x2}{data.frame or xts object}
+\item{y}{two dimension index-able object}
 }
 \value{
-list of length two of two data.frames or xts objects
+list of length two of two interleaved two dimensional index-able  objects
 }
 \description{
 \preformatted{
 
-This works better on xts objects.
-(lapply or plyr::llply structure is held together.)
-
 If one or the other has one index element while the other
 has N index elements, then the one will be recycled to N index elements.
-
-Helper to eXplode.
 
 }
 }
 \examples{
 \dontrun{
 #
-# list(iris[1:2,1:2], airquality[1:2,1:2])
+ list(iris[1:2,1:2], airquality[1:2,1:2])
 # [[1]]
 #   Sepal.Length Sepal.Width
 # 1          5.1         3.5
@@ -41,7 +36,7 @@ Helper to eXplode.
 # 1    41     190
 # 2    36     118
 #
-# > str( pairWise( iris[1:2,1:2], airquality[1:2,1:2] ) )
+ str( pairWise( iris[1:2,1:2], airquality[1:2,1:2] ) )
 # List of 2
 #  $ :List of 2
 #   ..$ Sepal.Length: num [1:2] 5.1 4.9
@@ -52,7 +47,7 @@ Helper to eXplode.
 #
 # # 1 by N recycling
 # #
-#  > str( pairWise( iris[1:2,1:2], airquality[1:2,1, drop = F] ) )
+  str( pairWise( iris[1:2,1:2], airquality[1:2,1, drop = F] ) )
 #  List of 2
 #   $ :List of 2
 #    ..$ Sepal.Length: num [1:2] 5.1 4.9
@@ -61,9 +56,9 @@ Helper to eXplode.
 #    ..$ Sepal.Width: num [1:2] 3.5 3
 #    ..$ Ozone      : int [1:2] 41 36
 #
-# > require(xts)
-# > data("sample_matrix", package = "xts")
-# > str( pairWise(as.xts(sample_matrix)[,1:2], as.xts(sample_matrix)[,3:4] ) )
+ library(xts)
+ data("sample_matrix", package = "xts")
+ str( pairWise(as.xts(sample_matrix)[,1:2], as.xts(sample_matrix)[,3:4] ) )
 # List of 2
 #  $ :List of 2
 #   ..$ Open:An 'xts' object on 2007-01-02/2007-06-30 containing:
@@ -100,9 +95,10 @@ Helper to eXplode.
 #   xts Attributes:
 #  NULL
 #
-# > ibm <- quantmod::getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
-#
-# > pairWise(tail(ibm[,c("IBM.Open","IBM.Close")]), xts(, zoo::as.Date(0)[0]))
+ library(quantmod)
+ ibm <- quantmod::getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
+ pairWise(tail(ibm[,c("IBM.Open","IBM.Close")]), xts(, zoo::as.Date(0)[0]))
+
 # [[1]]
 # [[1]]$IBM.Open
 # IBM.Open
@@ -118,8 +114,7 @@ Helper to eXplode.
 #   numeric(0)
 #
 # Index:
-#   Date of length 0
-#
+#   integer(0)
 #
 # [[2]]
 # [[2]]$IBM.Close
@@ -136,9 +131,9 @@ Helper to eXplode.
 #   numeric(0)
 #
 # Index:
-#   Date of length 0
+#   integer(0)
 #
-# > pairWise(tail(ibm[,c("IBM.Open")]), initXts())
+ pairWise(tail(ibm[,c("IBM.Open")]), xts())
 # [[1]]
 # [[1]]$IBM.Open
 # IBM.Open
@@ -154,7 +149,7 @@ Helper to eXplode.
 #   numeric(0)
 #
 # Index:
-#   Date of length 0
+#   integer(0)
 #
 #
 }

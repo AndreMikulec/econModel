@@ -2,7 +2,7 @@
 % Please edit documentation in R/explode.R
 \name{newXtsColName}
 \alias{newXtsColName}
-\title{generate a good xts column name}
+\title{generate a good column name}
 \usage{
 newXtsColName(
   xTs = NULL,
@@ -17,10 +17,10 @@ newXtsColName(
 )
 }
 \arguments{
-\item{x}{single column xts with the old column name}
+\item{x}{object with the old column names}
 }
 \value{
-single column xts with  the new column name
+object with the old column names
 }
 \description{
 \preformatted{
