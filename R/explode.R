@@ -232,22 +232,19 @@ pairWise <- function(x, y) {
 #' }
 #'
 #' @param x object with the old column names
-#' @return object with the old column names
+#' @return object with the new column names
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom stringr str_c
-#' @importFrom stringr str_replace_all
-newXtsColName <- function(xTs = NULL, Fun =  NULL, isCharFun = NULL, xTs1 = NULL, xTs2 = NULL, WhichCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
+newColNames <- function(xTs = NULL, Fun =  NULL, isCharFun = NULL, xTs1 = NULL, xTs2 = NULL, WhichCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
 tryCatchLog::tryCatchLog({
 
-
-  if(is.null(isCharFun)) stop("newXtsColName need actual paramter isCharFun")
+  if(is.null(isCharFun)) stop("newColNames need actual paramter isCharFun")
 
   if(is.null(AltName)) {
     if(isCharFun) {
-      NewName <- stringr::str_replace_all(Fun,"[.]|::",FixedSep)
+      NewName <- gsub("[.]|::", FixedSep, Fun)
     } else {
-      NewName <- "anon"
+      NewName <- "Anon"
     }
   } else {
     NewName <- AltName
@@ -386,7 +383,7 @@ tryCatchLog::tryCatchLog({
       if(NVAR(xTs2)) { xTs2List <- list(xTs2) } else { xTs2List <- NULL }
       Temp <- DescTools::DoCall(Fun, args = c(list(), list(xTs1), xTs2List, WhichCombo, list(...)), quote = quote, envir = envir)
 
-      Temp <- newXtsColName( Temp, Fun = Fun, isCharFun = isCharFun, xTs1 = xTs1, xTs2 = xTs2, WhichCombo = WhichCombo
+      Temp <- newColNames( Temp, Fun = Fun, isCharFun = isCharFun, xTs1 = xTs1, xTs2 = xTs2, WhichCombo = WhichCombo
                              , AltName = AltName, Prefix = Prefix, FixedSep = FixedSep)
 
       assign("xTs", merge(xTs, Temp), envir = FunctionEnv)

@@ -15,7 +15,6 @@ Depends:
 Imports:
     purrr,
     DescTools,
-    stringr,
     tryCatchLog,
     utils,
     stats,
