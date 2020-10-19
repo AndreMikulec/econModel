@@ -306,7 +306,7 @@ tryCatchLog::tryCatchLog({
 #' @param x1 two dimensional object
 #' @param x2 Optionally, second two dimensional object.
 #' @param Fun function name in the "bare" or in literal quotes("")
-#' @param Whiches list of possible varying parameters that are expanded
+#' @param Flags list of possible varying parameters that are expanded
 #' to all possible combinations by expand.grid
 #' @param AltName string alternate name for "Fun"
 #' @param Prefix boolan default is FALSE.  TRUE would place the column meta before the column name.
@@ -327,7 +327,7 @@ tryCatchLog::tryCatchLog({
 #' library(quantmod)
 #' ibm <- getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
 #'
-#'   explode(ibm[,c("IBM.Open")], Fun = "TTR::SMA", Whiches = list(n = 2:3))
+#'   explode(ibm[,c("IBM.Open")], Fun = "TTR::SMA", Flags = list(n = 2:3))
 #'
 #' #           IBM.Open.TTR.SMA.n.2  IBM.Open.TTR.SMA.n.3
 #' # 1970-01-02                   NA                   NA
@@ -338,7 +338,7 @@ tryCatchLog::tryCatchLog({
 #' # 1970-01-09               18.456               18.446
 #' # 1970-01-12               18.463               18.454
 #'
-#'   explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Whiches = list(n = 2:3))
+#'   explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Flags = list(n = 2:3))
 #' #
 #' #            IBM.Open.TTR.SMA.n.2 IBM.Close.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3 IBM.Close.TTR.SMA.n.3
 #' # 1970-01-02                   NA                    NA                   NA                    NA
@@ -348,27 +348,32 @@ tryCatchLog::tryCatchLog({
 #' # 1970-01-08               18.431                18.456               18.425                18.446
 #' # 1970-01-09               18.456                18.463               18.446                18.454
 #' # 1970-01-12               18.463                18.419               18.454                18.438
+#'
+#' # R CRAN Package TTR function runCor
+#' # runCor : function (x, y, n = 10, use = "all.obs", sample = TRUE, cumulative = FALSE)
+#' explode(ibm[,c("IBM.Open","IBM.Close")], ibm[,c("IBM.Low","IBM.High")], Fun = "TTR::runCor", Flags = list(n = 4:5, sample = c(TRUE,FALSE)))
+#'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom purrr transpose
+#' @importFrom rlist list.zip
 #' @importFrom plyr llply
 #' @importFrom DescTools DoCall
 #' @export
 explode <- function(  x1 = NULL, x2 = NULL, Fun = NULL
-                         , Whiches   = NULL
+                         , Flags   = NULL
                          , AltName   = NULL, Prefix = NULL, FixedSep  = NULL
                          , quote     = FALSE, envir = parent.frame(2)
                          , ...){
 tryCatchLog::tryCatchLog({
 
-
-  x1  <- as.xts(x1)
-  if(!is.null(x2)) x2 <- as.xts(x2)
+  if(is.null(x1)) stop("x1 is required")
+  if(is.null(x2)) x2 <- eval(parse(text = paste0(class(x1)[1], "()")))
   if(is.null(FixedSep)) FixedSep = "."
 
-  DescTools::DoCall(expand.grid, Whiches) %>%
-    as.list %>%
-    { purrr::transpose(.) } -> WhichesCombinations
+  # if do.call(rlist::list.zip, ) ever fails then
+  # then purrr::transpose is an acceptable replacement
+  do.call(rlist::list.zip,as.list(DescTools::DoCall(expand.grid, Flags))) -> WhichesCombinations
+
   if(!NCOL(WhichesCombinations)){ return(xts()) }
 
   if(mode(Fun) == "function") {
