@@ -67,14 +67,14 @@ ibm <- getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = F
 
   explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Flags = list(n = 2:3))
 #
-#            IBM.Open.TTR.SMA.n.2 IBM.Close.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3 IBM.Close.TTR.SMA.n.3
-# 1970-01-02                   NA                    NA                   NA                    NA
-# 1970-01-05               18.262                18.325                   NA                    NA
-# 1970-01-06               18.356                18.419               18.312                18.358
-# 1970-01-07               18.419                18.431               18.379                18.425
-# 1970-01-08               18.431                18.456               18.425                18.446
-# 1970-01-09               18.456                18.463               18.446                18.454
-# 1970-01-12               18.463                18.419               18.454                18.438
+#            IBM.Open.TTR.SMA.n.2 IBM.Close.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3
+# 1970-01-02                   NA                    NA                   NA
+# 1970-01-05               18.262                18.325                   NA
+# 1970-01-06               18.356                18.419               18.312
+# 1970-01-07               18.419                18.431               18.379
+# 1970-01-08               18.431                18.456               18.425
+# 1970-01-09               18.456                18.463               18.446
+# 1970-01-12               18.463                18.419               18.454
 
 # R CRAN Package TTR function runCor
 # runCor : function (x, y, n = 10, use = "all.obs", sample = TRUE, cumulative = FALSE)
