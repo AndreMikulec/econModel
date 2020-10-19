@@ -291,19 +291,15 @@ tryCatchLog::tryCatchLog({
 #' @description
 #' \preformatted{
 #'
-#' from an function stub, create an two dimensional object of derived columns
+#' From one(1) or two(2) two dimension objects, apply a function(3) upon the two objects.
 #'
-#' Meant to create many package TTR/PerformanceAnalytics column results
+#' Return a two dimensional object of with a column name derived from the three.
 #'
-#' Idea was from
-#'
-#' Time series cross-validation 5
-#' January 24, 2013
-#' By Deane-Mayer
-#' http://www.r-bloggers.com/time-series-cross-validation-5/
-#' http://moderntoolmaking.blogspot.com/2013/01/time-series-cross-validation-5.html
+#' Functions are meant to be many of the functions from R CRAN packages package TTR and PerformanceAnalytics
 #'
 #' NOTE: if any xTs2, then xTs1 and xTs2 are paired/matched column position to column position.
+#'
+#' This the "multivariate form" of the "single variate form" object TTR function data generator from the web page "Time series cross-validation 5"
 #'
 #' }
 #'
@@ -318,6 +314,13 @@ tryCatchLog::tryCatchLog({
 #' @param quote boolean passed to package DescTools function DoCall
 #' @param envir calling environment
 #' @return new xts object of new derived columns
+#'
+#' @references
+#' \cite{Zachary Mayer, "Time series cross-validation 5"
+#' \url{http://www.r-bloggers.com/time-series-cross-validation-5/}
+#' \url{http://moderntoolmaking.blogspot.com/2013/01/time-series-cross-validation-5.html}
+#' }
+#'
 #' @examples
 #' \dontrun{
 #'

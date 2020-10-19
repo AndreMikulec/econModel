@@ -2,7 +2,7 @@
 % Please edit documentation in R/explode.R
 \name{explodeXts}
 \alias{explodeXts}
-\title{expland out xts}
+\title{expland out a two dimensional object}
 \usage{
 explodeXts(
   xTs1 = NULL,
@@ -33,7 +33,7 @@ to all possible combinations by expand.grid}
 
 \item{FixedSep}{string divider of meta items}
 
-\item{quote}{boolean passed to DescTools DoCall}
+\item{quote}{boolean passed to package DescTools function DoCall}
 
 \item{envir}{calling environment}
 }
@@ -43,21 +43,15 @@ new xts object of new derived columns
 \description{
 \preformatted{
 
-from an xts function stub, create an xts object of derived columns
+From one(1) or two(2) two dimension objects, apply a function(3) upon the two objects.
 
-Meant to create many package TTR/PerformanceAnalytics column results
+Return a two dimensional object of with a column name derived from the three.
 
-Idea was from
-
-Time series cross-validation 5
-January 24, 2013
-By Deane-Mayer
-http://www.r-bloggers.com/time-series-cross-validation-5/
-http://moderntoolmaking.blogspot.com/2013/01
-      /time-series-cross-validation-5.html?utm_source=feedburner
-      &utm_medium=feed&utm_campaign=Feed%3A+ModernToolMaking+%28Modern+Tool+Making%29
+Functions are meant to be many of the functions from R CRAN packages package TTR and PerformanceAnalytics
 
 NOTE: if any xTs2, then xTs1 and xTs2 are paired/matched column position to column position.
+
+This the "multivariate form" of the "single variate form" object TTR function data generator from the web page "Time series cross-validation 5"
 
 }
 }
@@ -87,5 +81,11 @@ NOTE: if any xTs2, then xTs1 and xTs2 are paired/matched column position to colu
 # 1970-01-09               18.456               18.446
 # 1970-01-12               18.463               18.454
 
+}
+}
+\references{
+\cite{Zachary Mayer, "Time series cross-validation 5"
+\url{http://www.r-bloggers.com/time-series-cross-validation-5/}
+\url{http://moderntoolmaking.blogspot.com/2013/01/time-series-cross-validation-5.html}
 }
 }
