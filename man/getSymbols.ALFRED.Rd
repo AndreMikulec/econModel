@@ -117,14 +117,16 @@ View(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
 #   by ALFRED (and unmodified) '(old)FRED series identifier'_YYYYMMDD.
 #   YYYYMMDD is the 'Last Updated' date;
 #     YYYY is the year and
-#     MM is the month in number values of 01 through 12 representing January through December.
+#     MM is the month in number values of 01 through 12
+#       representing January through December.
 #     DD is the daty of the month from 01 through the last day of that month.
 colnames(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
 
 # From (above) https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #    one knows that Frequency is 'Monthly'.
 # To get  all of the data (in all of the vintages), set the
-#   LookBack to be a 'high value' e.g. perhaps, 100 years (1200: 12 months x 100 years)
+#   LookBack to be a 'high value' e.g. perhaps, 100 years
+#   (1200: 12 months x 100 years)
 #   (In this specific FRED series case, observation dates start in 1967)
 getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 1200, DataSheet = T)
 View(data.frame(xtsAttributes(RECPROUSM156N.vin)$DataSheet))
@@ -161,7 +163,8 @@ getSymbols("EFFR", src = "ALFRED", VintagesPerQuery = 192)
 # often better
 getSymbols("EFFR", src = "ALFRED", allowParallel = T, MaxParallel = 8)
 
-# the user does not want to query upon vintages before vintage at the 'Last Updated' date of "2020-01-01"
+# the user does not want to query upon vintages before vintage at the
+# 'Last Updated' date of "2020-01-01"
 # Note, if this paramter is used, the tail the returned data (older data)
 # is not expected to be correct.  The reason is that, not all vintages can bee seen,
 # so the clause is no longer true:
