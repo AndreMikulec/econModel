@@ -24,8 +24,7 @@ explode(
 
 \item{Fun}{function name in the "bare" or in literal quotes("")}
 
-\item{Flags}{list of possible varying parameters that are expanded
-to all possible combinations by expand.grid}
+\item{Flags}{list of possible varying parameters that are expanded to all possible combinations by expand.grid}
 
 \item{AltName}{string alternate name for "Fun"}
 
@@ -36,24 +35,18 @@ to all possible combinations by expand.grid}
 \item{quote}{boolean passed to package DescTools function DoCall}
 
 \item{envir}{calling environment}
+
+\item{...}{additional parameters}
 }
 \value{
-new xts object of new derived columns
+two dimensional object with different columns
 }
 \description{
-\preformatted{
-
 From one(1) or two(2) two dimension objects, apply a function(3) upon the two objects.
-
 Return a two dimensional object of with a column name derived from the three.
-
-Functions are meant to be many of the functions from R CRAN packages package TTR and PerformanceAnalytics
-
-NOTE: if any xTs2, then xTs1 and xTs2 are paired/matched column position to column position.
-
-This the "multivariate form" of the "single variate form" object TTR function data generator from the web page "Time series cross-validation 5"
-
-}
+Functions are meant to be many of the functions from R CRAN packages package TTR and PerformanceAnalytics.
+Note, if any x2, then x1 and x2 are paired/matched column position to column position.
+Note, this the "multivariate form" of the "single variate form" object TTR function data generator from the web page "Time series cross-validation 5".
 }
 \examples{
 \dontrun{
@@ -85,7 +78,8 @@ ibm <- getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = F
 
 # R CRAN Package TTR function runCor
 # runCor : function (x, y, n = 10, use = "all.obs", sample = TRUE, cumulative = FALSE)
-explode(ibm[,c("IBM.Open","IBM.Close")], ibm[,c("IBM.Low","IBM.High")], Fun = "TTR::runCor", Flags = list(n = 4:5, sample = c(TRUE,FALSE)))
+explode(ibm[,c("IBM.Open","IBM.Close")], ibm[,c("IBM.Low","IBM.High")],
+        Fun = "TTR::runCor", Flags = list(n = 4:5, sample = c(TRUE,FALSE)))
 
 }
 }

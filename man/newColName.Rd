@@ -41,5 +41,9 @@ object with the new column names
 \description{
 \preformatted{
 
+Given column names of one or two two dimensional objects,
+each with just one single column,  and a function and its arguments,
+generate a new column name and return the original 'one colun' two dimensional object
+
 }
 }

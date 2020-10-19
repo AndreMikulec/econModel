@@ -1,13 +1,6 @@
 
 
 
-
-
-
-
-
-
-
 #' Interleave two objects of arbitrary length
 #'
 #' @description
@@ -229,6 +222,10 @@ pairWise <- function(x, y) {
 #' @description
 #' \preformatted{
 #'
+#' Given column names of one or two two dimensional objects,
+#' each with just one single column,  and a function and its arguments,
+#' generate a new column name and return the original 'one colun' two dimensional object
+#'
 #' }
 #'
 #' @param x object with the old column names
@@ -288,32 +285,23 @@ tryCatchLog::tryCatchLog({
 
 #' expland out a two dimensional object
 #'
-#' @description
-#' \preformatted{
-#'
 #' From one(1) or two(2) two dimension objects, apply a function(3) upon the two objects.
-#'
 #' Return a two dimensional object of with a column name derived from the three.
-#'
-#' Functions are meant to be many of the functions from R CRAN packages package TTR and PerformanceAnalytics
-#'
-#' NOTE: if any xTs2, then xTs1 and xTs2 are paired/matched column position to column position.
-#'
-#' This the "multivariate form" of the "single variate form" object TTR function data generator from the web page "Time series cross-validation 5"
-#'
-#' }
+#' Functions are meant to be many of the functions from R CRAN packages package TTR and PerformanceAnalytics.
+#' Note, if any x2, then x1 and x2 are paired/matched column position to column position.
+#' Note, this the "multivariate form" of the "single variate form" object TTR function data generator from the web page "Time series cross-validation 5".
 #'
 #' @param x1 two dimensional object
 #' @param x2 Optionally, second two dimensional object.
 #' @param Fun function name in the "bare" or in literal quotes("")
-#' @param Flags list of possible varying parameters that are expanded
-#' to all possible combinations by expand.grid
+#' @param Flags list of possible varying parameters that are expanded to all possible combinations by expand.grid
 #' @param AltName string alternate name for "Fun"
 #' @param Prefix boolan default is FALSE.  TRUE would place the column meta before the column name.
 #' @param FixedSep string divider of meta items
 #' @param quote boolean passed to package DescTools function DoCall
 #' @param envir calling environment
-#' @return new xts object of new derived columns
+#' @param ... additional parameters
+#' @return two dimensional object with different columns
 #'
 #' @references
 #' \cite{Zachary Mayer, "Time series cross-validation 5"
@@ -351,12 +339,12 @@ tryCatchLog::tryCatchLog({
 #'
 #' # R CRAN Package TTR function runCor
 #' # runCor : function (x, y, n = 10, use = "all.obs", sample = TRUE, cumulative = FALSE)
-#' explode(ibm[,c("IBM.Open","IBM.Close")], ibm[,c("IBM.Low","IBM.High")], Fun = "TTR::runCor", Flags = list(n = 4:5, sample = c(TRUE,FALSE)))
+#' explode(ibm[,c("IBM.Open","IBM.Close")], ibm[,c("IBM.Low","IBM.High")],
+#'         Fun = "TTR::runCor", Flags = list(n = 4:5, sample = c(TRUE,FALSE)))
 #'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom rlist list.zip
-#' @importFrom plyr llply
 #' @importFrom DescTools DoCall
 #' @export
 explode <- function(  x1 = NULL, x2 = NULL, Fun = NULL
@@ -386,9 +374,9 @@ tryCatchLog::tryCatchLog({
   xTs <- xts()
   FunctionEnv <- environment()
 
-  plyr::llply(WhichesCombinations, function(WhichCombo) {
+  lapply(WhichesCombinations, function(WhichCombo) {
 
-    plyr::llply(pairWise(x1, x2), function(xTsColumnSet) {
+    lapply(pairWise(x1, x2), function(xTsColumnSet) {
 
       xTs1 <- xTsColumnSet[[1]]
       xTs2 <- xTsColumnSet[[2]]
