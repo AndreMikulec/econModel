@@ -148,47 +148,6 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
-#' NVAR(matrix())
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.matrix <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x, matrix())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
-#' NVAR(array())
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.array <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x,array())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
 
 
 
@@ -206,7 +165,7 @@ NVAR.xts <- function(x = NULL) {
 tryCatchLog::tryCatchLog({
 
   if(length(coredata(x))) {
-    res <- NCOL(coredata(x))
+    res <- NVAR(coredata(x))
   } else {
     res <- 0L
   }
