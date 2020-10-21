@@ -206,8 +206,7 @@
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom foreach foreach `%do%` `%dopar%`
 #' @importFrom doParallel registerDoParallel  stopImplicitCluster
-### #' @importFrom utils read.csv
-#' @importFrom utils tail
+#' @importFrom utils tail read.csv
 #' @importFrom stats na.omit
 #' @importFrom methods hasArg
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
