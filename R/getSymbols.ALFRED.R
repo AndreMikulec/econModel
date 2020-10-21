@@ -367,8 +367,6 @@ getSymbols.ALFRED <- function(Symbols,
       #
       SplittedLastUpdatedDates <- split(AllLastUpdatedDates, ceiling(seq_along(AllLastUpdatedDates)/VintagesPerQuery))
 
-      FR <- xts()
-
       if(allowParallel) {
         if(!is.null(MaxParallel)) {
           MaxDoParallelCores <- MaxParallel
@@ -384,7 +382,7 @@ getSymbols.ALFRED <- function(Symbols,
 
         LengthOfLastUpdatedDates <- length(LastUpdatedDates)
 
-        cat(paste0("Processing vintages: . . . ", LastUpdatedDates[1], " . . . ", LastUpdatedDates[LengthOfLastUpdatedDates]), "\n")
+        cat(paste0("Processing vintages: ", LastUpdatedDates[1], " ... ", LastUpdatedDates[LengthOfLastUpdatedDates]), "of", returnSym, "\n")
 
         # vintages
         URL <- paste(ALFRED.URL, "?id=",           paste0(rep(Symbols[[i]], LengthOfLastUpdatedDates), collapse = ","), sep = "")
@@ -539,6 +537,7 @@ getSymbols.ALFRED <- function(Symbols,
         colnames(fr) <- as.character(toupper(ColnamesFR[-1]))
 
         # S3 call to cbind.xts: FR left of fr will set wrong XtsAttributes
+        FR <- xts()
         tclass(FR) <- tclass(fr); tformat(FR) <- tformat(fr); tzone(FR) <- tzone(fr)
 
         FR <- fr

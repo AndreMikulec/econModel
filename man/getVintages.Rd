@@ -36,3 +36,12 @@ Read 2002 items
 
 }
 }
+\references{
+\cite{Download Data for Gross Domestic Product (GDP)
+\url{https://alfred.stlouisfed.org/series/downloaddata?seid=GDP}
+}
+
+\cite{Download Data Help
+\url{https://alfred.stlouisfed.org/help/downloaddata}
+}
+}

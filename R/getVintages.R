@@ -10,6 +10,14 @@
 #' @param Symbol specifying the name of the symbol to be loaded
 #' @param src see R CRAN package quantmod function getSymbols
 #' @return character vector of 'Last Updated' vintage dates
+#' @references
+#'\cite{Download Data for Gross Domestic Product (GDP)
+#'\url{https://alfred.stlouisfed.org/series/downloaddata?seid=GDP}
+#'}
+#' @references
+#'\cite{Download Data Help
+#'\url{https://alfred.stlouisfed.org/help/downloaddata}
+#'}
 #' @examples
 #' \dontrun{
 #'
