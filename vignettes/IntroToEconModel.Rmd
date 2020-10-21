@@ -15,7 +15,14 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+library(quantmod)
 library(econModel)
-dygraphs::
 ```
-
+## Recession Probabilities
+```r
+getSymbols("RECPROUSM156N", src = "FRED")
+getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
+index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
+index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
+dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
+```
