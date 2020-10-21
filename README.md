@@ -1,6 +1,6 @@
 # econModel
 
-The goal of econModel is to collect and display meaningful social and economic data.
+The goal of econModel is to collect and display meaningful social and economic data  from ALFRED and elsewhere
 
 ## Installation
 

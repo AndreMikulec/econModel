@@ -2,4 +2,5 @@
 #'
 #' @docType package
 #' @name econModel
+#' @importFrom dygraphs dygraph
 "_PACKAGE"

@@ -1,4 +1,51 @@
 
+
+
+
+#' better Names
+#'
+#' @description
+#' \preformatted{
+#'
+#' If the argument to names is NULL or has zero(0) length
+#' then instead for returning NULL, return character(0).
+#'
+#' }
+#'
+#' @param x names
+#' @export
+Names <- function(x) {
+  if(is.null(x) || !length(x)) return(character(0))
+  names(x) -> res
+  if(is.null(res)) return(character(0))
+  return(res)
+}
+
+
+
+#' garantee that Names assigns a zero length character vector
+#'
+#' @description
+#' \preformatted{
+#'
+#' if x or value is null or has length zero(0) then
+#' then that item is character(0)
+#'
+#' }
+#'
+#' @param x names
+#' @param value result
+#' @export
+`Names<-` <- function(x,value) {
+
+   if(is.null(x)     || !length(x))         x <- character(0)
+   if(is.null(value) || !length(value)) value <- character(0)
+  `names<-`(x = x, value = value)
+
+}
+
+
+
 #' number of variables
 #'
 #' @description

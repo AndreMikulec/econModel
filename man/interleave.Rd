@@ -20,3 +20,8 @@ new combined object
 from R CRAN package rmngb
 }
 }
+\examples{
+\dontrun{
+interleave(letters[1:2], LETTERS[1:2])
+}
+}

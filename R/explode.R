@@ -11,7 +11,10 @@
 #' @param x index-able objet by `[` and the same index length as y.  Compatible type with y and combinable(c)
 #' @param y index-able object by `[` and the same index length as x. Compatible type with x and combinable(c)
 #' @return new combined object
-#'
+#' @examples
+#' \dontrun{
+#' interleave(letters[1:2], LETTERS[1:2])
+#' }
 #' @export
 interleave <- function (x, y)
 {

@@ -166,7 +166,7 @@
 #'
 #' # the user does not want to query upon vintages before vintage at the
 #' # 'Last Updated' date of "2020-01-01"
-#' # Note, if this paramter is used, the tail the returned data (older data)
+#' # Note, if this parameter is used, the tail the returned data (older data)
 #' # is not expected to be correct.  The reason is that, not all vintages can bee seen,
 #' # so the clause is no longer true:
 #' # "the first available datam per specific date of all vintages".
@@ -174,6 +174,28 @@
 #' # better (just recent data)
 #' getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 #'
+#' # get multiple Symbols in one user execution
+#' # using R CRAN package quantmod function getSymbols
+#' getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01", nameVintagedId = T)
+#' # only the last Symbol is printed back to the console
+#' # Moreover, both series are actually there.
+#'
+#' # get multiple Symbols in one user execution
+#' mapply(
+#'   function(Symbol, VintageId, LookBack) {
+#'     getSymbols(Symbol, src = "ALFRED", VintageId = VintageId,
+#'                        nameVintagedId = T,
+#'                        LookBack = LookBack, env = .GlobalEnv)
+#'   },
+#'   c("RECPROUSM156N",  "RECPROUSM156N", "GDP"),           # symbol
+#'   c("2020-01-02",     "2019-01-02",    "2019-12-20"),    # vintageid
+#'   c(18,                12,              6)               # lookback # months and quarters
+#' )
+#' # Processing vintages: . . . 2020-01-02 . . . 2020-01-02
+#' # Processing vintages: . . . 2019-01-02 . . . 2019-01-02
+#' # Processing vintages: . . . 2019-12-20 . . . 2019-12-20
+#' #                  RECPROUSM156N                  RECPROUSM156N                            GDP
+#' # "RECPROUSM156N.vin.2020.01.02" "RECPROUSM156N.vin.2019.01.02"           "GDP.vin.2019.12.20"
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
@@ -424,7 +446,6 @@ getSymbols.ALFRED <- function(Symbols,
         # https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=EFFR&cosd=2020-10-02&coed=2020-10-05&vintage_date=2020-10-05
         # Tuesday reports  yesterday Monday
         # https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=EFFR&cosd=2020-10-03&coed=2020-10-06&vintage_date=2020-10-06
-
 
         if(Often == "day") {
           # need enough LookBack, such that, Tuesday and after a three(3) day holiday weekend can see behind to the previous Friday.
