@@ -77,23 +77,23 @@ getSymbols("RECPROUSM156N", src =   "FRED")
 
 getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 
-Read 2002 items
-Beginning Vintage: . . . 2012-09-04
-Beginning Vintage: . . . 2013-09-03
-Beginning Vintage: . . . 2014-09-01
-Beginning Vintage: . . . 2015-09-01
-Beginning Vintage: . . . 2016-09-01
-Beginning Vintage: . . . 2017-09-01
-Beginning Vintage: . . . 2018-09-03
-Beginning Vintage: . . . 2019-10-01
-Beginning Vintage: . . . 2020-10-01
+Processing vintages: 2012-09-04 ... 2013-08-08 of RECPROUSM156N.vin
+Processing vintages: 2013-09-03 ... 2014-08-01 of RECPROUSM156N.vin
+Processing vintages: 2014-09-01 ... 2015-08-06 of RECPROUSM156N.vin
+Processing vintages: 2015-09-01 ... 2016-08-05 of RECPROUSM156N.vin
+Processing vintages: 2016-09-01 ... 2017-08-03 of RECPROUSM156N.vin
+Processing vintages: 2017-09-01 ... 2018-08-01 of RECPROUSM156N.vin
+Processing vintages: 2018-09-03 ... 2019-09-03 of RECPROUSM156N.vin
+Processing vintages: 2019-10-01 ... 2020-09-01 of RECPROUSM156N.vin
+Processing vintages: 2020-10-01 ... 2020-10-01 of RECPROUSM156N.vin
 [1] "RECPROUSM156N.vin"
 
 # Note, the distance between the graphic date and the 'Last Updated' date
 # is about two(2) months, so one may shift the graphic to the right
 # by two(2) months to get the real story.
 #
-# See: 'Date Range' and 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
+# See: 'Date Range' and
+'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 # See: getVintages("RECPROUSM156N")
 #
 # rough way to get the real story based on 'Date Range' and "Last Updated"
@@ -101,31 +101,35 @@ Beginning Vintage: . . . 2020-10-01
 # the returnIndex parameter (default) is "ObservationDate (row/element date)
 index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
 index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
-dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
+dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin))
 
 # better way to get the real story
 # instead make observation dates to be the "Last Updated" published date.
 # the returnIndex parameter is "LastUpdatedDate" (vintage published date)
 getSymbols("RECPROUSM156N", src = "ALFRED", returnIndex = "LastUpdatedDate", LookBack = 4)
-dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner")
-
-# get just this exact vintage and its most recent data
-# that is restricted by the default short time Lookback
-getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02")
-
-# same as above, and include the vintageid in the column name
-getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", nameVintagedId = T)
-# Processing vintages: . . . 2020-01-02 . . . 2020-01-02
-# [1] "RECPROUSM156N.vin.2020.01.02"
-RECPROUSM156N.vin.2020.01.02
-#            RECPROUSM156N.vin.2020.01.02
-# 2019-10-01                         1.82
-# 2019-11-01                         0.60
+dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin))
 
 # get just this exact vintage data and all of its data
 # To get all of the data the user chooses look back 100 years)
 # (This series has known periods of one month long in duration)
 getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", LookBack = 1200)
+
+# get this exact vintage and all of its data
+getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02",
+            LookBack = "Beginning")
+
+# get just this exact vintage and its most recent data (some of its data)
+# that is restricted by the default short time Lookback
+getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02")
+
+# same as above, and include the vintageid in the column name
+getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", nameVintagedId = T)
+# Processing vintages: 2020-01-02 ... 2020-01-02 of RECPROUSM156N.vin.2020.01.02
+# [1] "RECPROUSM156N.vin.2020.01.02"
+RECPROUSM156N.vin.2020.01.02
+#            RECPROUSM156N.vin.2020.01.02
+# 2019-10-01                         1.82
+# 2019-11-01                         0.60
 
 # if too much time in periods exists between the
 # tail date of  the 'Date Range' and 'Last Updated' date,
@@ -199,7 +203,8 @@ getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 
 # get multiple Symbols in one user execution
 # using R CRAN package quantmod function getSymbols
-getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01", nameVintagedId = T)
+getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01",
+           nameVintagedId = T)
 # only the last Symbol is printed back to the console
 # Moreover, both series are actually there.
 
@@ -214,11 +219,11 @@ mapply(
   c("2020-01-02",     "2019-01-02",    "2019-12-20"),    # vintageid
   c(18,                12,              6)               # lookback # months and quarters
 )
-# Processing vintages: . . . 2020-01-02 . . . 2020-01-02
-# Processing vintages: . . . 2019-01-02 . . . 2019-01-02
-# Processing vintages: . . . 2019-12-20 . . . 2019-12-20
-#                  RECPROUSM156N                  RECPROUSM156N                            GDP
-# "RECPROUSM156N.vin.2020.01.02" "RECPROUSM156N.vin.2019.01.02"           "GDP.vin.2019.12.20"
+Processing vintages: 2020-01-02 ... 2020-01-02 of RECPROUSM156N.vin.2020.01.02
+Processing vintages: 2019-01-02 ... 2019-01-02 of RECPROUSM156N.vin.2019.01.02
+Processing vintages: 2019-12-20 ... 2019-12-20 of GDP.vin.2019.12.20
+                 RECPROUSM156N                  RECPROUSM156N                   GDP
+"RECPROUSM156N.vin.2020.01.02" "RECPROUSM156N.vin.2019.01.02"  "GDP.vin.2019.12.20"
 }
 }
 \references{

@@ -11,6 +11,7 @@
 #' @param return.class see R CRAN package quantmod private function convert.time.series
 #' @return R CRAN quantmod compatible time series
 #' @importFrom stats as.ts
+#' @importFrom zoo as.zoo
 #' @importFrom timeSeries timeSeries
 quantmod___convert.time.series <- function (fr, return.class)
 {
@@ -22,7 +23,7 @@ quantmod___convert.time.series <- function (fr, return.class)
     return(fr)
   }
   if ("zoo" %in% return.class) {
-    return(as.zoo(fr))
+    return(zoo::as.zoo(fr))
   }
   else if ("ts" %in% return.class) {
     fr <- stats::as.ts(fr)

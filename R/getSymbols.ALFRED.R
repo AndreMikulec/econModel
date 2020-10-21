@@ -69,7 +69,8 @@
 #' # is about two(2) months, so one may shift the graphic to the right
 #' # by two(2) months to get the real story.
 #' #
-#' # See: 'Date Range' and 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
+#' # See: 'Date Range' and
+#' 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #' # See: getVintages("RECPROUSM156N")
 #' #
 #' # rough way to get the real story based on 'Date Range' and "Last Updated"
@@ -91,7 +92,8 @@
 #' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", LookBack = 1200)
 #'
 #' # get this exact vintage and all of its data
-#' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", LookBack = "Beginning")
+#' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02",
+#'             LookBack = "Beginning")
 #'
 #' # get just this exact vintage and its most recent data (some of its data)
 #' # that is restricted by the default short time Lookback
@@ -178,7 +180,8 @@
 #'
 #' # get multiple Symbols in one user execution
 #' # using R CRAN package quantmod function getSymbols
-#' getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01", nameVintagedId = T)
+#' getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01",
+#'            nameVintagedId = T)
 #' # only the last Symbol is printed back to the console
 #' # Moreover, both series are actually there.
 #'
@@ -196,17 +199,24 @@
 #' Processing vintages: 2020-01-02 ... 2020-01-02 of RECPROUSM156N.vin.2020.01.02
 #' Processing vintages: 2019-01-02 ... 2019-01-02 of RECPROUSM156N.vin.2019.01.02
 #' Processing vintages: 2019-12-20 ... 2019-12-20 of GDP.vin.2019.12.20
-#'                  RECPROUSM156N                  RECPROUSM156N                            GDP
-#' "RECPROUSM156N.vin.2020.01.02" "RECPROUSM156N.vin.2019.01.02"           "GDP.vin.2019.12.20"
+#'                  RECPROUSM156N                  RECPROUSM156N                   GDP
+#' "RECPROUSM156N.vin.2020.01.02" "RECPROUSM156N.vin.2019.01.02"  "GDP.vin.2019.12.20"
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom foreach foreach `%do%` `%dopar%`
 #' @importFrom doParallel registerDoParallel  stopImplicitCluster
 ### #' @importFrom utils read.csv
+#' @importFrom utils tail
+#' @importFrom stats na.omit
 #' @importFrom methods hasArg
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
-#' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim
+#' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim coredata index `index<-`
+#' @importFrom xts xts as.xts last periodicity
+#' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-`
+### #' `xtsAttributes<-' is not exported by 'namespace:xts'
+### #' @importFrom xts xtsAttributes `xtsAttributes<-
+#' @importFrom xts as.xts
 #' @importFrom quantmod importDefaults getSymbols
 getSymbols.ALFRED <- function(Symbols,
                               env,
@@ -335,12 +345,13 @@ getSymbols.ALFRED <- function(Symbols,
         AllLastUpdatedDates <- as.character(zoo::as.Date(VintageId))
       }
 
-      # just subtracts off some older 'Last Updated' dates from the results of calling the function getVintages
+      # just subtracts off some older 'Last Updated' dates from the results of
+      # calling the function getVintages
       if(!is.null(EarliestLastUpdDate)) {
         AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(EarliestLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
       }
       # used when nameVintagedId == T
-      MostRecentLastUpdatedDate <- tail(AllLastUpdatedDates,1)
+      MostRecentLastUpdatedDate <- utils::tail(AllLastUpdatedDates,1)
 
       # update (1 of 2 places)
       if(!nameVintagedId) {
@@ -362,7 +373,7 @@ getSymbols.ALFRED <- function(Symbols,
       # Often <- periodicity(as.Date(AllLastUpdatedDates))$label
       #
       # peek at current data to get an idea of the periodicity: "quarter", "month", "week", "day"
-      Often <- periodicity(index(quantmod::getSymbols(Symbols[[i]], src = "FRED", auto.assign = FALSE)))$label
+      Often <- xts::periodicity(zoo::index(quantmod::getSymbols(Symbols[[i]], src = "FRED", auto.assign = FALSE)))$label
       # note, could read the Frequency here: https://fred.stlouisfed.org/data/GDP.txt
 
       # ALFRED limits 'VintagesPerQuery' (default 12) (groups of 'sheets of 'VintagesPerQuery' vintages')
@@ -383,6 +394,14 @@ getSymbols.ALFRED <- function(Symbols,
       # something similar to what package caret function nominalTrainWorkflow does
       `%op%` <- if(allowParallel) { foreach::`%dopar%` } else { foreach::`%do%` }
       foreach::foreach (LastUpdatedDates = SplittedLastUpdatedDates, .packages = "xts") %op% {
+
+        # OCT 2020
+        # devtools::check(manual = TRUE, args = c('--as-cran'))
+        # No visible binding for global variable
+        # August 18, 2019 by Random R Ramblings
+        # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+        # https://nathaneastwood.github.io/2019/08/18/no-visible-binding-for-global-variable/
+        if(!exists(LastUpdatedDates)) LastUpdatedDates <- character()
 
         LengthOfLastUpdatedDates <- length(LastUpdatedDates)
 
@@ -503,7 +522,7 @@ getSymbols.ALFRED <- function(Symbols,
 
         if (verbose)
           cat(paste0("Done downloading!\n"))
-        fr <- xts(as.matrix(fr[, -1]), as.Date(fr[, 1], origin = "1970-01-01"),
+        fr <- xts::xts(as.matrix(fr[, -1]), as.Date(fr[, 1], origin = "1970-01-01"),
                   src = "ALFRED", updated = Sys.time())
 
         # part ii of 2
@@ -550,11 +569,13 @@ getSymbols.ALFRED <- function(Symbols,
         colnames(fr) <- as.character(toupper(ColnamesFR[-1]))
 
         # S3 call to cbind.xts: FR left of fr will set wrong XtsAttributes
-        FR <- xts()
-        tclass(FR) <- tclass(fr); tformat(FR) <- tformat(fr); tzone(FR) <- tzone(fr)
+        FR <- xts::xts()
+        xts::tclass(FR) <- xts::tclass(fr)
+        xts::tformat(FR) <- xts::tformat(fr)
+        xts::tzone(FR) <- xts::tzone(fr)
 
         FR <- fr
-        xtsAttributes(FR) <- xtsAttributes(fr)
+        xts::xtsAttributes(FR) <- xts::xtsAttributes(fr)
 
         FR
 
@@ -565,7 +586,7 @@ getSymbols.ALFRED <- function(Symbols,
       # FR <- do.call(cbind, c(list(), list(FE) ListFR))
 
       fr <- FR
-      xtsAttributes(fr)$OldestVintage <- OldestVintageDate
+      xts::xtsAttributes(fr)$OldestVintage <- OldestVintageDate
       # keep FR.  I later attach the DataSheet to xtsAttributes
       FR <- fr
 
@@ -629,7 +650,7 @@ getSymbols.ALFRED <- function(Symbols,
       NewIndexControl <- apply(FrMatrixTransposedUpsideDown, MARGIN = 2,  function(x) !all(is.na(x)))
       FrMatrixTransposedUpsideDown <- FrMatrixTransposedUpsideDown[, NewIndexControl, drop = F]
       #
-      NewCoreData <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) last(na.omit(x))), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
+      NewCoreData <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) xts::last(stats::na.omit(x))), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
       # note list colnames is sometimes just for display here (just below).
       #      Colnames MAY SOMETIMES later discarded by "index(fr) <-"
       #
@@ -646,19 +667,19 @@ getSymbols.ALFRED <- function(Symbols,
       #
       if(returnIndex == "ObservationDate") {
         # (almost) no change
-        NewIndex <- index(fr)[NewIndexControl]
+        NewIndex <- zoo::index(fr)[NewIndexControl]
       }
       if(returnIndex == "LastUpdatedDate") {
         # NewIndexMatrix: not used in default parameter returnCoreData = "ObservationDate"
         NewIndexMatrix <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) { rownames(FrMatrixTransposedUpsideDown)[length(zoo::na.trim(x, sides = "right"))] }  ), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
-        NewIndex       <- zoo::as.Date(sapply(strsplit(as.vector(coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+        NewIndex       <- zoo::as.Date(sapply(strsplit(as.vector(zoo::coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
       }
 
       # not the same size ( so can not do "coredata(fr) <- NewCoreData")
-      frNew <- as.xts(NewCoreData)
+      frNew <- xts::as.xts(NewCoreData)
       # index(frNew) <- index(fr)
-      index(frNew) <- NewIndex
-      xtsAttributes(frNew) <- xtsAttributes(fr)
+      zoo::index(frNew) <- NewIndex
+      xts::xtsAttributes(frNew) <- xts::xtsAttributes(fr)
       fr <- frNew
 
       # need to just keep the oldest vintage column (useless op if ran 'not the same size')
@@ -679,7 +700,7 @@ getSymbols.ALFRED <- function(Symbols,
 
       # debugging
       if(DataSheet == T) {
-        xtsAttributes(fr)$DataSheet <- FR
+        xts::xtsAttributes(fr)$DataSheet <- FR
       }
 
       if (auto.assign)
