@@ -7,8 +7,6 @@
 \alias{NVAR.numeric}
 \alias{NVAR.complex}
 \alias{NVAR.raw}
-\alias{NVAR.matrix}
-\alias{NVAR.array}
 \alias{NVAR.xts}
 \alias{NVAR.default}
 \title{number of variables}
@@ -26,10 +24,6 @@ NVAR(x = NULL)
 \method{NVAR}{complex}(x = NULL)
 
 \method{NVAR}{raw}(x = NULL)
-
-\method{NVAR}{matrix}(x = NULL)
-
-\method{NVAR}{array}(x = NULL)
 
 \method{NVAR}{xts}(x = NULL)
 
@@ -73,14 +67,6 @@ NVAR(complex())
 }
 \dontrun{
 NVAR(raw())
-# [1] 0
-}
-\dontrun{
-NVAR(matrix())
-# [1] 0
-}
-\dontrun{
-NVAR(array())
 # [1] 0
 }
 \dontrun{

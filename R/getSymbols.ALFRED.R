@@ -12,8 +12,10 @@
 #' @param Symbols a character vector specifying the names of each symbol to be loaded (from R CRAN package quantmod function getSymbols)
 #' @param env where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)
 #' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
+#' @param VintageId download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function getVintages.
+#' @param nameVintagedId add the VintageId (or the most recent "Last Updated" date VintageId) to the name of what is returned
 #' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}
-#' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.  Note, if this paramter is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
+#' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages (xor vintages that have been entered by the user throught the paramter VintageId).  Note, if this paramter EarliestLastUpdDate, is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
 #' @param LookBack how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.
 #' @param VintagesPerQuery number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different with not-a-known reason.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes (but not often) better than the parameter allowParallel. On many occasions  when using this parameter with values greater than 12, the requested data is missing from the returned data set.
 #' @param FullOldestVintageData if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
@@ -24,7 +26,7 @@
 #' @return as R CRAN package quantmod function getSymbols. See the parameter returnIndex for a user-choice the xts objects returned index
 #'
 #' @author Andre Mikulec   (adapted from the original code)
-#' @author Jeffrey A. Ryan (original code from the R CRAN package quantmod function getSymbols.FRED)
+#' @author Jeffrey A. Ryan (original code that is inside the R CRAN package quantmod function getSymbols.FRED)
 #' @references
 #' \cite{Blame of the code of the R CRAN package quantmod function getSymbols and getSymbols.FRED
 #' \url{https://github.com/joshuaulrich/quantmod/blame/master/R/getSymbols.R}
@@ -73,7 +75,7 @@
 #' #
 #' # rough way to get the real story based on 'Date Range' and "Last Updated"
 #' # after the last observation date the "Last Updated" published date is two(2) months later
-#' # the returnIndex paramter (default) is "ObservationDate (row/element date)
+#' # the returnIndex parameter (default) is "ObservationDate (row/element date)
 #' index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
 #' index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
 #' dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
@@ -83,6 +85,24 @@
 #' # the returnIndex parameter is "LastUpdatedDate" (vintage published date)
 #' getSymbols("RECPROUSM156N", src = "ALFRED", returnIndex = "LastUpdatedDate", LookBack = 4)
 #' dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner")
+#'
+#' # get just this exact vintage and its most recent data
+#' # that is restricted by the default short time Lookback
+#' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02")
+#'
+#' # same as above, and include the vintageid in the column name
+#' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", nameVintagedId = T)
+#' # Processing vintages: . . . 2020-01-02 . . . 2020-01-02
+#' # [1] "RECPROUSM156N.vin.2020.01.02"
+#' RECPROUSM156N.vin.2020.01.02
+#' #            RECPROUSM156N.vin.2020.01.02
+#' # 2019-10-01                         1.82
+#' # 2019-11-01                         0.60
+#'
+#' # get just this exact vintage data and all of its data
+#' # To get all of the data the user chooses look back 100 years)
+#' # (This series has known periods of one month long in duration)
+#' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", LookBack = 1200)
 #'
 #' # if too much time in periods exists between the
 #' # tail date of  the 'Date Range' and 'Last Updated' date,
@@ -168,6 +188,8 @@ getSymbols.ALFRED <- function(Symbols,
                               env,
                               return.class = "xts",
                               returnIndex = "ObservationDate",
+                              VintageId = NULL,
+                              nameVintagedId = F,
                               EarliestLastUpdDate = NULL,
                               LookBack = 3,
                               VintagesPerQuery = 12,
@@ -200,6 +222,20 @@ getSymbols.ALFRED <- function(Symbols,
     stop("returnIndex must be just one of \"ObservationDate\" or \"LastUpdatedDate\"")
   } else if(!length(returnIndex)) {
     stop("LookBack can not be NULL")
+  }
+
+  if(length(VintageId) && !class(VintageId) %in% c("Date", "character")) {
+    stop("VintageId must be NULL or of class \"Date\" or \"character\"")
+  } else if(length(VintageId) && class(try( {zoo::as.Date(VintageId)}, silent = F)) == "try-error") {
+    stop("VintageId must be NULL or convertible to a Date-like")
+  } else if(1L < length(VintageId)) {
+    stop("VintageId must be just one element")
+  }
+
+  if(length(nameVintagedId) &&!class(nameVintagedId) %in% c("logical")) {
+    stop("nameVintagedId must be of class \"logical\"")
+  } else if(!length(nameVintagedId)) {
+    stop("nameVintagedId can not be NULL")
   }
 
   if(length(EarliestLastUpdDate) && !class(EarliestLastUpdDate) %in% c("Date", "character")) {
@@ -257,18 +293,34 @@ getSymbols.ALFRED <- function(Symbols,
   for (i in seq_along(Symbols)) {
     if (verbose)
       cat("downloading ", Symbols[[i]], ".....\n\n")
-    # Later I may want to change to _VIN
-    # update (1 of 2 places)
-    returnSym <- returnSym[returnSym %in% Symbols] <- paste0(Symbols[[i]], ".vin")
+
+    # # update (1 of 2 places)
+    # returnSym <- returnSym[returnSym %in% Symbols] <- paste0(Symbols[[i]], ".vin")
+    # MOVED TO BELOW
 
     test <- tryCatchLog::tryCatchLog({
     # test <- try({
 
-      AllLastUpdatedDates <- getVintages(Symbols[[i]])
-      #
-      # just subtracts off some 'Last Updated' dates from the results of calling the function getVintages
+      # where to get the vintages' 'Last Updated' dates
+      if(is.null(VintageId)) {
+        AllLastUpdatedDates <- getVintages(Symbols[[i]])
+      } else {
+        # instead the user chooses the vintages
+        AllLastUpdatedDates <- as.character(zoo::as.Date(VintageId))
+      }
+
+      # just subtracts off some older 'Last Updated' dates from the results of calling the function getVintages
       if(!is.null(EarliestLastUpdDate)) {
         AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(EarliestLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
+      }
+      # used when nameVintagedId == T
+      MostRecentLastUpdatedDate <- tail(AllLastUpdatedDates,1)
+
+      # update (1 of 2 places)
+      if(!nameVintagedId) {
+        returnSym <- returnSym[returnSym %in% Symbols] <- paste0(Symbols[[i]], ".vin")
+      } else {
+        returnSym <- returnSym[returnSym %in% Symbols] <- paste0(Symbols[[i]], ".vin", "." , gsub("-", ".", MostRecentLastUpdatedDate))
       }
 
       if(VintagesPerQuery == "Max") {
@@ -476,7 +528,8 @@ getSymbols.ALFRED <- function(Symbols,
       } -> ListFR
       if(allowParallel) doParallel::stopImplicitCluster()
 
-      FR <- do.call(cbind, ListFR)
+      FR <- do.call(cbind, c(list(), ListFR))
+      # FR <- do.call(cbind, c(list(), list(FE) ListFR))
 
       fr <- FR
       xtsAttributes(fr)$OldestVintage <- OldestVintageDate
@@ -510,7 +563,7 @@ getSymbols.ALFRED <- function(Symbols,
       #   are at the right (no change)
       # of the column values, highest value columns(latest in time) (observation dates)
       #   are at top (change)
-      FrMatrixTransposedUpsideDown <- FrMatrixTransposed[rev(seq_along(rownames(FrMatrixTransposed))), ]
+      FrMatrixTransposedUpsideDown <- FrMatrixTransposed[rev(seq_along(rownames(FrMatrixTransposed))), , drop = F]
       #
       # Browse[2]> FrMatrixTransposedUpsideDown
       #              2019-04-01 2019-07-01 2019-10-01 2020-01-01 2020-04-01
@@ -584,7 +637,11 @@ getSymbols.ALFRED <- function(Symbols,
       Symbols[[i]] <- toupper(gsub("\\^", "", Symbols[[i]]))
 
       # update (2 of 2 places)
-      Symbols[[i]]    <- paste0(Symbols[[i]], ".vin")
+      if(!nameVintagedId) {
+        Symbols[[i]]    <- paste0(Symbols[[i]], ".vin")
+      } else {
+        Symbols[[i]]    <- paste0(Symbols[[i]], ".vin", "." , gsub("-", ".", MostRecentLastUpdatedDate))
+      }
       colnames(fr)[1] <- Symbols[[i]]
 
       # debugging

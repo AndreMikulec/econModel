@@ -9,6 +9,8 @@ getSymbols.ALFRED(
   env,
   return.class = "xts",
   returnIndex = "ObservationDate",
+  VintageId = NULL,
+  nameVintagedId = F,
   EarliestLastUpdDate = NULL,
   LookBack = 3,
   VintagesPerQuery = 12,
@@ -28,7 +30,11 @@ getSymbols.ALFRED(
 
 \item{returnIndex}{one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}}
 
-\item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages.  Note, if this paramter is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".}
+\item{VintageId}{download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function getVintages.}
+
+\item{nameVintagedId}{add the VintageId (or the most recent "Last Updated" date VintageId) to the name of what is returned}
+
+\item{EarliestLastUpdDate}{character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages (xor vintages that have been entered by the user throught the paramter VintageId).  Note, if this paramter EarliestLastUpdDate, is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".}
 
 \item{LookBack}{how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3.  Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.}
 
@@ -92,7 +98,7 @@ Beginning Vintage: . . . 2020-10-01
 #
 # rough way to get the real story based on 'Date Range' and "Last Updated"
 # after the last observation date the "Last Updated" published date is two(2) months later
-# the returnIndex paramter (default) is "ObservationDate (row/element date)
+# the returnIndex parameter (default) is "ObservationDate (row/element date)
 index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
 index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
 dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
@@ -102,6 +108,24 @@ dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
 # the returnIndex parameter is "LastUpdatedDate" (vintage published date)
 getSymbols("RECPROUSM156N", src = "ALFRED", returnIndex = "LastUpdatedDate", LookBack = 4)
 dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner")
+
+# get just this exact vintage and its most recent data
+# that is restricted by the default short time Lookback
+getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02")
+
+# same as above, and include the vintageid in the column name
+getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", nameVintagedId = T)
+# Processing vintages: . . . 2020-01-02 . . . 2020-01-02
+# [1] "RECPROUSM156N.vin.2020.01.02"
+RECPROUSM156N.vin.2020.01.02
+#            RECPROUSM156N.vin.2020.01.02
+# 2019-10-01                         1.82
+# 2019-11-01                         0.60
+
+# get just this exact vintage data and all of its data
+# To get all of the data the user chooses look back 100 years)
+# (This series has known periods of one month long in duration)
+getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", LookBack = 1200)
 
 # if too much time in periods exists between the
 # tail date of  the 'Date Range' and 'Last Updated' date,
@@ -192,5 +216,5 @@ getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 \author{
 Andre Mikulec   (adapted from the original code)
 
-Jeffrey A. Ryan (original code from the R CRAN package quantmod function getSymbols.FRED)
+Jeffrey A. Ryan (original code that is inside the R CRAN package quantmod function getSymbols.FRED)
 }
