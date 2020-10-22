@@ -381,6 +381,8 @@ tryCatchLog::tryCatchLog({
 #' # if indexAt == "firstof" then the returned index class is "POSIXct" "POSIXt"
 #' # if indexAt == "lastof" then the returned index class is "Date"
 #'
+#' # STILL HAS WEEK AND DAY DEBUGGING TO GO
+#'
 #' }
 #'
 #' @param x ? xts::to.monthly and the index(x) class must
@@ -404,7 +406,7 @@ tryCatchLog::tryCatchLog({
 #' @return See. ? xts::to.monthly
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom xts to.monthly
-#' @importFrom DescTools LastDayOfMonth
+#' @importFrom DescTools Weekday
 #' @examples
 #' \dontrun{
 #' x <- xts(2:362, zoo::as.Date(2:362))
@@ -507,7 +509,7 @@ tryCatchLog::tryCatchLog({
       Intermediates <- seq(from = head(zoo::as.Date(index(Period)),1),
                              to = tail(zoo::as.Date(index(Period)),1), by = "day")
       # only Sundays # (not 'by = "week"' so I do not have to first figure out where Sunday exists.)
-      Intermediates <- Intermediates[Weekday(Intermediates) == 0L]
+      Intermediates <- Intermediates[DescTools::Weekday(Intermediates) == 7L] # 1(Monday) - 7(Sunday)
     } else
     if(period == "days") {
       Intermediates <- seq(from = head(zoo::as.Date(index(Period)),1),

@@ -70,6 +70,8 @@ x x <- xts(2:363, zoo::as.Date(1:362))
 # if indexAt == "firstof" then the returned index class is "POSIXct" "POSIXt"
 # if indexAt == "lastof" then the returned index class is "Date"
 
+# STILL HAS WEEK AND DAY DEBUGGING TO GO
+
 }
 }
 \examples{
