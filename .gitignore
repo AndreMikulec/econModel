@@ -11,3 +11,5 @@ dump*
 tryCatchLog.logged.txt
 debug.log
 inst/doc
+doc
+Meta

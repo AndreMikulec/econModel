@@ -7,3 +7,5 @@
 dump.*
 tryCatchLog\.logged\.txt
 debug\.log
+^doc$
+^Meta$

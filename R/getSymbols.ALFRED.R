@@ -390,17 +390,18 @@ getSymbols.ALFRED <- function(Symbols,
         doParallel::registerDoParallel(cores = MaxDoParallelCores)
       }
 
+
+      # OCT 2020
+      # devtools::check(manual = TRUE, args = c('--as-cran'))
+      # No visible binding for global variable
+      # August 18, 2019 by Random R Ramblings
+      # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+      # https://nathaneastwood.github.io/2019/08/18/no-visible-binding-for-global-variable/
+      LastUpdatedDates <- NULL
+      #
       # something similar to what package caret function nominalTrainWorkflow does
       `%op%` <- if(allowParallel) { foreach::`%dopar%` } else { foreach::`%do%` }
       foreach::foreach (LastUpdatedDates = SplittedLastUpdatedDates, .packages = "xts") %op% {
-
-        # OCT 2020
-        # devtools::check(manual = TRUE, args = c('--as-cran'))
-        # No visible binding for global variable
-        # August 18, 2019 by Random R Ramblings
-        # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-        # https://nathaneastwood.github.io/2019/08/18/no-visible-binding-for-global-variable/
-        if(!exists(LastUpdatedDates)) LastUpdatedDates <- character()
 
         LengthOfLastUpdatedDates <- length(LastUpdatedDates)
 

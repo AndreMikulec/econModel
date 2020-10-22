@@ -28,6 +28,7 @@ Imports:
 RoxygenNote: 7.1.1
 Suggests: 
     testthat,
+    dygraphs,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

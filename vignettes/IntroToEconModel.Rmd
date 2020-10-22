@@ -2,7 +2,7 @@
 title: "Introducing the R Package EconModel"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{IntroToEconModel}
+  %\VignetteIndexEntry{Introducing the R Package EconModel}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,15 +14,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(quantmod)
-library(econModel)
-```
 ## Recession Probabilities
-```r
+```{r}
+library(quantmod)
 getSymbols("RECPROUSM156N", src = "FRED")
+library(econModel)
 getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 index(RECPROUSM156N) <- index(RECPROUSM156N) + 61
 index(RECPROUSM156N.vin) <- index(RECPROUSM156N.vin) + 61
-dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin, join = "inner"))
+```
+
+```{r, fig.show = "hold"}
+library(dygraphs)
+dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin))
 ```
