@@ -30,7 +30,13 @@ Based on the code of seq.Date.
 The situation of "no existing seq.yearmon" drove me nuts!
 Therefore I programmed one.
 
-NOTE: this implementations complements the gist by adding "by methods"
+Currently, unlike seq.Date, this function
+does not have a difftime implementation.
+
+Currently, unlike seq.Date, this function
+does not try to convert to POSIX__.
+
+NOTE: this implementations compliments the gist by adding "by methods"
 See. the examples.
 
 }
