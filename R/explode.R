@@ -349,6 +349,8 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom rlist list.zip
 #' @importFrom DescTools DoCall
+#' @importFrom xts xts
+#' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
 explode <- function(  x1 = NULL, x2 = NULL, Fun = NULL
                          , Flags   = NULL
@@ -358,14 +360,22 @@ explode <- function(  x1 = NULL, x2 = NULL, Fun = NULL
 tryCatchLog::tryCatchLog({
 
   if(is.null(x1)) stop("x1 is required")
+  if(is.null(Fun)) stop("Fun is required")
+  # possible alt: if is.null(x2) could run identity on x1
+
   if(is.null(x2)) x2 <- eval(parse(text = paste0(class(x1)[1], "()")))
   if(is.null(FixedSep)) FixedSep = "."
 
   # if do.call(rlist::list.zip, ) ever fails then
   # then purrr::transpose is an acceptable replacement
-  do.call(rlist::list.zip,as.list(DescTools::DoCall(expand.grid, Flags))) -> FlagsCombinations
+  DescTools::DoCall(
+    rlist::list.zip, as.list(DescTools::DoCall(expand.grid, Flags))
+  ) -> FlagsCombinations
 
-  if(!NCOL(FlagsCombinations)){ return(eval(parse(text = paste0(class(x1)[1], "()")))) }
+  # just may want to run without andy flag combinations
+  if(!length(FlagsCombinations)){
+    FlagsCombinations <- list(list())
+  }
 
   if(mode(Fun) == "function") {
     Fun = match.fun(Fun)
@@ -374,7 +384,15 @@ tryCatchLog::tryCatchLog({
     isCharFun <- TRUE
   }
 
+  # x: placeholder to return data into something
   x <- eval(parse(text = paste0(class(x1)[1], "()")))
+  # these functions will not work (assign) to a zero width object
+  #
+  # xts::tclass(x)  <- xts::tclass(x1)
+  # xts::tzone(x)   <- xts::tzone(x1)
+  # xts::tformat(x) <- xts::tformat(x1)
+  # xts::xtsAttributes(x) <- xts::xtsAttributes(x1)
+
   FunctionEnv <- environment()
 
   lapply(FlagsCombinations, function(FlagsCombo) {
@@ -390,7 +408,12 @@ tryCatchLog::tryCatchLog({
       Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = x11, x2 = x21, FlagsCombo = FlagsCombo
                              , AltName = AltName, Prefix = Prefix, FixedSep = FixedSep)
 
-      assign("x", merge(x, Temp), envir = FunctionEnv)
+      # prevent loosing tclass, tzone, and tformat
+      if(!NVAR(x)) {
+        assign("x", Temp, envir = FunctionEnv)
+      } else {
+        assign("x", merge(x, Temp), envir = FunctionEnv)
+      }
 
       invisible()
 
@@ -398,6 +421,9 @@ tryCatchLog::tryCatchLog({
 
   }) -> Empty
 
+  # user side custom attributes
+  # still there (nothing to do)
+  # xts::xtsAttributes(x) <- xtsAttributes(x1)
   x
 
 })}

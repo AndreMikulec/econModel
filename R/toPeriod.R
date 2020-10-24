@@ -412,7 +412,7 @@ tryCatchLog::tryCatchLog({
 #' or "lastof", then fill in missing month dates, if any.
 #' Otherwise FALSE, just pass throught to xts::to.monthly.
 #' @param fillMissingData FALSE(default).  Estimate value.  See timeSeries::na.omit .Meant for test data (not prediction data and not validation data).  If TRUE, then the parameter fillMissingDates become TRUE. NOT IMPLEMENTED YET.
-#' @param Alignment.  Does the x period start date match the calendar period start date? If TRUE, then Alignment is "regular." Default is "regular".  Otherwise, choose "irregular". NOT IMPLEMENTED YET.
+#' @param Alignment  Does the x period start date match the calendar period start date? If TRUE, then Alignment is "regular." Default is "regular".  Otherwise, choose "irregular". NOT IMPLEMENTED YET.
 #' @param ... dots See. ? xts::to.monthly
 #' @return See. ? xts::to.monthly
 #' @importFrom tryCatchLog tryCatchLog
@@ -429,7 +429,9 @@ tryCatchLog::tryCatchLog({
 #' toPeriod(x, indexAt = "yearqtr")
 #'}
 #' @export
-toPeriod <- function(x, period='months',indexAt='firstof',drop.time=TRUE, name = NULL, return.class = 'xts', fillMissingDates = T, fillMissingData = F, Alignment = 'regular', ...) {
+toPeriod <- function(x, period='months',indexAt='firstof',drop.time=TRUE, name = NULL,
+                     return.class = 'xts',
+                     fillMissingDates = T, fillMissingData = F, Alignment = 'regular', ...) {
 tryCatchLog::tryCatchLog({
 
   oldtz <- Sys.getenv("TZ")
@@ -514,22 +516,22 @@ tryCatchLog::tryCatchLog({
     # in making seq.Date work, a person must start from day 1 of the period
 
     if(period == "quarters") {
-      Intermediates <- seq(from = head(zoo::as.Date(as.yearqtr(index(Period)), frac = 0),1),
-                           to = tail(zoo::as.Date(as.yearqtr(index(Period)), frac = 0),1), by = "quarter")
+      Intermediates <- seq(from = utils::head(zoo::as.Date(as.yearqtr(index(Period)), frac = 0),1),
+                           to   = utils::tail(zoo::as.Date(as.yearqtr(index(Period)), frac = 0),1), by = "quarter")
     } else
     if(period == "months") {
-      Intermediates <- seq(from = head(zoo::as.Date(as.yearmon(index(Period)), frac = 0),1),
-                           to = tail(zoo::as.Date(as.yearmon(index(Period)), frac = 0),1), by = "month")
+      Intermediates <- seq(from = utils::head(zoo::as.Date(as.yearmon(index(Period)), frac = 0),1),
+                           to   = utils::tail(zoo::as.Date(as.yearmon(index(Period)), frac = 0),1), by = "month")
     } else
     if(period == "weeks") {
-      Intermediates <- seq(from = head(zoo::as.Date(index(Period)),1),
-                             to = tail(zoo::as.Date(index(Period)),1), by = "day")
+      Intermediates <- seq(from = utils::head(zoo::as.Date(index(Period)),1),
+                           to   = utils::tail(zoo::as.Date(index(Period)),1), by = "day")
       # only Sundays # (not 'by = "week"' so I do not have to first figure out where Sunday exists.)
       Intermediates <- Intermediates[DescTools::Weekday(Intermediates) == 7L] # 1(Monday) - 7(Sunday)
     } else
     if(period == "days") {
-      Intermediates <- seq(from = head(zoo::as.Date(index(Period)),1),
-                             to = tail(zoo::as.Date(index(Period)),1), by = "day")
+      Intermediates <- seq(from = utils::head(zoo::as.Date(index(Period)),1),
+                             to = utils::tail(zoo::as.Date(index(Period)),1), by = "day")
     }
 
     # # stats,zoo, xts, timeSeries

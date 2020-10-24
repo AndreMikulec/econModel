@@ -301,9 +301,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
 #' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim coredata index `index<-`
 #' @importFrom xts xts as.xts last periodicity
-#' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-`
-### #' `xtsAttributes<-' is not exported by 'namespace:xts'
-### #' @importFrom xts xtsAttributes `xtsAttributes<-
+#' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-`  xtsAttributes `xtsAttributes<-`
 #' @importFrom xts as.xts
 #' @importFrom quantmod importDefaults getSymbols
 getSymbols.ALFRED <- function(Symbols,

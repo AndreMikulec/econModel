@@ -10,8 +10,6 @@ BugReports: https://github.com/AndreMikulec/econModel/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends:
-    xts
 Imports:
     rlist,
     DescTools,
@@ -23,6 +21,8 @@ Imports:
     doParallel,
     timeSeries,
     zoo,
+    chron,
+    timeDate,
     curl,
     quantmod
 RoxygenNote: 7.1.1
