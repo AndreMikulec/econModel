@@ -2,32 +2,15 @@
 % Please edit documentation in R/AMBasis.R
 \name{NVAR}
 \alias{NVAR}
-\alias{NVAR.character}
-\alias{NVAR.integer}
-\alias{NVAR.numeric}
-\alias{NVAR.complex}
-\alias{NVAR.raw}
-\alias{NVAR.xts}
 \alias{NVAR.default}
-\title{number of variables}
+\alias{NVAR.xts}
+\title{Number of Variables}
 \usage{
-NVAR(x = NULL)
+NVAR(x)
 
-\method{NVAR}{character}(x = NULL)
+\method{NVAR}{default}(x)
 
-\method{NVAR}{integer}(x = NULL)
-
-\method{NVAR}{numeric}(x = NULL)
-
-\method{NVAR}{integer}(x = NULL)
-
-\method{NVAR}{complex}(x = NULL)
-
-\method{NVAR}{raw}(x = NULL)
-
-\method{NVAR}{xts}(x = NULL)
-
-\method{NVAR}{default}(x = NULL)
+\method{NVAR}{xts}(x)
 }
 \arguments{
 \item{x}{object}
@@ -37,41 +20,44 @@ integer number of variables
 }
 \description{
 \preformatted{
-
 NCOL wrongly returns value one(1)
 on non-data.frame 2nd dimension objects
 with a 2nd dimension size of zero(0).
 
+This function NVAR correctly determines the number
+of variables (NVAR) in an object.
+
+R S3 class implementations exist for classes: xts
+
+Contributions are welcome.
+}
+
+\preformatted{
 }
 }
 \examples{
 \dontrun{
-NVAR(character())
-# [1] 0
-}
-\dontrun{
-NVAR(integer())
-# [1] 0
-}
-\dontrun{
+
+# examples
+
+NVAR(NULL)
+[1] 0
+
 NVAR(numeric())
-# [1] 0
-}
-\dontrun{
+[1] 0
+
 NVAR(integer())
-# [1] 0
+[1] 0
+
+NVAR(character())
+[1] 0
 }
 \dontrun{
-NVAR(complex())
-# [1] 0
-}
-\dontrun{
-NVAR(raw())
-# [1] 0
-}
-\dontrun{
-# > library(xts)
-# > NVAR(xts(, as.Date("1970-01-12")))
-# [1] 0
+
+# xts example
+
+library(xts)
+NVAR(xts(, as.Date("1970-01-01")))
+[1] 0
 }
 }

@@ -77,8 +77,9 @@ that is found inside the R CRAN package caroline.
 
 R language S3 class implementations exist for some classes from packages
 and R CRAN packages: base, zoo, chron, and timeDate.
-Vector words are members of the following classes: character, numeric, logical,
-POSIXct, POSIXlt,Date, yearmon, yearqtr,  chron, times, dates, timeDate
+Vector words are members of the following classes:
+character, numeric(integer), logical,
+POSIXct, POSIXlt, Date, yearmon, yearqtr, chron, times, dates, timeDate
 
 Contributions are welcome.
 }

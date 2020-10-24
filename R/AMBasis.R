@@ -1,18 +1,16 @@
 
 
 
-
-#' better Names
+#' Better Names
 #'
 #' @description
 #' \preformatted{
-#'
+#' Names:
 #' If the argument to names is NULL or has zero(0) length
 #' then instead for returning NULL, return character(0).
-#'
 #' }
-#'
 #' @param x names
+#' @rdname Names
 #' @export
 Names <- function(x) {
   if(is.null(x) || !length(x)) return(character(0))
@@ -22,19 +20,18 @@ Names <- function(x) {
 }
 
 
-
-#' garantee that Names assigns a zero length character vector
-#'
+#' Better Names
+#'#'
 #' @description
 #' \preformatted{
-#'
-#' if x or value is null or has length zero(0) then
-#' then that item is character(0)
-#'
+#' `Names<-`
+#' Guarantee that Names assigns a zero length character vector.
+#' If x or value is null or has length zero(0) then
+#' then that item is character(0).
 #' }
-#'
 #' @param x names
 #' @param value result
+#' @rdname Names
 #' @export
 `Names<-` <- function(x,value) {
 
@@ -46,169 +43,79 @@ Names <- function(x) {
 
 
 
-#' number of variables
+#' Number of Variables
 #'
 #' @description
 #' \preformatted{
-#'
 #' NCOL wrongly returns value one(1)
 #' on non-data.frame 2nd dimension objects
 #' with a 2nd dimension size of zero(0).
 #'
+#' This function NVAR correctly determines the number
+#' of variables (NVAR) in an object.
+#'
+#' R S3 class implementations exist for classes: xts
+#'
+#' Contributions are welcome.
 #' }
 #' @param x object
 #' @return integer number of variables
 #' @rdname NVAR
 #' @export
-NVAR <- function(x = NULL) {
+NVAR <- function(x) {
   # tryCatchLog is not allowed here
   UseMethod("NVAR")
 }
 
 
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
-#' NVAR(character())
-#' # [1] 0
+#' Number of Variables
+#'
+#' @description
+#' \preformatted{
 #' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.character <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x, character())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
-
-
 #' @rdname NVAR
 #' @examples
 #' \dontrun{
-#' NVAR(integer())
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.integer <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x, integer())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
+#'
+#' # examples
+#'
+#' NVAR(NULL)
+#' [1] 0
+#'
 #' NVAR(numeric())
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.numeric <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x, numeric())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
+#' [1] 0
+#'
 #' NVAR(integer())
-#' # [1] 0
+#' [1] 0
+#'
+#' NVAR(character())
+#' [1] 0
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-NVAR.integer <- function(x = NULL) {
+NVAR.default <- function(x) {
 tryCatchLog::tryCatchLog({
 
-  if(!identical(x, integer())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
+  if(!length(x)) return(0L)
+  NCOL(x)
 
 })}
-
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
-#' NVAR(complex())
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.complex <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x, complex())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
-
-#' @rdname NVAR
-#' @examples
-#' \dontrun{
-#' NVAR(raw())
-#' # [1] 0
-#' }
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.raw <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
-
-  if(!identical(x, raw())) {
-    res <- NCOL(x)
-  } else {
-    res <- 0L
-  }
-  return(res)
-
-})}
-
-
-
-
 
 
 
 #' @rdname NVAR
 #' @examples
 #' \dontrun{
-#' # > library(xts)
-#' # > NVAR(xts(, as.Date("1970-01-12")))
-#' # [1] 0
+#'
+#' # xts example
+#'
+#' library(xts)
+#' NVAR(xts(, as.Date("1970-01-01")))
+#' [1] 0
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-NVAR.xts <- function(x = NULL) {
+NVAR.xts <- function(x) {
 tryCatchLog::tryCatchLog({
 
   if(length(coredata(x))) {
@@ -221,15 +128,6 @@ tryCatchLog::tryCatchLog({
 })}
 
 
-#' @rdname NVAR
-#' @export
-#' @importFrom tryCatchLog tryCatchLog
-NVAR.default <- function(x = NULL) {
-tryCatchLog::tryCatchLog({
 
-  if(is.null(x)) return(0L)
-  NCOL(x)
-
-})}
 
 

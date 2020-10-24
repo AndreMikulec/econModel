@@ -2,18 +2,29 @@
 % Please edit documentation in R/AMBasis.R
 \name{Names}
 \alias{Names}
-\title{better Names}
+\alias{Names<-}
+\title{Better Names}
 \usage{
 Names(x)
+
+Names(x) <- value
 }
 \arguments{
 \item{x}{names}
+
+\item{value}{result}
 }
 \description{
 \preformatted{
-
+Names:
 If the argument to names is NULL or has zero(0) length
 then instead for returning NULL, return character(0).
+}
 
+\preformatted{
+`Names<-`
+Guarantee that Names assigns a zero length character vector.
+If x or value is null or has length zero(0) then
+then that item is character(0).
 }
 }
