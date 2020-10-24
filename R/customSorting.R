@@ -83,16 +83,19 @@ cSort.character <- function(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVe
 
   Vector <- x
   # will reduce to vector
+  # as.vector that strips the incoming vector down to an R base type
   Vector <- as.vector(Vector)
   InitOrder <- as.vector(InitOrder)
   # custom sorting
   VectorLevels <- InitOrder
   # will reduce to vector
   # note: R package base function setdiff
-  #       executes as.vector that strips the incoming vector
-  #       down to an R base type (important)
+  #       executes as.vecto
   VectorExcess <- setdiff(Vector, VectorLevels)
-  if(CI == FALSE) {
+  # CI only makes sense (at this current time) about characters.
+  # Unless anyone ever creates an S3 class
+  # and implements a tolower method (e.g. Roman Numerals?)
+  if(CI == FALSE && is.character(Vector)) {
     if(sortVectExc) {
       VectorExcessCS <-   sort(VectorExcess)
     } else {
@@ -100,7 +103,7 @@ cSort.character <- function(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVe
     }
     VectorExcessCaseDetermined <- VectorExcessCS
   } else {
-    if(sortVectExc) {
+    if(sortVectExc) {                       # forces to.character - S3?
       VectorExcessCI <-   VectorExcess[order(tolower(VectorExcess))]
     } else {
       VectorExcessCI <-   VectorExcess
@@ -144,6 +147,7 @@ cSort.numeric <- function() {}
 #' [1] "integer"
 #' }
 #' @export
+# R studio can not debug this in "this way"
 cSort.numeric <- cSort.character
 
 
