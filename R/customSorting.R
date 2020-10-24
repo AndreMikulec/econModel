@@ -277,7 +277,7 @@ cSort.chron <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
-#' @importFrom chron as.chron as.dates
+#' @importFrom chron as.times
 #' @export
 cSort.times <- function(x, InitOrder, ...) {
 
