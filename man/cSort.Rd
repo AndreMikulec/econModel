@@ -5,6 +5,7 @@
 \alias{cSort.default}
 \alias{cSort.character}
 \alias{cSort.numeric}
+\alias{cSort.logical}
 \alias{cSort.Date}
 \alias{cSort.yearmon}
 \alias{cSort.yearqtr}
@@ -23,6 +24,8 @@ cSort(x, ...)
 \method{cSort}{character}(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVectExc = FALSE, ...)
 
 \method{cSort}{numeric}(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVectExc = FALSE, ...)
+
+\method{cSort}{logical}(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVectExc = FALSE, ...)
 
 \method{cSort}{Date}(x, InitOrder, ...)
 
@@ -111,6 +114,9 @@ in the parameter vector InitOrder that are
 
 \preformatted{
 }
+
+\preformatted{
+}
 }
 \examples{
 \dontrun{
@@ -148,9 +154,19 @@ cSort(c(5, 2, 3.0001, 4 ,1 ), c(4, 2, 3.0001))
 class(.Last.value)
 [1] "numeric"
 
+# integer(numeric) example
+
 cSort(c(5L, 2L, 3L, 4L ,1L ), c(4L, 2L, 3L))
+[1] 4 2 3 1 5
 class(.Last.value)
 [1] "integer"
+}
+\dontrun{
+
+# logical example
+
+cSort(c(F ,T, F, T, T, F, T, F), F)
+[1] FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE
 }
 \dontrun{
 

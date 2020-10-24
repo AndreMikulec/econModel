@@ -142,13 +142,39 @@ cSort.numeric <- function() {}
 #' class(.Last.value)
 #' [1] "numeric"
 #'
+#' # integer(numeric) example
+#'
 #' cSort(c(5L, 2L, 3L, 4L ,1L ), c(4L, 2L, 3L))
+#' [1] 4 2 3 1 5
 #' class(.Last.value)
 #' [1] "integer"
 #' }
 #' @export
 # R studio can not debug this in "this way"
 cSort.numeric <- cSort.character
+
+
+
+# So R Studio can see
+cSort.boolean <- function() {}
+#' custom sorting a vector
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @rdname cSort
+#' @examples
+#' \dontrun{
+#'
+#' # logical example
+#'
+#' cSort(c(F ,T, F, T, T, F, T, F), F)
+#' [1] FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE
+#' }
+#' @importFrom chron as.times
+#' @export
+# R studio can not debug this in "this way"
+cSort.logical <- cSort.character
 
 
 
