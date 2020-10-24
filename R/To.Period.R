@@ -439,6 +439,11 @@ tryCatchLog::tryCatchLog({
   #
   assign("oldtz", oldtz, envir = environment())
 
+  # doc of R CRAN  package xts
+  # The ability to create an index using any of the
+  # supported timeBased classes
+  # (POSIXct, Date, dates, chron, timeDate, yearmon, yearqtr)
+
   #  return.class: Presently this may be ts, zoo, xts, or timeSeries
   PeriodReturned <- quantmod___convert.time.series(x, return.class = "xts")
 

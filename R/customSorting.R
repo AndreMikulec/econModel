@@ -4,8 +4,8 @@
 #'
 #' @description
 #' \preformatted{
-#' Performs a custom sort of a vector x.  In parameter vector InitOrder,
-#' the elements to be sorted and the exact order is chosen.
+#' Performs a custom sort of a vector x.  The parameter vector InitOrder,
+#' contains the elements to be sorted and the exact order.
 #' }
 #' @rdname cSort
 #' @export
@@ -28,8 +28,9 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #'
 #' @description
 #' \preformatted{
-#' Excess Vector elements are appended to the end.
-#' (sort or not sort, CI(case insensitive) sort or non-CI sort)
+#' Excess Vector elements(not found in InitOrder) are appended
+#' to the end. Choices are (sort or not sort, CI(case insensitive) sort
+#' or non-CI sort)
 #'
 #' For the purpose of "not sorting",
 #' other vector elements(vector excess) that are
@@ -37,7 +38,7 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #' "not found" in the input x are ignored.
 #' }
 #'
-#' @param x vector  to be sorted
+#' @param x vector to be sorted
 #' @param InitOrder starting custom sorting ( without the excess )
 #' @param CI FALSE(default) whether or not Vector excess items that are
 #' not found in InitOrder  are sorted 'not case insensitive'(TRUE) or
@@ -55,6 +56,8 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #' @rdname cSort
 #' @examples
 #' \dontrun{
+#'
+#' # character examples
 #'
 #' cSort( c("a","v", "E2", "c","l", "e3" ,"h","o","date"),
 #'    InitOrder = c("date", "o", "h", "l", "c", "v", "a"), CI = TRUE
@@ -74,7 +77,6 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #' # other(InitOrder) ignored "F"
 #' cSort(c("E","B","C","D","A"), c("F", "D","B","C"), sortVectExc = FALSE)
 #' [1] "D" "B" "C" "E" "A"
-#'
 #' }
 #' @export
 cSort.character <- function(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVectExc = FALSE, ...) {
@@ -86,6 +88,9 @@ cSort.character <- function(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVe
   # custom sorting
   VectorLevels <- InitOrder
   # will reduce to vector
+  # note: R package base function setdiff
+  #       executes as.vector that strips the incoming vector
+  #       down to an R base type (important)
   VectorExcess <- setdiff(Vector, VectorLevels)
   if(CI == FALSE) {
     if(sortVectExc) {
@@ -113,7 +118,8 @@ cSort.character <- function(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVe
 }
 
 
-
+# So R Studio can see
+cSort.numeric <- function() {}
 #' custom sorting a vector
 #'
 #' @description
@@ -122,8 +128,20 @@ cSort.character <- function(x, InitOrder, CI = FALSE, sortVectExc = TRUE, chopVe
 #' @rdname cSort
 #' @examples
 #' \dontrun{
-#' cSort(c(7,4,2,3,6), c(5,2,3,4,1))
-#' [1] 2 3 4 6 7
+#'
+#' # numeric examples
+#'
+#' cSort(c(5, 2, 3, 4 ,1 ), c(4, 2, 3))
+#' [1] 4 2 3 1 5
+#'
+#' cSort(c(5, 2, 3.0001, 4 ,1 ), c(4, 2, 3.0001))
+#' [1] 4.0000 2.0000 3.0001 1.0000 5.0000
+#' class(.Last.value)
+#' [1] "numeric"
+#'
+#' cSort(c(5L, 2L, 3L, 4L ,1L ), c(4L, 2L, 3L))
+#' class(.Last.value)
+#' [1] "integer"
 #' }
 #' @export
 cSort.numeric <- cSort.character
@@ -138,6 +156,7 @@ cSort.numeric <- cSort.character
 #' @rdname cSort
 #' @examples
 #' \dontrun{
+#'
 #' # Date examples
 #'
 #' cSort(zoo::as.Date(6:3), zoo::as.Date(1:4))
@@ -214,6 +233,23 @@ cSort.POSIXct <- function(x, InitOrder, ...) {
 }
 
 
+#' custom sorting a vector
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @rdname cSort
+#' @export
+cSort.POSIXlt <- function(x, InitOrder, ...) {
+
+  x <- as.numeric(x)
+  InitOrder <- as.numeric(InitOrder)
+  x <- cSort(x, InitOrder = InitOrder, ...)
+  as.POSIXlt(x, origin = "1970-01-01", ...)
+
+}
+
+
 
 #' custom sorting a vector
 #'
@@ -225,11 +261,63 @@ cSort.POSIXct <- function(x, InitOrder, ...) {
 #' @export
 cSort.chron <- function(x, InitOrder, ...) {
 
-  xA <- attributes(x)
-  attributes(x) <- NULL
-  x <- as.numeric(x)
-  InitOrder <- as.numeric(InitOrder)
+  x <- as.POSIXct(x)
   x <- cSort(x, InitOrder = InitOrder, ...)
-  attributes(x) <- xA
-  x
+  chron::as.chron(x)
 }
+
+
+#' custom sorting a vector
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @rdname cSort
+#' @importFrom chron as.chron as.dates
+#' @export
+cSort.times <- function(x, InitOrder, ...) {
+
+  x <- as.character(x)
+  x <- cSort(x, InitOrder = InitOrder, ...)
+  chron::as.times(x)
+}
+
+
+
+#' custom sorting a vector
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @rdname cSort
+#' @importFrom chron as.chron as.dates
+#' @export
+cSort.dates <- function(x, InitOrder, ...) {
+
+  # help from namespace xts
+  # xts:::as.POSIXct.dates
+  # need to implement our own method to correctly handle TZ
+  x <- structure(as.POSIXct(as.POSIXlt(x, tz="GMT"), tz="GMT"),class=c("POSIXct","POSIXt"))
+  x <- cSort(x, InitOrder = InitOrder, ...)
+  chron::as.dates(as.chron(x))
+}
+
+
+
+#' custom sorting a vector
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @rdname cSort
+#' @importFrom timeDate as.timeDate
+#' @export
+cSort.timeDate <- function(x, InitOrder, ...) {
+
+  x <- as.POSIXct(x)
+  xA <- attributes(x)
+  x <- cSort(x, InitOrder = InitOrder, ...)
+  as.timeDate(x, zone = xA$tzone, FinCenter = xA$control[names(xA$control) %in% "FinCenter"])
+}
+
+

@@ -9,7 +9,11 @@
 \alias{cSort.yearmon}
 \alias{cSort.yearqtr}
 \alias{cSort.POSIXct}
+\alias{cSort.POSIXlt}
 \alias{cSort.chron}
+\alias{cSort.times}
+\alias{cSort.dates}
+\alias{cSort.timeDate}
 \title{custom sorting a vector}
 \usage{
 cSort(x, ...)
@@ -28,10 +32,18 @@ cSort(x, ...)
 
 \method{cSort}{POSIXct}(x, InitOrder, ...)
 
+\method{cSort}{POSIXlt}(x, InitOrder, ...)
+
 \method{cSort}{chron}(x, InitOrder, ...)
+
+\method{cSort}{times}(x, InitOrder, ...)
+
+\method{cSort}{dates}(x, InitOrder, ...)
+
+\method{cSort}{timeDate}(x, InitOrder, ...)
 }
 \arguments{
-\item{x}{vector  to be sorted}
+\item{x}{vector to be sorted}
 
 \item{...}{dots passed}
 
@@ -52,16 +64,17 @@ vector sorted by InitOrder
 }
 \description{
 \preformatted{
-Performs a custom sort of a vector x.  In parameter vector InitOrder,
-the elements to be sorted and the exact order is chosen.
+Performs a custom sort of a vector x.  The parameter vector InitOrder,
+contains the elements to be sorted and the exact order.
 }
 
 \preformatted{
 }
 
 \preformatted{
-Excess Vector elements are appended to the end.
-(sort or not sort, CI(case insensitive) sort or non-CI sort)
+Excess Vector elements(not found in InitOrder) are appended
+to the end. Choices are (sort or not sort, CI(case insensitive) sort
+or non-CI sort)
 
 For the purpose of "not sorting",
 other vector elements(vector excess) that are
@@ -86,9 +99,23 @@ in the parameter vector InitOrder that are
 
 \preformatted{
 }
+
+\preformatted{
+}
+
+\preformatted{
+}
+
+\preformatted{
+}
+
+\preformatted{
+}
 }
 \examples{
 \dontrun{
+
+# character examples
 
 cSort( c("a","v", "E2", "c","l", "e3" ,"h","o","date"),
    InitOrder = c("date", "o", "h", "l", "c", "v", "a"), CI = TRUE
@@ -108,13 +135,25 @@ cSort(c("G", "D","B","C", "F"), c("E","B","C","D","A"), sortVectExc = FALSE)
 # other(InitOrder) ignored "F"
 cSort(c("E","B","C","D","A"), c("F", "D","B","C"), sortVectExc = FALSE)
 [1] "D" "B" "C" "E" "A"
+}
+\dontrun{
 
+# numeric examples
+
+cSort(c(5, 2, 3, 4 ,1 ), c(4, 2, 3))
+[1] 4 2 3 1 5
+
+cSort(c(5, 2, 3.0001, 4 ,1 ), c(4, 2, 3.0001))
+[1] 4.0000 2.0000 3.0001 1.0000 5.0000
+class(.Last.value)
+[1] "numeric"
+
+cSort(c(5L, 2L, 3L, 4L ,1L ), c(4L, 2L, 3L))
+class(.Last.value)
+[1] "integer"
 }
 \dontrun{
-cSort(c(7,4,2,3,6), c(5,2,3,4,1))
-[1] 2 3 4 6 7
-}
-\dontrun{
+
 # Date examples
 
 cSort(zoo::as.Date(6:3), zoo::as.Date(1:4))
