@@ -129,5 +129,150 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' If Then Else
+#'
+#' @description
+#' \preformatted{
+#' If Then Else
+#' }
+#' @param test xts object
+#' @param yes if T, select this value
+#' @param no  if F, select this value
+#' @param ... dots passed
+#' @return xts object
+
+#' @examples
+#' \dontrun{
+#'
+#' # ifelse.xts(If Then Else) examples
+#'
+#' xts(matrix(c(T,F),ncol=1), zoo::as.Date(0:1))
+#'            [,1]
+#' 1970-01-01  TRUE
+#' 1970-01-02 FALSE
+#'
+#' ifelse.xts(xts(matrix(c(T,F),ncol=1), zoo::as.Date(0:1)), 11, 10)
+#'            V1ie
+#' 1970-01-01   11
+#' 1970-01-02   10
+#'
+#' xts(matrix(c(T,F,F,T),ncol=2), zoo::as.Date(0:1))
+#'             [,1]  [,2]
+#' 1970-01-01  TRUE FALSE
+#' 1970-01-02 FALSE  TRUE
+#'
+#' ifelse.xts(xts(matrix(c(T,F,F,T),ncol=2), zoo::as.Date(0:1)), 11, 10)
+#'            V1ie V2ie
+#' 1970-01-01   11   10
+#' 1970-01-02   10   11
+#'
+#' ifelse.xts(xts(matrix(c(T,F,F,T),ncol=2), zoo::as.Date(0:1)), c(11,21), c(10,20))
+#'            V1ie V2ie
+#' 1970-01-01   11   10
+#' 1970-01-02   20   21
+#'
+#' xts(matrix(c(11,10),ncol=1), zoo::as.Date(0:1))
+#'            [,1]
+#' 1970-01-01   11
+#' 1970-01-02   10
+#'
+#' # note: some functions, I must test on the coredata. E.g. is.na
+#' ifelse.xts(xts(matrix(c(11,10),ncol=1), zoo::as.Date(0:1)) > 10 , 21, 20)
+#'            V1ie
+#' 1970-01-01   21
+#' 1970-01-02   20
+#' }
+#' @importFrom tryCatchLog  tryCatchLog
+#' @importFrom zoo coredata
+#' @export
+ifelse.xts <- function(test, yes, no) {
+tryCatchLog::tryCatchLog({
+
+  # NOTE: There exists better/faster ifelse out ther
+  # e.g. ifelseC
+
+  # ifelse.zoo is not a method (because ifelse is not a generic)
+  # ? zoo
+  xTs <- test
+  zoo::coredata(xTs) <- apply(zoo::coredata(xTs), MARGIN = 2, FUN = function(x) {
+    ifelse(x, yes, no)
+  })
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ie")
+  }
+  xTs
+
+})}
+
+
+
+#' If Then Else
+#'
+#' @description
+#' \preformatted{
+#' If Then Else
+#' }
+#' @param x xts object
+#' @param y if T, select this value
+#' @param n  if F, select this value
+#' @param ... dots passed
+#' @return xts object
+
+#' @examples
+#' \dontrun{
+#'
+#' # IE(If Then Else) examples
+#'
+#' xts(matrix(c(T,F),ncol=1), zoo::as.Date(0:1))
+#'            [,1]
+#' 1970-01-01  TRUE
+#' 1970-01-02 FALSE
+#'
+#' IE(xts(matrix(c(T,F),ncol=1), zoo::as.Date(0:1)), 11, 10)
+#'            V1ie
+#' 1970-01-01   11
+#' 1970-01-02   10
+#'
+#' matrix(c(T,F,F,T),ncol=2), zoo::as.Date(0:1)
+#'             [,1]  [,2]
+#' 1970-01-01  TRUE FALSE
+#' 1970-01-02 FALSE  TRUE
+#'
+#' IE(xts(matrix(c(T,F,F,T),ncol=2), zoo::as.Date(0:1)), 11, 10)
+#'            V1ie V2ie
+#' 1970-01-01   11   10
+#' 1970-01-02   10   11
+#'
+#' IE(xts(matrix(c(T,F,F,T),ncol=2), zoo::as.Date(0:1)), c(11,21), c(10,20))
+#'            V1ie V2ie
+#' 1970-01-01   11   10
+#' 1970-01-02   20   21
+#'
+#' xts(matrix(c(11,10),ncol=1), zoo::as.Date(0:1))
+#'            [,1]
+#' 1970-01-01   11
+#' 1970-01-02   10
+#'
+#' # note: some functions, I must test on the coredata. E.g. is.na
+#' IE(xts(matrix(c(11,10),ncol=1), zoo::as.Date(0:1)) > 10 , 21, 20)
+#'            V1ie
+#' 1970-01-01   21
+#' 1970-01-02   20
+#' }
+#' @importFrom tryCatchLog  tryCatchLog
+#' @importFrom zoo coredata
+#' @export
+IE <- function(x, y, n) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- ifelse.xts(x, yes = y, no = n)
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ie")
+  }
+  xTs
+
+})}
 
 
