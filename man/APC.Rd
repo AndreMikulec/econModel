@@ -15,6 +15,9 @@ APC(x, b = 0, l = 1, ...)
 
 \item{...}{dots passed}
 }
+\value{
+xts object
+}
 \description{
 \preformatted{
 This is most useful for calculating velocity

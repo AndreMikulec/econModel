@@ -12,6 +12,11 @@ RPCP(x, b = 0, l = 1, ...)
 \item{b}{choose -1 (or less) to look into the future}
 
 \item{l}{observations backwards}
+
+\item{...}{dots passed}
+}
+\value{
+xts object
 }
 \description{
 \preformatted{

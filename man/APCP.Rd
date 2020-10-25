@@ -15,6 +15,9 @@ APCP(x, b = 0, l = 1, ...)
 
 \item{...}{dots passed}
 }
+\value{
+xts object
+}
 \description{
 \preformatted{
 Absolute Proportional Change(APC) multiplied by 100.00

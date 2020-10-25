@@ -217,6 +217,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @param x xts object
 #' @param k choose 0 or 1 or greater to peer into the current and the past
+#' @param ... dots passed
 #' @return xts object
 #' @examples
 #' \dontrun{
@@ -263,6 +264,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @param x xts object
 #' @param k choose 1 or greater  to look into the future
+#' @param ... dots passed
 #' @return xts object
 #' @examples
 #' \dontrun{
@@ -305,6 +307,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
+#' Absolute Change
 #' }
 #' @param x xts object
 #' @param base choose -1 (or less) to look into the future
@@ -354,6 +357,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
+#' Absolute Change
 #' }
 #' @param x xts object
 #' @param b choose -1 (or less) to look into the future
@@ -409,6 +413,7 @@ tryCatchLog::tryCatchLog({
 #' @param b choose -1 (or less) to look into the future
 #' @param l observations backwards
 #' @param ... dots passed
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -493,6 +498,8 @@ tryCatchLog::tryCatchLog({
 #' @param x xts object
 #' @param b choose -1 (or less) to look into the future
 #' @param l observations backwards
+#' @param ... dots passed
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -576,6 +583,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
+#' Relative Change
 #' }
 #' @param x xts object
 #' @param base choose -1 (or less) to look into the future
@@ -891,7 +899,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
-#' @importFrom xts `.xts`
+#' @importFrom xts `.xts` `.index`
 #' @export
 diffXts <- function(x, lag=1, differences=1, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = diff, ...) {
 tryCatchLog::tryCatchLog({
@@ -940,6 +948,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
+#' Differences by using Absolute Change
 #' }
 #' @param x xts object
 #' @param l lag
@@ -995,6 +1004,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
+#' Differences by using Relative Change
 #' }
 #' @param x xts object
 #' @param l lag

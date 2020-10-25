@@ -20,6 +20,7 @@ xts object
 }
 \description{
 \preformatted{
+Differences by using Absolute Change
 }
 }
 \examples{

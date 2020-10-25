@@ -10,6 +10,8 @@ LD(x, k = 1, ...)
 \item{x}{xts object}
 
 \item{k}{choose 1 or greater  to look into the future}
+
+\item{...}{dots passed}
 }
 \value{
 xts object

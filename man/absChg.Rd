@@ -20,6 +20,7 @@ xts object
 }
 \description{
 \preformatted{
+Absolute Change
 }
 }
 \examples{

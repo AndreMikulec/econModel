@@ -22,6 +22,7 @@ xts object
 }
 \description{
 \preformatted{
+Relative Change
 }
 }
 \examples{

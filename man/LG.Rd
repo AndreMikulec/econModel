@@ -10,6 +10,8 @@ LG(x, k = 1, ...)
 \item{x}{xts object}
 
 \item{k}{choose 0 or 1 or greater to peer into the current and the past}
+
+\item{...}{dots passed}
 }
 \value{
 xts object
