@@ -4,16 +4,10 @@
 \alias{LG}
 \title{Lag an xts Object}
 \usage{
-LG(x, k = 1, na.pad = TRUE, ...)
+LG(x, k = 1, ...)
 }
 \arguments{
-\item{x}{xts object}
-
 \item{k}{choose 0 or 1 or greater to peer into the current and the past}
-
-\item{na.pad}{as lag.xts}
-
-\item{...}{dots passed to lag.xts}
 }
 \description{
 \preformatted{
