@@ -29,7 +29,7 @@ SHOULD HAVE BEEN using this one.
 \examples{
 \dontrun{
 
-# APS(Absolute Proportional Change) example
+# APC(Absolute Proportional Change) example
 
 xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
            [,1] [,2]

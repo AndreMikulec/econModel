@@ -127,6 +127,7 @@ tryCatchLog::tryCatchLog({
 #' @param k choose -1 to look into the future
 #' @param na.pad as lag.xts
 #' @param ... dots passed to lag.xts
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -411,7 +412,7 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #'
-#' # APS(Absolute Proportional Change) example
+#' # APC(Absolute Proportional Change) example
 #'
 #' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 #'            [,1] [,2]
@@ -439,6 +440,47 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 })}
+
+
+
+#' Absolute Percent Change
+#'
+#' @description
+#' \preformatted{
+#' Absolute Proportional Change(APC) multiplied by 100.00
+#' Absolute Proportional Change(APC) in percent (APCP)
+#' }
+#' @inheritParams APC
+#' @inherit APC return details
+#' @examples
+#' \dontrun{
+#'
+#' # APCP(Absolute Proportional Change in Percent) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' APCP(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1apcp.0.1 V2apcp.0.1
+#' 1970-01-01         NA         NA
+#' 1970-01-02       -300        100
+#' 1970-01-03       -100        100
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+APCP <- function(x, b = 0, l = 1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- APC(x, b = b, l = l, ...) * 100.000
+  # strait override (I know that xTs has no names)
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"apcp"),".", b, ".", l)
+  }
+  xTs
+})}
+
 
 
 #' Relative Proportional Change
@@ -479,6 +521,50 @@ tryCatchLog::tryCatchLog({
   # strait override
   if(NVAR(xTs)) {
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rpc"),".", b, ".", l)
+  }
+  xTs
+})}
+
+
+
+
+#' Relative Proportional Change in Percent
+#'
+#' @description
+#' \preformatted{
+#' Ninety-nine (99%) percent of the people in the world
+#' are using THIS WRONG ONE.
+#' Relative Proportional Change(RPC) multiplied by 100.00
+#' Relative Proportional Change(RPC) in percent (RPCP)
+#' }
+#' @inheritParams RPC
+#' @inherit RPC return details
+#' @examples
+#' \dontrun{
+#'
+#' RPCP(Relative Proportional Change in Percent) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' RPCP(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1rpcp.0.1 V2rpcp.0.1
+#' 1970-01-01         NA         NA
+#' 1970-01-02       -300        100
+#' 1970-01-03        100        100
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+RPCP <- function(x, b = 0, l = 1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- RPC(x, b = b, l = l, ...) * 100
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rpcp"),".", b, ".", l)
   }
   xTs
 })}
@@ -658,7 +744,7 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #'
-#' # ARC (absolute relative change) example
+#' # ARC (Absolute Relative Change) example
 #'
 #' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 #'            [,1] [,2]
@@ -686,6 +772,51 @@ tryCatchLog::tryCatchLog({
   xTs
 
 })}
+
+
+
+#' Relative Relative Change
+#'
+#' @description
+#' \preformatted{
+#' Absolute value of "Absolute Relative Change"
+#' Results NEVER include "negative numbers."
+#' }
+#' @inheritParams RC
+#' @inherit RC return details
+#' @examples
+#' \dontrun{
+#'
+#' # RRC (Relative Relative Change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' RRC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1rrc.0.1 V2rrc.0.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02         2         2
+#' 1970-01-03         1         2
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo coredata
+#' @export
+RRC <- function(x = NULL, b = 0, l = 1, lg = FALSE, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- abs(ARC(x, b = b, l = l, lg = lg, ...))
+  # strait override (I know that xTs has no names)
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rrc"),".", b, ".", l)
+  }
+  xTs
+})}
+
+
+
 
 
 

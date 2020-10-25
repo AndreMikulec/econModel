@@ -15,6 +15,9 @@ lagXts(x, k = 1, na.pad = TRUE, ...)
 
 \item{...}{dots passed to lag.xts}
 }
+\value{
+xts object
+}
 \description{
 \preformatted{
 This does not complain when: any(abs(k) > NROW(xTs)):
