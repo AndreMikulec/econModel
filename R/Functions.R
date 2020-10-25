@@ -596,7 +596,7 @@ tryCatchLog::tryCatchLog({
 DFA <- function(x, l=1, d=1, ...) {
 tryCatchLog::tryCatchLog({
 
-  diffXts(x, lag=l, differences=d, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = diff, ...)
+  diffXts(x, lag=l, differences=d, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = AC, ...)
 
 })}
 
