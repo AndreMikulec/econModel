@@ -27,23 +27,21 @@ xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 1970-01-03   -4   32
 
 DFR(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
-           V1diff.1 V2diff.1
-           V1diff.1 V2diff.1
-1970-01-01       NA       NA
-1970-01-02       -2        2
-1970-01-03       -1        2
+           V1dfr.2.1 V2dfr.2.1
+1970-01-01        NA        NA
+1970-01-02        -2         2
+1970-01-03        -1         2
 
 DFR(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), d = 2)
-           V1diff.1 V2diff.1
-           V1diff.1 V2diff.1
-1970-01-01       NA       NA
-1970-01-02       NA       NA
-1970-01-03      0.5        1
+           V1dfr.2.1 V2dfr.2.1
+1970-01-01        NA        NA
+1970-01-02        NA        NA
+1970-01-03       0.5         1
 
 DFR(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), l = 2)
-           V1diff.1 V2diff.1
-1970-01-01       NA       NA
-1970-01-02       NA       NA
-1970-01-03       -4        4
+           V1dfr.2.1 V2dfr.2.1
+1970-01-01        NA        NA
+1970-01-02        NA        NA
+1970-01-03        -4         4
 }
 }

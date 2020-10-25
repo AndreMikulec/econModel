@@ -572,22 +572,22 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-03   -4   32
 #'
 #' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
-#'            V1diff.1 V2diff.1
-#' 1970-01-01       NA       NA
-#' 1970-01-02       -3        8
-#' 1970-01-03       -2       16
+#'            V1dfa.2.1 V2dfa.2.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        -3         8
+#' 1970-01-03        -2        16
 #'
 #' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), d = 2)
-#'            V1diff.1 V2diff.1
-#' 1970-01-01       NA       NA
-#' 1970-01-02       NA       NA
-#' 1970-01-03        1        8
+#'            V1dfa.2.1 V2dfa.2.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        NA        NA
+#' 1970-01-03         1         8
 #'
 #' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), l = 2)
-#'            V1diff.1 V2diff.1
-#' 1970-01-01       NA       NA
-#' 1970-01-02       NA       NA
-#' 1970-01-03       -5       24
+#'            V1dfa.2.1 V2dfa.2.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        NA        NA
+#' 1970-01-03        -5        24
 #' }
 #' @param l lag
 #' @param d differences
@@ -596,7 +596,12 @@ tryCatchLog::tryCatchLog({
 DFA <- function(x, l=1, d=1, ...) {
 tryCatchLog::tryCatchLog({
 
-  diffXts(x, lag=l, differences=d, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = AC, ...)
+  xTs <- diffXts(x, lag=l, differences=d, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = AC, ...)
+  # override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"dfa"),".", l, ".", d)
+  }
+  xTs
 
 })}
 
