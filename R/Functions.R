@@ -280,10 +280,63 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
 
 
 
+
+#' Absolute Change
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @param x xts object
+#' @param base choose -1 (or less) to look into the future
+#' @param lag observations backwards
+#' @param ... dots passed to lagXts
+#' @examples
+#' \dontrun{
+#'
+#' # AC example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#' #'
+#' AC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1ac.1 V2ac.1
+#' 1970-01-01     NA     NA
+#' 1970-01-02     -3      8
+#' 1970-01-03     -2     16
+#'
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom stringr str_replace
+#' @export
+AC <- function(x, base = 0, lag = 1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- x
+  xTs1 <- lagXts(xTs, k = base + rep(0,length(lag)), ...)
+  xTs2 <- lagXts(xTs, k = base + lag, ...)
+  xTs  <- xTs1 - xTs2
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ac"),".", lag)
+  }
+  xTs
+})}
+
+
+
+
+
+
+
+
 #' Lag and/or Difference and/or Use a function(Fun) Upon its xts Object
 #'
 #' @description
 #' \preformatted{
+#' Based on R CRAN package xts function diff.xts
 #' }
 #' @param x as diff.xts
 #' @param lag as diff.xts
@@ -300,7 +353,7 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
 #' @examples
 #' \dontrun{
 #'
-#' # based on xts::lag.xts
+#' # diffXts example
 #'
 #' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 #'            [,1] [,2]
@@ -308,7 +361,7 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
 #' 1970-01-02   -2   16
 #' 1970-01-03   -4   32
 #'
-
+#'
 #' diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
 #'         V1diff.1 V2diff.1
 #' 1970-01-01       NA       NA
