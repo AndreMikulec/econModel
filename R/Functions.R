@@ -321,7 +321,7 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02   -2   16
 #' 1970-01-03   -4   32
 #' #'
-#' AC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#' absChg(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
 #'            V1ac.0.1 V2ac.0.1
 #' 1970-01-01       NA       NA
 #' 1970-01-02       -3        8
@@ -329,7 +329,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-AC <- function(x, base = 0, lag = 1, ...) {
+absChg <- function(x, base = 0, lag = 1, ...) {
 tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
@@ -346,6 +346,49 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 })}
+
+
+
+#' Absolute Change
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @param x xts object
+#' @param b choose -1 (or less) to look into the future
+#' @param l observations backwards
+#' @param ... dots passed to lagXts
+#' @return xts object
+#' @examples
+#' \dontrun{
+#'
+#' # AC(absolute change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#' #'
+#' AC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1ac.0.1 V2ac.0.1
+#' 1970-01-01       NA       NA
+#' 1970-01-02       -3        8
+#' 1970-01-03       -2       16
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+AC <- function(x, b = 0, l = 1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- absChg(x, base = b, lag = l, ...)
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ac"),".", b, ".", l)
+  }
+  xTs
+})}
+
 
 
 
@@ -497,7 +540,6 @@ RC <- function(x = NULL, b = 0, l = 1, lg = FALSE, ...) {
 tryCatchLog::tryCatchLog({
 
   xTs <- relChg(x, base = b, lag = l, log = lg, ...)
-
   # strait override (I know that xTs has no names)
   if(NVAR(xTs)) {
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", b, ".", l)
