@@ -188,7 +188,7 @@ tryCatchLog::tryCatchLog({
 ifelse.xts <- function(test, yes, no) {
 tryCatchLog::tryCatchLog({
 
-  # NOTE: There exists better/faster ifelse out ther
+  # NOTE: There exists better/faster ifelse out there
   # e.g. ifelseC
 
   # ifelse.zoo is not a method (because ifelse is not a generic)
