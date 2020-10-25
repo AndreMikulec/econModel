@@ -21,7 +21,7 @@ Probably this function should be an xts enhancement.
 \examples{
 \dontrun{
 
-# INA examples
+# INA(is na?) examples
 
 library(xts)
 

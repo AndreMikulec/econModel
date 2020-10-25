@@ -21,16 +21,18 @@ beforehand.
 \examples{
 \dontrun{
 
-# LG(lagXts lagging 1) example
+# LG(lag 1) example
 
-LG(IBM.Open.TTR.SMA.n.2, k = 1)
-           IBM.Open.TTR.SMA.n.2.lag.1
-1970-01-02                         NA
-1970-01-05                         NA
-1970-01-06                   18.26250
-1970-01-07                   18.35625
-1970-01-08                   18.41875
-1970-01-09                   18.43125
-1970-01-12                   18.45625
+xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+           [,1] [,2]
+1970-01-01    1    8
+1970-01-02   -2   16
+1970-01-03   -4   32
+
+LG(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+           V1lg.1 V2lg.1
+1970-01-01     NA     NA
+1970-01-02      1      8
+1970-01-03     -2     16
 }
 }

@@ -66,7 +66,7 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #'
-#' # INA examples
+#' # INA(is na?) examples
 #'
 #' library(xts)
 #'
@@ -79,14 +79,13 @@ tryCatchLog::tryCatchLog({
 #'
 #' INA(xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2)))
 #'
-#'               V1
+#'            V1ina
 #' 1970-01-01  TRUE
 #' 1970-01-02 FALSE
 #' 1970-01-03  TRUE
 #'
-#' NOTE
 #' INA(xts::xts(matrix(c(NA_real_, 0, NA_real_,0), ncol = 2), zoo::as.Date(0:1)))
-#'              V1     V2
+#'            V1ina V2ina
 #' 1970-01-01  TRUE  TRUE
 #' 1970-01-02 FALSE FALSE
 #'
@@ -107,7 +106,13 @@ tryCatchLog::tryCatchLog({
 INA <- function(x) {
 tryCatchLog::tryCatchLog({
 
-  is.na.xts(x)
+  xTs <- is.na.xts(x)
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ina"))
+  }
+  xTs
+
 })}
 
 
@@ -219,7 +224,7 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #'
-#' # LG(lagXts lagging 1) example
+#' # LG(lag 1) example
 #'
 #' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 #'            [,1] [,2]
@@ -264,29 +269,36 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #'
-#' # LD(lagXts leading 1) example
+#' # LD(lead 1) example
 #'
-#' LD(IBM.Open.TTR.SMA.n.2, k = 1)
-#'            IBM.Open.TTR.SMA.n.2.lead.1
-#' 1970-01-02                    18.26250
-#' 1970-01-05                    18.35625
-#' 1970-01-06                    18.41875
-#' 1970-01-07                    18.43125
-#' 1970-01-08                    18.45625
-#' 1970-01-09                    18.46250
-#' 1970-01-12                          NA
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' LD(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1ld.1 V2ld.1
+#' 1970-01-01     -2     16
+#' 1970-01-02     -4     32
+#' 1970-01-03     NA     NA
 #' }
-#' @inheritParams lagXts
 #' @param k choose 1 or greater  to look into the future
 #' @inherit lagXts return details
 #' @export
-LD <- function(x, k = 1, na.pad = TRUE, ...) {
+LD <- function(x, k = 1, ...) {
 tryCatchLog::tryCatchLog({
 
    if( any(unlist(lapply (k, function(k1) { k1 <= 0  } )))) {
      stop("k <= 0: fix this; Use function LG(lag) instead")
    }
-   lagXts(x, k = -1 * k, na.pad = na.pad, ...)
+   xTs <- lagXts(x, k = -1 * k, na.pad = TRUE, ...)
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ld"),".", k)
+  }
+  xTs
+
 })}
 
 

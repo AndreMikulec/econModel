@@ -4,16 +4,10 @@
 \alias{LD}
 \title{Lead an xts Object}
 \usage{
-LD(x, k = 1, na.pad = TRUE, ...)
+LD(x, k = 1, ...)
 }
 \arguments{
-\item{x}{xts object}
-
 \item{k}{choose 1 or greater  to look into the future}
-
-\item{na.pad}{as lag.xts}
-
-\item{...}{dots passed to lag.xts}
 }
 \description{
 \preformatted{
@@ -27,16 +21,18 @@ beforehand.
 \examples{
 \dontrun{
 
-# LD(lagXts leading 1) example
+# LD(lead 1) example
 
-LD(IBM.Open.TTR.SMA.n.2, k = 1)
-           IBM.Open.TTR.SMA.n.2.lead.1
-1970-01-02                    18.26250
-1970-01-05                    18.35625
-1970-01-06                    18.41875
-1970-01-07                    18.43125
-1970-01-08                    18.45625
-1970-01-09                    18.46250
-1970-01-12                          NA
+xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+           [,1] [,2]
+1970-01-01    1    8
+1970-01-02   -2   16
+1970-01-03   -4   32
+
+LD(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+           V1ld.1 V2ld.1
+1970-01-01     -2     16
+1970-01-02     -4     32
+1970-01-03     NA     NA
 }
 }
