@@ -31,7 +31,7 @@
 #'
 #' NOTE
 #' is.na(xts::xts(matrix(c(NA_real_, 0, NA_real_,0), ncol = 2), zoo::as.Date(0:1)))
-#'             [,1]  [,2]
+#'             V1na  V2na
 #' 1970-01-01  TRUE  TRUE
 #' 1970-01-02 FALSE FALSE
 #'
@@ -48,7 +48,7 @@ tryCatchLog::tryCatchLog({
   #
   xTs <- xts::xts(is.na(zoo::coredata(x)), index(x))
   if(!length(Names(xTs)) && NVAR(xTs)) {
-     Names(xTs) <- paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs)))
+     Names(xTs) <- paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"na")
   }
   xTs
 
@@ -277,3 +277,87 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
    }
    lagXts(x, k = -1 * k, na.pad = na.pad, ...)
 }
+
+
+
+#' Lag and/or Difference and/or Use a function(Fun) Upon its xts Object
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @param x as diff.xts
+#' @param lag as diff.xts
+#' @param differences as diff.xts
+#' @param arithmetic as diff.xts
+#' @param log as diff.xts
+#' @param na.pad as diff.xts
+#' @param Fun difference-ing function.
+#' Meant to change the xTs in some way.
+#' (Default diff (expected: xts::diff.xts)).
+#' Should accept or (accept and ignore) the parameters: lag;
+#' for S3 compatibility, differences; for xts compatiblity,
+#' arithmetic, log, and/or na.pad.
+#' @examples
+#' \dontrun{
+#'
+#' # based on xts::lag.xts
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+
+#' diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            [,1] [,2]
+#' 1970-01-01   NA   NA
+#' 1970-01-02   -3    8
+#' 1970-01-03   -2   16
+#'
+#'
+#' }
+#' @param ... dots passed
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
+#' @export
+diffXts <- function(x, lag=1, differences=1, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = diff, ...) {
+tryCatchLog::tryCatchLog({
+
+  Fun = match.fun(Fun)
+  Dots <- list(...)
+
+  if(!is.null(lag)) {
+    if(!is.integer(lag) && any(is.na(as.integer(lag))))
+      stop("'lag' must be integer")
+  }
+
+  if(!is.null(differences)) {
+    differences <- as.integer(differences[1L])
+    if(is.na(differences))
+      stop("'differences' must be integer")
+  }
+
+  if(is.logical(x))
+    x <- .xts(matrix(as.integer(x),ncol=NCOL(x)), .index(x), tclass(x))
+
+  # if the use is to wants to do some differencing
+  if(!is.null(differences) && !is.na(differences) && is.numeric(differences)) {
+
+    # basically just keep iterative-ly keep running the same function
+    # differences is a 'dumb counter'
+    if(differences > 1) {
+      xTs <- DescTools::DoCall(Fun, c(list(), list(x),     lag=lag,   arithmetic=arithmetic, log = log, na.pad = na.pad, Fun = Fun, Dots))
+      diffXts(xTs, lag=lag, differences=differences - 1,              arithmetic=arithmetic, log = log, na.pad = na.pad, Fun = Fun,   ...)
+    } else {
+      xTs <- DescTools::DoCall(Fun,  c(list(), list(x),    lag=lag,   arithmetic=arithmetic, log = log, na.pad = na.pad, Fun = Fun, Dots))
+
+      return(xTs)
+    }
+
+  }
+
+})}
+
+
+

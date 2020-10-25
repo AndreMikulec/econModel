@@ -83,6 +83,21 @@ explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Flags = list(n = 2:3)
 1970-01-09               18.456                18.463               18.446
 1970-01-12               18.463                18.419               18.454
 
+# column naming checks
+
+explode(ibm[,c("IBM.Open","IBM.Close")], Fun = TTR::SMA, Flags = list(n = 2:3),
+        AltName = "CUST")
+IBM.Open.CUST.n.2 IBM.Close.CUST.n.2 IBM.Open.CUST.n.3 IBM.Close.CUST.n.3
+
+explode(IBM.Open.TTR.SMA.n.2, Fun = TTR::SMA, Flags = list(n = 3:4))
+IBM.Open.TTR.SMA.n.2.TTR.SMA.n.3 IBM.Open.TTR.SMA.n.2.TTR.SMA.n.4
+
+SMA2 <- TTR::SMA
+explode(IBM.Open.TTR.SMA.n.2, Fun = SMA2, Flags = list(n = 3:4))
+IBM.Open.TTR.SMA.n.2.SMA2.n.3 IBM.Open.TTR.SMA.n.2.SMA2.n.4
+
+# x2 case
+
 # R CRAN Package TTR function runCor
 # runCor : function (x, y, n = 10, use = "all.obs", sample = TRUE, cumulative = FALSE)
 explode(ibm[,c("IBM.Open","IBM.Close")], ibm[,c("IBM.Low","IBM.High")],
