@@ -265,7 +265,6 @@ LG <- function(x, k = 1, na.pad = TRUE, ...) {
 #' 1970-01-08                    18.45625
 #' 1970-01-09                    18.46250
 #' 1970-01-12                          NA
-#'
 #' }
 #' @inheritParams lagXts
 #' @param k choose 1 or greater  to look into the future
@@ -293,7 +292,7 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
 #' @examples
 #' \dontrun{
 #'
-#' # AC example
+#' # AC(absolute change) example
 #'
 #' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 #'            [,1] [,2]
@@ -306,7 +305,6 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
 #' 1970-01-01     NA     NA
 #' 1970-01-02     -3      8
 #' 1970-01-03     -2     16
-#'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom stringr str_replace
@@ -327,8 +325,114 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Relative Change
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @param x xts object
+#' @param base choose -1 (or less) to look into the future
+#' @param lag observations backwards
+#' @examples
+#' \dontrun{
+#'
+#' # RC(relative change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' RC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1rc.1 V2rc.1
+#' 1970-01-01     NA     NA
+#' 1970-01-02     -2      2
+#' 1970-01-03     -1      2
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo coredata
+#' @importFrom stringr str_replace
+#' @export
+RC <- function(x, base = 0, lag = 1, log = FALSE, ...) {
+tryCatchLog::tryCatchLog({
 
+  xTs <- x
+  xTs1 <- lagXts(xTs, k = base + rep(0,length(lag)), ...)
+  xTs2 <- lagXts(xTs, k = base + lag               , ...)
 
+  # ? `[`
+  #
+  # x[i]
+  # x[i] <- value
+  #
+  # A third form of indexing is via a
+  # numeric matrix with the
+  #   one column for each dimension: each row of the index matrix
+  #     then selects a single element of the array,
+  #       and the result is a vector.
+  # Negative indices are not allowed in the index matrix.
+  # NA and zero values are allowed:
+  #   rows of an index matrix containing a zero are ignored,
+  #   whereas rows containing an NA produce an NA in the result.
+  #
+  # Indexing via a character matrix with one column per dimensions is also supported
+  # if the array has dimension names.
+  #   As with numeric matrix indexing, each row of the index matrix selects a single element of the array.
+  #   Indices are matched against the appropriate dimension names. N
+  #   A is allowed and will produce an NA in the result.
+  #   Unmatched indices as well as the empty string ("") are not allowed and will result in an error.
+
+  NegNegTest <- (lagXts(xTs, k = base + rep(0,length(lag)), ...) < 0) & (lagXts(xTs, k = base + lag, ...) < 0)
+
+  # before any 'any/all' test
+  if(anyNA(NegNegTest))
+    NegNegTest[which(is.na(NegNegTest), arr.ind = TRUE)] <- FALSE
+
+  if(any(zoo::coredata(NegNegTest) == TRUE)) {
+
+    NewCoreXts <- zoo::coredata(xTs)
+
+    arrayIndiciesNegNeg  <- which( zoo::coredata(NegNegTest), arr.ind = TRUE)
+    arrayIndiciesRegular <- which(!zoo::coredata(NegNegTest), arr.ind = TRUE)
+
+    # regular common case
+    NewCoreXts[arrayIndiciesRegular] <-
+                  zoo::coredata(xTs1)[arrayIndiciesRegular]/
+                  zoo::coredata(xTs2)[arrayIndiciesRegular]
+
+    # neg/neg rare case: (LagXts(xTs, base + rep(0,length(lag))) < 0) & (LagXts(xTs, base + lag) < 0)
+    # bad interpretation
+
+    # make sure one UNDERSTANDs the contexts of
+    # NEG-nonlag / NEGlagged
+    # use with with MUCH care
+
+    # > sign(-4)*(-5 - (-4))/-4
+    # [1] -0.25 # 25% percent less
+
+    # > sign(-2)*(-4 - (-2))/-2
+    # [1] -1 # one full proportion less
+    NewCoreXts[arrayIndiciesNegNeg] <-
+              sign(  zoo::coredata(lagXts(xTs, k = base + lag, ...))[arrayIndiciesNegNeg] ) *
+                  (
+                       zoo::coredata(xTs1)[arrayIndiciesNegNeg] -
+                     ( zoo::coredata(xTs2)[arrayIndiciesNegNeg] )
+                  ) /
+                  zoo::coredata(xTs2)[arrayIndiciesNegNeg]
+
+    zoo::coredata(xTs) <- NewCoreXts
+
+  } else {
+    xTs  <- xTs1/xTs2
+  }
+
+  # strait override (I know that xTs has no names)
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", lag)
+  }
+  xTs
+})}
 
 
 
@@ -367,11 +471,11 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-01       NA       NA
 #' 1970-01-02       -3        8
 #' 1970-01-03       -2       16
-#'
 #' }
 #' @param ... dots passed
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
+#' @importFrom xts `.xts`
 #' @export
 diffXts <- function(x, lag=1, differences=1, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = diff, ...) {
 tryCatchLog::tryCatchLog({
