@@ -23,8 +23,6 @@ Probably this function should be an xts enhancement.
 
 # INA(is na?) examples
 
-library(xts)
-
 xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 
            [,1]
@@ -34,14 +32,13 @@ xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 
 INA(xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2)))
 
-              V1
+           V1ina
 1970-01-01  TRUE
 1970-01-02 FALSE
 1970-01-03  TRUE
 
-NOTE
 INA(xts::xts(matrix(c(NA_real_, 0, NA_real_,0), ncol = 2), zoo::as.Date(0:1)))
-             V1     V2
+           V1ina V2ina
 1970-01-01  TRUE  TRUE
 1970-01-02 FALSE FALSE
 
@@ -54,6 +51,5 @@ explode(IBM.Open.TTR.SMA.n.2, Fun = "INA")
 1970-01-08                    FALSE
 1970-01-09                    FALSE
 1970-01-12                    FALSE
-
 }
 }

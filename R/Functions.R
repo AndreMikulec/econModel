@@ -68,8 +68,6 @@ tryCatchLog::tryCatchLog({
 #'
 #' # INA(is na?) examples
 #'
-#' library(xts)
-#'
 #' xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 #'
 #'            [,1]
@@ -98,7 +96,6 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-08                    FALSE
 #' 1970-01-09                    FALSE
 #' 1970-01-12                    FALSE
-#'
 #' }
 #' @inheritParams is.na.xts
 #' @inherit is.na.xts return details
@@ -122,11 +119,9 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
-#'
 #' This does not complain when: any(abs(k) > NROW(xTs)):
 #' zoo_lag can not and will not handle. So k's are eliminated
 #' beforehand.
-#'
 #' }
 #' @param x xts object
 #' @param k choose -1 to look into the future
@@ -215,12 +210,13 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
-#'
 #' This does not complain when: any(abs(k) > NROW(xTs)):
 #' zoo_lag can not and will not handle. So k's are eliminated
 #' beforehand.
-#'
 #' }
+#' @param x xts object
+#' @param k choose 0 or 1 or greater to peer into the current and the past
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -238,7 +234,7 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02      1      8
 #' 1970-01-03     -2     16
 #' }
-#' @param k choose 0 or 1 or greater to peer into the current and the past
+
 #' @inherit lagXts return details
 #' @export
 LG <- function(x, k = 1, ...) {
@@ -260,12 +256,13 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
-#'
 #' This does not complain when: any(abs(k) > NROW(xTs)):
 #' zoo_lag can not and will not handle. So k's are eliminated
 #' beforehand.
-#'
 #' }
+#' @param x xts object
+#' @param k choose 1 or greater  to look into the future
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -283,7 +280,6 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02     -4     32
 #' 1970-01-03     NA     NA
 #' }
-#' @param k choose 1 or greater  to look into the future
 #' @inherit lagXts return details
 #' @export
 LD <- function(x, k = 1, ...) {
@@ -313,6 +309,7 @@ tryCatchLog::tryCatchLog({
 #' @param base choose -1 (or less) to look into the future
 #' @param lag observations backwards
 #' @param ... dots passed to lagXts
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -325,16 +322,19 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-03   -4   32
 #' #'
 #' AC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
-#'            V1ac.1 V2ac.1
-#' 1970-01-01     NA     NA
-#' 1970-01-02     -3      8
-#' 1970-01-03     -2     16
+#'            V1ac.0.1 V2ac.0.1
+#' 1970-01-01       NA       NA
+#' 1970-01-02       -3        8
+#' 1970-01-03       -2       16
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom stringr str_replace
 #' @export
 AC <- function(x, base = 0, lag = 1, ...) {
 tryCatchLog::tryCatchLog({
+
+  Dots <- list(...)
+  if(!is.null(Dots$b))  { base <- Dots$b }
+  if(!is.null(Dots$l))  { lag  <- Dots$l }
 
   xTs <- x
   xTs1 <- lagXts(xTs, k = base + rep(0,length(lag)), ...)
@@ -342,7 +342,7 @@ tryCatchLog::tryCatchLog({
   xTs  <- xTs1 - xTs2
   # strait override
   if(NVAR(xTs)) {
-     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ac"),".", lag)
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ac"),".", base, ".", lag)
   }
   xTs
 })}
@@ -357,10 +357,13 @@ tryCatchLog::tryCatchLog({
 #' @param x xts object
 #' @param base choose -1 (or less) to look into the future
 #' @param lag observations backwards
+#' @param log logrithmic
+#' @param ... dots passed
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
-#' # RC(relative change) example
+#' # relChg (relative change) example
 #'
 #' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 #'            [,1] [,2]
@@ -368,17 +371,16 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02   -2   16
 #' 1970-01-03   -4   32
 #'
-#' RC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
-#'            V1rc.1 V2rc.1
-#' 1970-01-01     NA     NA
-#' 1970-01-02     -2      2
-#' 1970-01-03     -1      2
+#' relChg(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1rc.0.1 V2rc.0.1
+#' 1970-01-01       NA       NA
+#' 1970-01-02       -2        2
+#' 1970-01-03       -1        2
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo coredata
-#' @importFrom stringr str_replace
 #' @export
-RC <- function(x, base = 0, lag = 1, log = FALSE, ...) {
+relChg <- function(x = NULL, base = 0, lag = 1, log = FALSE, ...) {
 tryCatchLog::tryCatchLog({
 
   xTs <- x
@@ -453,10 +455,58 @@ tryCatchLog::tryCatchLog({
 
   # strait override (I know that xTs has no names)
   if(NVAR(xTs)) {
-     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", lag)
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", base, ".", lag)
   }
   xTs
 })}
+
+
+
+#' Relative Change
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @param x xts object
+#' @param b choose -1 (or less) to look into the future
+#' @param l observations backwards
+#' @param lg log
+#' @param ... dots passed
+#' @return xts object
+#' @examples
+#' \dontrun{
+#'
+#' # RC (relative change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' RC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1rc.0.1 V2rc.0.1
+#' 1970-01-01       NA       NA
+#' 1970-01-02       -2        2
+#' 1970-01-03       -1        2
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo coredata
+#' @export
+RC <- function(x = NULL, b = 0, l = 1, lg = FALSE, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- relChg(x, base = b, lag = l, log = lg, ...)
+
+  # strait override (I know that xTs has no names)
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", b, ".", l)
+  }
+  xTs
+
+})}
+
+
 
 
 
@@ -478,6 +528,8 @@ tryCatchLog::tryCatchLog({
 #' Should accept or (accept and ignore) the parameters: lag;
 #' for S3 compatibility, differences; for xts compatiblity,
 #' arithmetic, log, and/or na.pad.
+#' @param ... dots passed
+#' @return xts object
 #' @examples
 #' \dontrun{
 #'
@@ -525,7 +577,6 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-03      0.5        1
 #'
 #' }
-#' @param ... dots passed
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
 #' @importFrom xts `.xts`
@@ -578,6 +629,12 @@ tryCatchLog::tryCatchLog({
 #' @description
 #' \preformatted{
 #' }
+#' @param x xts object
+#' @param l lag
+#' @param d differences
+#' @param ... dots passed
+#' @return xts object
+#' @inherit diffXts return details
 #' @examples
 #' \dontrun{
 #'
@@ -607,9 +664,6 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02        NA        NA
 #' 1970-01-03        -5        24
 #' }
-#' @param l lag
-#' @param d differences
-#' @inherit diffXts return details
 #' @export
 DFA <- function(x, l=1, d=1, ...) {
 tryCatchLog::tryCatchLog({
@@ -630,6 +684,12 @@ tryCatchLog::tryCatchLog({
 #' @description
 #' \preformatted{
 #' }
+#' @param x xts object
+#' @param l lag
+#' @param d differences
+#' @param ... dots passed
+#' @return xts object
+#' @inherit diffXts return details
 #' @examples
 #' \dontrun{
 #'
@@ -659,9 +719,6 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02        NA        NA
 #' 1970-01-03        -4         4
 #' }
-#' @param l lag
-#' @param d differences
-#' @inherit diffXts return details
 #' @export
 DFR <- function(x, l=1, d=1, ...) {
 tryCatchLog::tryCatchLog({

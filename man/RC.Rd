@@ -4,14 +4,21 @@
 \alias{RC}
 \title{Relative Change}
 \usage{
-RC(x, base = 0, lag = 1, log = FALSE, ...)
+RC(x = NULL, b = 0, l = 1, lg = FALSE, ...)
 }
 \arguments{
 \item{x}{xts object}
 
-\item{base}{choose -1 (or less) to look into the future}
+\item{b}{choose -1 (or less) to look into the future}
 
-\item{lag}{observations backwards}
+\item{l}{observations backwards}
+
+\item{lg}{log}
+
+\item{...}{dots passed}
+}
+\value{
+xts object
 }
 \description{
 \preformatted{
@@ -20,7 +27,7 @@ RC(x, base = 0, lag = 1, log = FALSE, ...)
 \examples{
 \dontrun{
 
-# RC(relative change) example
+# RC (relative change) example
 
 xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
            [,1] [,2]
@@ -29,9 +36,9 @@ xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 1970-01-03   -4   32
 
 RC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
-           V1rc.1 V2rc.1
-1970-01-01     NA     NA
-1970-01-02     -2      2
-1970-01-03     -1      2
+           V1rc.0.1 V2rc.0.1
+1970-01-01       NA       NA
+1970-01-02       -2        2
+1970-01-03       -1        2
 }
 }

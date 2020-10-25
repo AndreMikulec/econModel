@@ -7,15 +7,18 @@
 LD(x, k = 1, ...)
 }
 \arguments{
+\item{x}{xts object}
+
 \item{k}{choose 1 or greater  to look into the future}
+}
+\value{
+xts object
 }
 \description{
 \preformatted{
-
 This does not complain when: any(abs(k) > NROW(xTs)):
 zoo_lag can not and will not handle. So k's are eliminated
 beforehand.
-
 }
 }
 \examples{

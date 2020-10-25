@@ -37,6 +37,9 @@ arithmetic, log, and/or na.pad.}
 
 \item{...}{dots passed}
 }
+\value{
+xts object
+}
 \description{
 \preformatted{
 Based on R CRAN package xts function diff.xts

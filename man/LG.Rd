@@ -7,15 +7,18 @@
 LG(x, k = 1, ...)
 }
 \arguments{
+\item{x}{xts object}
+
 \item{k}{choose 0 or 1 or greater to peer into the current and the past}
+}
+\value{
+xts object
 }
 \description{
 \preformatted{
-
 This does not complain when: any(abs(k) > NROW(xTs)):
 zoo_lag can not and will not handle. So k's are eliminated
 beforehand.
-
 }
 }
 \examples{

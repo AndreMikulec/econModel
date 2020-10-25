@@ -7,9 +7,16 @@
 DFA(x, l = 1, d = 1, ...)
 }
 \arguments{
+\item{x}{xts object}
+
 \item{l}{lag}
 
 \item{d}{differences}
+
+\item{...}{dots passed}
+}
+\value{
+xts object
 }
 \description{
 \preformatted{

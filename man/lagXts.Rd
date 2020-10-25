@@ -17,11 +17,9 @@ lagXts(x, k = 1, na.pad = TRUE, ...)
 }
 \description{
 \preformatted{
-
 This does not complain when: any(abs(k) > NROW(xTs)):
 zoo_lag can not and will not handle. So k's are eliminated
 beforehand.
-
 }
 }
 \examples{
