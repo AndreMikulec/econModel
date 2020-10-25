@@ -571,13 +571,13 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-02   -2   16
 #' 1970-01-03   -4   32
 #'
-#' #' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
 #'            V1diff.1 V2diff.1
 #' 1970-01-01       NA       NA
 #' 1970-01-02       -3        8
 #' 1970-01-03       -2       16
 #'
-#' #' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), d = 2)
+#' DFA(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), d = 2)
 #'            V1diff.1 V2diff.1
 #' 1970-01-01       NA       NA
 #' 1970-01-02       NA       NA
@@ -600,6 +600,56 @@ tryCatchLog::tryCatchLog({
 
 })}
 
+
+
+#' Differences by using Relative Change
+#'
+#' @description
+#' \preformatted{
+#' }
+#' @examples
+#' \dontrun{
+#'
+#' # DFR(Differences by using Relative Change) examples
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' DFR(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1dfr.2.1 V2dfr.2.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        -2         2
+#' 1970-01-03        -1         2
+#'
+#' DFR(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), d = 2)
+#'            V1dfr.2.1 V2dfr.2.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        NA        NA
+#' 1970-01-03       0.5         1
+#'
+#' DFR(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), l = 2)
+#'            V1dfr.2.1 V2dfr.2.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        NA        NA
+#' 1970-01-03        -4         4
+#' }
+#' @param l lag
+#' @param d differences
+#' @inherit diffXts return details
+#' @export
+DFR <- function(x, l=1, d=1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- diffXts(x, lag=l, differences=d, arithmetic=TRUE, log=FALSE, na.pad=TRUE, Fun = RC, ...)
+  # override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"dfr"),".", l, ".", d)
+  }
+  xTs
+})}
 
 
 
