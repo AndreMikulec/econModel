@@ -392,6 +392,100 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Absolute Proportional Change
+#'
+#' @description
+#' \preformatted{
+#' This is most useful for calculating velocity
+#' and acceleration, (and jerk).
+#' To get acceleration and jerk use this with
+#' diffXts with differences 2 (and 3) respectively.
+#'
+#' Ninety-nine (99%) percent of the people in the world
+#' SHOULD HAVE BEEN using this one.
+#' }
+#' @param x xts object
+#' @param b choose -1 (or less) to look into the future
+#' @param l observations backwards
+#' @param ... dots passed
+#' @examples
+#' \dontrun{
+#'
+#' # APS(Absolute Proportional Change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' APC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1apc.0.1 V2apc.0.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        -3         1
+#' 1970-01-03        -1         1
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+APC <- function(x, b = 0, l = 1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- x
+  xTs2 <- lagXts(xTs, k = b + l, ...)
+  xTs  <- AC(xTs, b = b + rep(0,length(l)), l = l, ...)/ abs(xTs2)
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"apc"),".", b, ".", l)
+  }
+  xTs
+})}
+
+
+#' Relative Proportional Change
+#'
+#' @description
+#' \preformatted{
+#' Ninety-nine (99%) percent of the people in the world
+#' are using THIS WRONG ONE.
+#' }
+#' @param x xts object
+#' @param b choose -1 (or less) to look into the future
+#' @param l observations backwards
+#' @examples
+#' \dontrun{
+#'
+#' RPC(Relative Proportional Change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' RPC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1rpc.0.1 V2rpc.0.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        -3         1
+#' 1970-01-03         1         1
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+RPC <- function(x, b = 0, l = 1, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- x
+  xTs2 <- lagXts(xTs, k = b + l, ...)
+  xTs <- AC(xTs, b = b + rep(0,length(l)), l = l, ...)/xTs2
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rpc"),".", b, ".", l)
+  }
+  xTs
+})}
+
+
+
+
 #' Relative Change
 #'
 #' @description
@@ -509,6 +603,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
+#' Results may be negative.
 #' }
 #' @param x xts object
 #' @param b choose -1 (or less) to look into the future
@@ -543,6 +638,50 @@ tryCatchLog::tryCatchLog({
   # strait override (I know that xTs has no names)
   if(NVAR(xTs)) {
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", b, ".", l)
+  }
+  xTs
+
+})}
+
+
+
+
+#' Absolute Relative Change
+#'
+#' @description
+#' \preformatted{
+#' Same as Relative Change.
+#' Results may be negative.
+#' }
+#' @inheritParams RC
+#' @inherit RC return details
+#' @examples
+#' \dontrun{
+#'
+#' # ARC (absolute relative change) example
+#'
+#' xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
+#'            [,1] [,2]
+#' 1970-01-01    1    8
+#' 1970-01-02   -2   16
+#' 1970-01-03   -4   32
+#'
+#' ARC(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
+#'            V1arc.0.1 V2arc.0.1
+#' 1970-01-01        NA        NA
+#' 1970-01-02        -2         2
+#' 1970-01-03        -1         2
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo coredata
+#' @export
+ARC <- function(x = NULL, b = 0, l = 1, lg = FALSE, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- RC(x, b = b, l = l, lg = lg, ...)
+  # strait override (I know that xTs has no names)
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"arc"),".", b, ".", l)
   }
   xTs
 
