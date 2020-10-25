@@ -45,7 +45,7 @@ Based on R CRAN package xts function diff.xts
 \examples{
 \dontrun{
 
-# diffXts example
+# diffXts examples
 
 xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
            [,1] [,2]
@@ -53,11 +53,40 @@ xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
 1970-01-02   -2   16
 1970-01-03   -4   32
 
-
 diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
         V1diff.1 V2diff.1
 1970-01-01       NA       NA
 1970-01-02       -3        8
 1970-01-03       -2       16
+
+# same as above
+diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), Fun = AC)
+           V1diff.1 V2diff.1
+1970-01-01       NA       NA
+1970-01-02       -3        8
+1970-01-03       -2       16
+
+diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)),
+       differences = 2, Fun = AC)
+
+           V1diff.1 V2diff.1
+1970-01-01       NA       NA
+1970-01-02       NA       NA
+1970-01-03        1        8
+
+diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)), Fun = RC)
+           V1diff.1 V2diff.1
+1970-01-01       NA       NA
+1970-01-02       -2        2
+1970-01-03       -1        2
+
+diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)),
+        differences = 2, Fun = RC)
+
+           V1diff.1 V2diff.1
+1970-01-01       NA       NA
+1970-01-02       NA       NA
+1970-01-03      0.5        1
+
 }
 }
