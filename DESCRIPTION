@@ -24,6 +24,7 @@ Imports:
     chron,
     timeDate,
     curl,
+    xts,
     quantmod
 RoxygenNote: 7.1.1
 Suggests: 

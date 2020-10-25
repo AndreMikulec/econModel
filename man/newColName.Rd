@@ -12,6 +12,7 @@ newColName(
   x2 = NULL,
   FlagsCombo = NULL,
   AltName = NULL,
+  asIsAltName = NULL,
   Prefix = NULL,
   FixedSep = NULL
 )
@@ -19,17 +20,27 @@ newColName(
 \arguments{
 \item{x}{object with the old column names}
 
-\item{Fun}{literally written function or the function name inside a string}
+\item{Fun}{literally written function or the function name inside a string.
+if mode(Fun) == "function", then the returned (xts and) xts root column name is "Anon".
+Alternately instead of "Anon", the use may (always) explicity provide the
+return (xts and) xts root column name.}
 
 \item{isCharFun}{hint as to Fun being a function or the function name inside of a string}
 
-\item{x1}{object providing part of the new colum name}
+\item{x1}{object providing part of the new column name}
 
 \item{x2}{object providing (yet another) part of the the new column name}
 
 \item{FlagsCombo}{list with named elements and their values to (eventually) become part of the new column name}
 
-\item{AltName}{column new root name.  Default is NULL. Unless a string is provided then the root name will not be replaced.}
+\item{AltName}{column new root name.  Default is NULL. The input value is a string. Unless a string is provided then the root name will not be replaced.}
+
+\item{asIsAltName}{Default is NULL(F). NULL is interpreted as F.
+This NULL(F) means do not attempt to simplify the AltName.
+For example, if the user passed "TTR::SMA" and asIsAltName == T, then "TTR::SMA" would
+directly tried to become part of the column name (and "::" would cause an error so this
+would not work.).  If the user passed "TTR::SMA" and asIsAltName == NULL(F), then
+"SMA" would be directly tried to directly become part of the column name.}
 
 \item{Prefix}{place the new addition to the column name at the front instead of the end. Default is NULL. Internally the default is FALSE.}
 
@@ -43,7 +54,7 @@ object with the new column names
 
 Given column names of one or two two dimensional objects,
 each with just one single column,  and a function and its arguments,
-generate a new column name and return the original 'one colun' two dimensional object
+generate a new column name and return the original 'one column' two dimensional object
 
 }
 }

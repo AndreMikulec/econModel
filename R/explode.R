@@ -227,23 +227,33 @@ pairWise <- function(x, y) {
 #'
 #' Given column names of one or two two dimensional objects,
 #' each with just one single column,  and a function and its arguments,
-#' generate a new column name and return the original 'one colun' two dimensional object
+#' generate a new column name and return the original 'one column' two dimensional object
 #'
 #' }
 #'
 #' @param x object with the old column names
-#' @param Fun literally written function or the function name inside a string
+#' @param Fun literally written function or the function name inside a string.
+#' if mode(Fun) == "function", then the returned (xts and) xts root column name is "Anon".
+#' Alternately instead of "Anon", the use may (always) explicity provide the
+#' return (xts and) xts root column name.
 #' @param isCharFun hint as to Fun being a function or the function name inside of a string
-#' @param x1 object providing part of the new colum name
+#' @param x1 object providing part of the new column name
 #' @param x2 object providing (yet another) part of the the new column name
 #' @param FlagsCombo list with named elements and their values to (eventually) become part of the new column name
-#' @param AltName column new root name.  Default is NULL. Unless a string is provided then the root name will not be replaced.
+#' @param AltName column new root name.  Default is NULL. The input value is a string. Unless a string is provided then the root name will not be replaced.
+#' @param asIsAltName Default is NULL(F). NULL is interpreted as F.
+#' This NULL(F) means do not attempt to simplify the AltName.
+#' For example, if the user passed "TTR::SMA" and asIsAltName == T, then "TTR::SMA" would
+#' directly tried to become part of the column name (and "::" would cause an error so this
+#' would not work.).  If the user passed "TTR::SMA" and asIsAltName == NULL(F), then
+#' "SMA" would be directly tried to directly become part of the column name.
 #' @param Prefix place the new addition to the column name at the front instead of the end. Default is NULL. Internally the default is FALSE.
 #' @param FixedSep replacement for "[.]|::" that was found in the function name
 #' @return object with the new column names
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-newColName <- function(x = NULL, Fun =  NULL, isCharFun = NULL, x1 = NULL, x2 = NULL, FlagsCombo =  NULL, AltName = NULL, Prefix = NULL, FixedSep = NULL) {
+newColName <- function(x = NULL, Fun =  NULL, isCharFun = NULL, x1 = NULL, x2 = NULL, FlagsCombo =  NULL,
+                       AltName = NULL, asIsAltName = NULL, Prefix = NULL, FixedSep = NULL) {
 tryCatchLog::tryCatchLog({
 
   if(is.null(isCharFun)) stop("newColNames need actual paramter isCharFun")
@@ -255,7 +265,13 @@ tryCatchLog::tryCatchLog({
       NewName <- "Anon"
     }
   } else {
-    NewName <- AltName
+    if(is.null(asIsAltName) || asIsAltName == F) {
+      # try to fix
+      NewName <- gsub("[.]|::", FixedSep, AltName)
+    } else { # T - just leave the AltName(to become NewName) "as is"
+      NewName <- AltName
+    }
+
   }
 
   paste0(
@@ -299,6 +315,12 @@ tryCatchLog::tryCatchLog({
 #' @param Fun function name in the "bare" or in literal quotes("")
 #' @param Flags list of possible varying parameters that are expanded to all possible combinations by expand.grid
 #' @param AltName string alternate name for "Fun"
+#' @param asIsAltName Default is NULL(F). Passed to the column generator function.  NULL is interpreted as F.
+#' This NULL(F) means do not attempt to simplify the AltName.
+#' For example, if the user passed "TTR::SMA" and asIsAltName == T, then "TTR::SMA" would
+#' directly tried to become part of the column name (and "::" would cause an error so this
+#' would not work.).  If the user passed "TTR::SMA" and asIsAltName == NULL(F), then
+#' "SMA" would be directly tried to directly become part of the column name.
 #' @param Prefix boolan default is FALSE.  TRUE would place the column meta before the column name.
 #' @param FixedSep string divider of meta items
 #' @param quote boolean passed to package DescTools function DoCall
@@ -318,27 +340,42 @@ tryCatchLog::tryCatchLog({
 #' library(quantmod)
 #' ibm <- getSymbols("IBM", from = "1970-01-01", to = "1970-01-13", auto.assign = FALSE)
 #'
-#'   explode(ibm[,c("IBM.Open")], Fun = "TTR::SMA", Flags = list(n = 2:3))
+#' explode(ibm[,c("IBM.Open")], Fun = "TTR::SMA", Flags = list(n = 2:3))
+#
+#'           IBM.Open.TTR.SMA.n.2  IBM.Open.TTR.SMA.n.3
+#' 1970-01-02                   NA                   NA
+#' 1970-01-05               18.262                   NA
+#' 1970-01-06               18.356               18.312
+#' 1970-01-07               18.419               18.379
+#' 1970-01-08               18.431               18.425
+#' 1970-01-09               18.456               18.446
+#' 1970-01-12               18.463               18.454
 #'
-#' #           IBM.Open.TTR.SMA.n.2  IBM.Open.TTR.SMA.n.3
-#' # 1970-01-02                   NA                   NA
-#' # 1970-01-05               18.262                   NA
-#' # 1970-01-06               18.356               18.312
-#' # 1970-01-07               18.419               18.379
-#' # 1970-01-08               18.431               18.425
-#' # 1970-01-09               18.456               18.446
-#' # 1970-01-12               18.463               18.454
+#' explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Flags = list(n = 2:3))
 #'
-#'   explode(ibm[,c("IBM.Open","IBM.Close")], Fun = "TTR::SMA", Flags = list(n = 2:3))
-#' #
-#' #            IBM.Open.TTR.SMA.n.2 IBM.Close.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3
-#' # 1970-01-02                   NA                    NA                   NA
-#' # 1970-01-05               18.262                18.325                   NA
-#' # 1970-01-06               18.356                18.419               18.312
-#' # 1970-01-07               18.419                18.431               18.379
-#' # 1970-01-08               18.431                18.456               18.425
-#' # 1970-01-09               18.456                18.463               18.446
-#' # 1970-01-12               18.463                18.419               18.454
+#'            IBM.Open.TTR.SMA.n.2 IBM.Close.TTR.SMA.n.2 IBM.Open.TTR.SMA.n.3
+#' 1970-01-02                   NA                    NA                   NA
+#' 1970-01-05               18.262                18.325                   NA
+#' 1970-01-06               18.356                18.419               18.312
+#' 1970-01-07               18.419                18.431               18.379
+#' 1970-01-08               18.431                18.456               18.425
+#' 1970-01-09               18.456                18.463               18.446
+#' 1970-01-12               18.463                18.419               18.454
+#'
+#' # column naming checks
+#'
+#' explode(ibm[,c("IBM.Open","IBM.Close")], Fun = TTR::SMA, Flags = list(n = 2:3),
+#'         AltName = "CUST")
+#' IBM.Open.CUST.n.2 IBM.Close.CUST.n.2 IBM.Open.CUST.n.3 IBM.Close.CUST.n.3
+#'
+#' explode(IBM.Open.TTR.SMA.n.2, Fun = TTR::SMA, Flags = list(n = 3:4))
+#' IBM.Open.TTR.SMA.n.2.TTR.SMA.n.3 IBM.Open.TTR.SMA.n.2.TTR.SMA.n.4
+#'
+#' SMA2 <- TTR::SMA
+#' explode(IBM.Open.TTR.SMA.n.2, Fun = SMA2, Flags = list(n = 3:4))
+#' IBM.Open.TTR.SMA.n.2.SMA2.n.3 IBM.Open.TTR.SMA.n.2.SMA2.n.4
+#'
+#' # x2 case
 #'
 #' # R CRAN Package TTR function runCor
 #' # runCor : function (x, y, n = 10, use = "all.obs", sample = TRUE, cumulative = FALSE)
@@ -354,7 +391,8 @@ tryCatchLog::tryCatchLog({
 #' @export
 explode <- function(  x1 = NULL, x2 = NULL, Fun = NULL
                          , Flags   = NULL
-                         , AltName   = NULL, Prefix = NULL, FixedSep  = NULL
+                         , AltName   = NULL, asIsAltName = NULL
+                         , Prefix = NULL, FixedSep  = NULL
                          , quote     = FALSE, envir = parent.frame(2)
                          , ...){
 tryCatchLog::tryCatchLog({
@@ -366,23 +404,38 @@ tryCatchLog::tryCatchLog({
   if(is.null(x2)) x2 <- eval(parse(text = paste0(class(x1)[1], "()")))
   if(is.null(FixedSep)) FixedSep = "."
 
+  # inside the call to newColName, function name of Fun is lost
+  if(mode(Fun) == "function" && is.null(AltName)) {
+    # e.g. [1] "::"  "TTR" "SMA"
+    AltNameVector <- as.character(as.list(match.call())$Fun)
+    if(AltNameVector[1] == "::" && length(AltNameVector) == 3)  {
+      # rebuild the Altname
+      # e.g. [1] "TTR::SMA"
+      AltName  <- paste0(AltNameVector[2], AltNameVector[1], AltNameVector[3], collapse = "")
+    } else {
+      AltName <-  AltNameVector[1] # no change
+    }
+
+  }
+  if(mode(Fun) == "function") {
+    Fun <- match.fun(Fun)
+    isCharFun <- FALSE
+  } else {
+    isCharFun <- TRUE
+  }
+
   # if do.call(rlist::list.zip, ) ever fails then
   # then purrr::transpose is an acceptable replacement
   DescTools::DoCall(
     rlist::list.zip, as.list(DescTools::DoCall(expand.grid, Flags))
   ) -> FlagsCombinations
-
-  # just may want to run without andy flag combinations
+  #
+  # user just may want to run without any flag combinations
   if(!length(FlagsCombinations)){
     FlagsCombinations <- list(list())
   }
 
-  if(mode(Fun) == "function") {
-    Fun = match.fun(Fun)
-    isCharFun <- FALSE
-  } else {
-    isCharFun <- TRUE
-  }
+
 
   # x: placeholder to return data into something
   x <- eval(parse(text = paste0(class(x1)[1], "()")))
@@ -405,8 +458,10 @@ tryCatchLog::tryCatchLog({
       if(NVAR(x21)) { x21List <- list(x21) } else { x21List <- NULL }
       Temp <- DescTools::DoCall(Fun, args = c(list(), list(x11), x21List, FlagsCombo, list(...)), quote = quote, envir = envir)
 
-      Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = x11, x2 = x21, FlagsCombo = FlagsCombo
-                             , AltName = AltName, Prefix = Prefix, FixedSep = FixedSep)
+
+      Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = x11, x2 = x21, FlagsCombo = FlagsCombo,
+                                AltName = AltName, asIsAltName = asIsAltName,
+                                Prefix = Prefix, FixedSep = FixedSep)
 
       # prevent loosing tclass, tzone, and tformat
       if(!NVAR(x)) {
