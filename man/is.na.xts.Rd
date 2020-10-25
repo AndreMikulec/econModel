@@ -41,7 +41,7 @@ is.na(xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2)))
 
 NOTE
 is.na(xts::xts(matrix(c(NA_real_, 0, NA_real_,0), ncol = 2), zoo::as.Date(0:1)))
-            [,1]  [,2]
+            V1na  V2na
 1970-01-01  TRUE  TRUE
 1970-01-02 FALSE FALSE
 

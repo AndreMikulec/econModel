@@ -310,11 +310,10 @@ LD <- function(x, k = 1, na.pad = TRUE, ...) {
 #'
 
 #' diffXts(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
-#'            [,1] [,2]
-#' 1970-01-01   NA   NA
-#' 1970-01-02   -3    8
-#' 1970-01-03   -2   16
-#'
+#'         V1diff.1 V2diff.1
+#' 1970-01-01       NA       NA
+#' 1970-01-02       -3        8
+#' 1970-01-03       -2       16
 #'
 #' }
 #' @param ... dots passed
@@ -337,6 +336,7 @@ tryCatchLog::tryCatchLog({
     if(is.na(differences))
       stop("'differences' must be integer")
   }
+  init.differences <- differences
 
   if(is.logical(x))
     x <- .xts(matrix(as.integer(x),ncol=NCOL(x)), .index(x), tclass(x))
@@ -351,7 +351,9 @@ tryCatchLog::tryCatchLog({
       diffXts(xTs, lag=lag, differences=differences - 1,              arithmetic=arithmetic, log = log, na.pad = na.pad, Fun = Fun,   ...)
     } else {
       xTs <- DescTools::DoCall(Fun,  c(list(), list(x),    lag=lag,   arithmetic=arithmetic, log = log, na.pad = na.pad, Fun = Fun, Dots))
-
+      if(!length(Names(xTs)) && NVAR(xTs)) {
+         Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"diff"),".", init.differences)
+      }
       return(xTs)
     }
 
