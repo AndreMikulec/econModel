@@ -7,6 +7,7 @@
 #' Probably this function should be an xts enhancement.
 #' }
 #' @param x xts object
+#' @param ... dots passes
 #' @return xts object of T/F values
 #' @examples
 #' \dontrun{
@@ -40,7 +41,7 @@
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo coredata index
 #' @importFrom xts xts
-is.na.xts <- function(x) {
+is.na.xts <- function(x, ...) {
 tryCatchLog::tryCatchLog({
 
   # without this function, is.na(xts) strips the index
@@ -100,7 +101,7 @@ tryCatchLog::tryCatchLog({
 #' @inheritParams is.na.xts
 #' @inherit is.na.xts return details
 #' @export
-INA <- function(x) {
+INA <- function(x, ...) {
 tryCatchLog::tryCatchLog({
 
   xTs <- is.na.xts(x)
@@ -830,7 +831,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Lag and/or Difference and/or Use a function(Fun) Upon its xts Object
+#' Lag and/or Difference/Use(rerun) a function(Fun) Upon its xts Object
 #'
 #' @description
 #' \preformatted{
@@ -838,7 +839,9 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @param x as diff.xts
 #' @param lag as diff.xts
-#' @param differences as diff.xts
+#' @param differences as diff.xts.
+#' Also, knows as "number of (re)runs - 1" of function(Fun).
+#' Runs use as its input data, the results data from the the previous run (if any).s
 #' @param arithmetic as diff.xts
 #' @param log as diff.xts
 #' @param na.pad as diff.xts
@@ -934,7 +937,7 @@ tryCatchLog::tryCatchLog({
       xTs <- DescTools::DoCall(Fun,  c(list(), list(x),    lag=lag,   arithmetic=arithmetic, log = log, na.pad = na.pad, Fun = Fun, Dots))
       # override
       if(NVAR(xTs)) {
-         Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"diff"),".", init.differences)
+         Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))), "diff"),".", init.differences)
       }
       return(xTs)
     }
@@ -1061,7 +1064,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname runRanks
 #'
 #' @description
-#' This is a wrapper around TTR runPercentRank.
+#' This is a wrapper around the R CRAN package TTR function runPercentRank.
 #' TTR runPercentRank gives skewed values
 #' (but with the value are in the correct order).
 #' This function uses that "proper ordering" and makes
@@ -1072,14 +1075,14 @@ tryCatchLog::tryCatchLog({
 #' If cumulative=TRUE, the number of observations to use
 #' before the first result is returned. Not tested. So beware.
 #' Must be between 1 and nrow(x), inclusive
-#' @param ranks 4(default) number of ranks. A lower value
-#' means a lower rank number.
+#' @param ranks window(default) number of ranks.
 #' @param cumulative FALSE(default) use from-inception calculation?
 #' Not tested. So beware.
 #' @param exact.multiplier The weight applied to identical values
 #' in the window. Must be between 0 and 1, inclusive.
 #' See ? TTR::runPercentRank
-#' @return xts object
+#' @param ... dots passed
+#' @return xts object. Lower x coredata values means lower rank numbers..
 #' @references
 #'\cite{last Fortran version of percentRank.f (but the newer C version has a fix)
 #'\url{https://github.com/joshuaulrich/TTR/blob/9b30395f7604c37ea12a865961d81666bc167616/src/percentRank.f}
@@ -1089,51 +1092,130 @@ tryCatchLog::tryCatchLog({
 #'
 #' # runRanks(rolling ranks using TTR::runPercentRank) examples
 #'
-#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4)
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 2)
+#'            V1rnk.2.2
+#' 1970-01-01        NA
+#' 1970-01-02         1
+#' 1970-01-03         2
+#' 1970-01-04         2
 #'
-#' 1970-01-01          NA
-#' 1970-01-02          NA
-#' 1970-01-03          NA
-#' 1970-01-04           3
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 3, ranks = 2)
+#'            V1rnk.3.2
+#' 1970-01-01        NA
+#' 1970-01-02        NA
+#' 1970-01-03         1
+#' 1970-01-04         2
 #'
-#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4)
-#'
-#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 3, ranks = 3)
-#'
-#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4, ranks = 2)
-#'
-#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4, cumulative = TRUE)
+#' # the window is larger than the data
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 5)
+#'            V1rnk.5.5
+#' 1970-01-01        NA
+#' 1970-01-02        NA
+#' 1970-01-03        NA
+#' 1970-01-04        NA
 #'}
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom TTR runPercentRank
 #' @export
-runRanks <- function(x, window = 10, ranks = 4, cumulative = F, exact.multiplier = 0.5) {
+runRanks <- function(x, window = 10, ranks = window, cumulative = F, exact.multiplier = 0.5, ...) {
 tryCatchLog::tryCatchLog({
+
+  if(NVAR(x) > 1) {
+     stop("TTR runPercentRank ignores all other columns")
+  }
 
   if(ranks <= 1 || window <= 1) {
     stop(paste0("\"windows\" and \"ranks\" must be greater than one(1)"))
   }
 
-  if(window <= NROW(x)) {
-      # number between zero(0) and one(1)
-    y   <- TTR::runPercentRank(x, n = window, cumulative = cumulative, exact.multiplier = exact.multiplier)
-        # number between zero(0) and "rank"
-    y   <- y * ranks                                      # very important
-                           # splitter sequence # 1, 2, ... rank-1
-    res <- findInterval(y, vec = { seq_len(ranks - 1) }, left.open = TRUE) + 1
-  } else {
-     res <- rep(NA_real_, NROW(x))
+  if(window < ranks) {
+    stop("if parameters: window < ranks;  TTR runPercentRank gives un-interpretable(not-useful) results")
   }
 
-  xTs <- xts(res, index(x))
+  xTs <- x
 
+  if(window <= NROW(xTs)) {
+    # number between zero(0) and one(1)
+           # internally
+           # x <- try.xts(x, error = as.matrix)
+    xTs <- TTR::runPercentRank(xTs, n = window, cumulative = cumulative, exact.multiplier = exact.multiplier)
+           # number between zero(0) and "rank"
+    xTs <- xTs * ranks                                    # very important
+                          # splitter sequence # 1, 2, ... rank-1
+    zoo::coredata(xTs) <- findInterval(zoo::coredata(xTs), vec = { seq_len(ranks - 1) }, left.open = TRUE) + 1
+  } else {
+    xTs <- xts(rep(NA_real_, NROW(xTs)), zoo::index(xTs))
+  }
   # override
   if(NVAR(xTs)) {
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rnk"),".",  window, ".", ranks)
   }
   xTs
 })}
+
+
+
+#' rolling ranks using TTR::runPercentRank
+#'
 #' @rdname runRanks
 #'
+#' @description
+#' This is a wrapper around the R CRAN package TTR function runPercentRank.
+#' TTR runPercentRank gives skewed values
+#' (but with the value are in the correct order).
+#' This function uses that "proper ordering" and makes
+#' usable running ranks.
+#'
+#' @param x xts object
+#' @param w window 10(default) lag to determine the ranks.
+#' If cumulative=TRUE, the number of observations to use
+#' before the first result is returned. Not tested. So beware.
+#' Must be between 1 and nrow(x), inclusive
+#' @param r ranks window(default) number of ranks.
+#' @param ... dots passed
+#' @return xts object. Lower x coredata values means lower rank numbers.
+#' @references
+#'\cite{last Fortran version of percentRank.f (but the newer C version has a fix)
+#'\url{https://github.com/joshuaulrich/TTR/blob/9b30395f7604c37ea12a865961d81666bc167616/src/percentRank.f}
+#'}
+#' @examples
+#' \dontrun{
+#'
+#' # RNK(rolling ranks using TTR::runPercentRank) examples
+#'
+#' RNK(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), w = 2)
+#'            V1rnk.2.2
+#' 1970-01-01        NA
+#' 1970-01-02         1
+#' 1970-01-03         2
+#' 1970-01-04         2
+#'
+#' RNK(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), w = 3, r = 2)
+#'            V1rnk.3.2
+#' 1970-01-01        NA
+#' 1970-01-02        NA
+#' 1970-01-03         1
+#' 1970-01-04         2
+#'
+#' # the window is larger than the data
+#' RNK(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), w = 5)
+#'            V1rnk.5.5
+#' 1970-01-01        NA
+#' 1970-01-02        NA
+#' 1970-01-03        NA
+#' 1970-01-04        NA
+#'}
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
-RNKS <- runRanks
+RNK <- function(x, w = 10, r = w, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- runRanks(x, window = w, ranks = w, ...)
+  # override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rnk"),".",  w, ".", r)
+  }
+  xTs
+
+})}
+

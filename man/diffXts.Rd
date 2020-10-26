@@ -2,7 +2,7 @@
 % Please edit documentation in R/Functions.R
 \name{diffXts}
 \alias{diffXts}
-\title{Lag and/or Difference and/or Use a function(Fun) Upon its xts Object}
+\title{Lag and/or Difference/Use(rerun) a function(Fun) Upon its xts Object}
 \usage{
 diffXts(
   x,
@@ -20,7 +20,9 @@ diffXts(
 
 \item{lag}{as diff.xts}
 
-\item{differences}{as diff.xts}
+\item{differences}{as diff.xts.
+Also, knows as "number of (re)runs - 1" of function(Fun).
+Runs use as its input data, the results data from the the previous run (if any).s}
 
 \item{arithmetic}{as diff.xts}
 

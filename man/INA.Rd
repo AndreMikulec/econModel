@@ -4,10 +4,12 @@
 \alias{INA}
 \title{Perform is.na About Each Column in an xts Object}
 \usage{
-INA(x)
+INA(x, ...)
 }
 \arguments{
 \item{x}{xts object}
+
+\item{...}{dots passes}
 }
 \value{
 xts object of T/F values

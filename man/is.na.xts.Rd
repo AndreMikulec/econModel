@@ -4,10 +4,12 @@
 \alias{is.na.xts}
 \title{Perform is.na About Each Column in an xts Object}
 \usage{
-\method{is.na}{xts}(x)
+\method{is.na}{xts}(x, ...)
 }
 \arguments{
 \item{x}{xts object}
+
+\item{...}{dots passes}
 }
 \value{
 xts object of T/F values

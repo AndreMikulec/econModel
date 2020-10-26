@@ -2,12 +2,19 @@
 % Please edit documentation in R/Functions.R
 \name{runRanks}
 \alias{runRanks}
-\alias{RNKS}
+\alias{RNK}
 \title{rolling ranks using TTR::runPercentRank}
 \usage{
-runRanks(x, window = 10, ranks = 4, cumulative = F, exact.multiplier = 0.5)
+runRanks(
+  x,
+  window = 10,
+  ranks = window,
+  cumulative = F,
+  exact.multiplier = 0.5,
+  ...
+)
 
-RNKS(x, window = 10, ranks = 4, cumulative = F, exact.multiplier = 0.5)
+RNK(x, w = 10, r = w, ...)
 }
 \arguments{
 \item{x}{xts object}
@@ -17,8 +24,7 @@ If cumulative=TRUE, the number of observations to use
 before the first result is returned. Not tested. So beware.
 Must be between 1 and nrow(x), inclusive}
 
-\item{ranks}{4(default) number of ranks. A lower value
-means a lower rank number.}
+\item{ranks}{window(default) number of ranks.}
 
 \item{cumulative}{FALSE(default) use from-inception calculation?
 Not tested. So beware.}
@@ -26,12 +32,29 @@ Not tested. So beware.}
 \item{exact.multiplier}{The weight applied to identical values
 in the window. Must be between 0 and 1, inclusive.
 See ? TTR::runPercentRank}
+
+\item{...}{dots passed}
+
+\item{w}{window 10(default) lag to determine the ranks.
+If cumulative=TRUE, the number of observations to use
+before the first result is returned. Not tested. So beware.
+Must be between 1 and nrow(x), inclusive}
+
+\item{r}{ranks window(default) number of ranks.}
 }
 \value{
-xts object
+xts object. Lower x coredata values means lower rank numbers..
+
+xts object. Lower x coredata values means lower rank numbers.
 }
 \description{
-This is a wrapper around TTR runPercentRank.
+This is a wrapper around the R CRAN package TTR function runPercentRank.
+TTR runPercentRank gives skewed values
+(but with the value are in the correct order).
+This function uses that "proper ordering" and makes
+usable running ranks.
+
+This is a wrapper around the R CRAN package TTR function runPercentRank.
 TTR runPercentRank gives skewed values
 (but with the value are in the correct order).
 This function uses that "proper ordering" and makes
@@ -42,23 +65,60 @@ usable running ranks.
 
 # runRanks(rolling ranks using TTR::runPercentRank) examples
 
-runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4)
+runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 2)
+           V1rnk.2.2
+1970-01-01        NA
+1970-01-02         1
+1970-01-03         2
+1970-01-04         2
 
-1970-01-01          NA
-1970-01-02          NA
-1970-01-03          NA
-1970-01-04           3
+runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 3, ranks = 2)
+           V1rnk.3.2
+1970-01-01        NA
+1970-01-02        NA
+1970-01-03         1
+1970-01-04         2
 
-runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4)
+# the window is larger than the data
+runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 5)
+           V1rnk.5.5
+1970-01-01        NA
+1970-01-02        NA
+1970-01-03        NA
+1970-01-04        NA
+}
+\dontrun{
 
-runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 3, ranks = 3)
+# RNK(rolling ranks using TTR::runPercentRank) examples
 
-runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4, ranks = 2)
+RNK(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), w = 2)
+           V1rnk.2.2
+1970-01-01        NA
+1970-01-02         1
+1970-01-03         2
+1970-01-04         2
 
-runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4, cumulative = TRUE)
+RNK(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), w = 3, r = 2)
+           V1rnk.3.2
+1970-01-01        NA
+1970-01-02        NA
+1970-01-03         1
+1970-01-04         2
+
+# the window is larger than the data
+RNK(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), w = 5)
+           V1rnk.5.5
+1970-01-01        NA
+1970-01-02        NA
+1970-01-03        NA
+1970-01-04        NA
 }
 }
 \references{
+\cite{last Fortran version of percentRank.f (but the newer C version has a fix)
+\url{https://github.com/joshuaulrich/TTR/blob/9b30395f7604c37ea12a865961d81666bc167616/src/percentRank.f}
+}
+
 \cite{last Fortran version of percentRank.f (but the newer C version has a fix)
 \url{https://github.com/joshuaulrich/TTR/blob/9b30395f7604c37ea12a865961d81666bc167616/src/percentRank.f}
 }
