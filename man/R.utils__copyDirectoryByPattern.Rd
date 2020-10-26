@@ -2,16 +2,16 @@
 % Please edit documentation in R/econModelSupport.R
 \name{R.utils__copyDirectoryByPattern}
 \alias{R.utils__copyDirectoryByPattern}
-\title{copy Directory using a Regular Expression}
+\title{copy Files and Directories Using a Regular Expression}
 \usage{
 R.utils__copyDirectoryByPattern(
   from,
   to = ".",
   ...,
-  private = TRUE,
-  recursive = TRUE,
+  private = T,
+  recursive = T,
   pattern = NULL,
-  tolower = FALSE
+  CaseChange = NULL
 )
 }
 \arguments{
@@ -19,32 +19,32 @@ R.utils__copyDirectoryByPattern(
 
 \item{to}{The pathname of the destination directory.}
 
-\item{...}{Additional arguments passed to
-    \code{\link[base:files]{file.copy}}(), e.g. \code{overwrite}.}
+\item{...}{Additional arguments passed to file.copy(), e.g. overwrite.}
 
-\item{private}{If \code{\link[base:logical]{TRUE}}, files (and directories) starting with
-        a period is also copied, otherwise not.}
+\item{private}{If TRUE, files (and directories) starting with a period is also copied, otherwise not.}
 
-\item{recursive}{If \code{\link[base:logical]{TRUE}}, subdirectories are copied too,
-        otherwise not.}
+\item{recursive}{If TRUE, subdirectories are copied too, otherwise not.  Note, the name of the subdirectory also must in in "pattern".}
 
-\item{tolower}{default is F. Convert the target file names to lower case.}
-}
-\value{
-Returns (invisibly) a \code{\link[base]{character}} \code{\link[base]{vector}} of pathnames copied.
+\item{pattern}{regular expression of the names of the source files}
+
+\item{CaseChange}{string. Default is NULL(no change).  Change to target file name to the desired case: NULL(no change), "UpperCase", "LowerCase".}
 }
 \description{
 \preformatted{
 Code copy of R.utils::copyDirectory.default with the addition of the
-parameter (and feature) "tolower".  The function is renamed to
-be R.utils__copyDirectoryByPattern
+features pattern(source files) CaseChange(destination files).
+The function is renamed to be R.utils__copyDirectoryByPattern
 }
-}
-\details{
-Note that this method does \emph{not} use \code{\link[R.utils]{copyFile}}() to
-  copy the files, but \code{\link[base]{file.copy}}().
 }
 \examples{
 \dontrun{
+
+# R.utils__copyDirectoryByPattern example
+
+R.utils__copyDirectoryByPattern("C:/Program Files (x86)/Stock Investor/Professional",
+  to = tempdir(), pattern = "(*\\\\.dbf$|\\\\.*DBF$|\\\\.*DBF$|*.chm$|ReadMe\\\\.txt)",
+  CaseChange = "UpperCase"
+)
+dir(tempdir())
 }
 }

@@ -4,7 +4,7 @@
 \alias{ifelse.xts}
 \title{If Then Else}
 \usage{
-ifelse.xts(test, yes, no)
+ifelse.xts(test, yes, no, ...)
 }
 \arguments{
 \item{test}{xts object}

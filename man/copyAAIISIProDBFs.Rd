@@ -6,13 +6,16 @@
 \usage{
 copyAAIISIProDBFs(
   From = "C:/Program Files (x86)/Stock Investor/Professional",
-  To = tempdir()
+  To = tempdir(),
+  CaseChange = "UpperCase"
 )
 }
 \arguments{
 \item{From}{string. Directory of AAII StockInvestor Pro installation directory.  Defaults to "C:/Program Files (x86)/Stock Investor/Professional".}
 
 \item{To}{string. Location of the target directory. Default is in the TEMPDIR.}
+
+\item{CaseChange}{string. Default is NULL(no change).  Change to target file name to the desired case: NULL(no change), "UpperCase", "LowerCase".}
 }
 \value{
 string. Date of the SIPro update, in days since the UNIX epoch (birthday of UNIX: January 1st, 1970). Returned is the "Current as of date" of StockInvestor Pro.  This is the same data found by doing Help -> About (and then reading the bottom line).
@@ -24,11 +27,13 @@ Along with the copied .DBF files also the ReadMe.txt and the si.chm help files i
 \examples{
 \dontrun{
 
-# example of copyAAIISIProDBFs(Copy SIPro .DBF Files to a Target Directory)
+# copyAAIISIProDBFs(Copy SIPro .DBF Files to a Target Directory) example
 
 copyAAIISIProDBFs(
-    from = "C:/Program Files (x86)/Stock Investor/Professional"
-  , to   = paste0("W:/AAIISIProDBFs","/",getAAIISIProDate())
+    From = "C:/Program Files (x86)/Stock Investor/Professional",
+    To   = paste0(tempdir(),"/", getAAIISIProDate()),
+    CaseChange = "UpperCase"
 )
+dir(paste0(tempdir(),"/", getAAIISIProDate()))
 }
 }

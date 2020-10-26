@@ -140,7 +140,6 @@ tryCatchLog::tryCatchLog({
 #' @param no  if F, select this value
 #' @param ... dots passed
 #' @return xts object
-
 #' @examples
 #' \dontrun{
 #'
@@ -185,7 +184,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog  tryCatchLog
 #' @importFrom zoo coredata
 #' @export
-ifelse.xts <- function(test, yes, no) {
+ifelse.xts <- function(test, yes, no, ...) {
 tryCatchLog::tryCatchLog({
 
   # NOTE: There exists better/faster ifelse out there
@@ -263,7 +262,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog  tryCatchLog
 #' @importFrom zoo coredata
 #' @export
-IE <- function(x, y, n) {
+IE <- function(x, y, n, ...) {
 tryCatchLog::tryCatchLog({
 
   xTs <- ifelse.xts(x, yes = y, no = n)

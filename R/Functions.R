@@ -110,7 +110,6 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ina"))
   }
   xTs
-
 })}
 
 

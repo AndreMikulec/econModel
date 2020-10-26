@@ -11,6 +11,9 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
+    foreign,
+    R.oo,
+    R.utils,
     rlist,
     DescTools,
     tryCatchLog,

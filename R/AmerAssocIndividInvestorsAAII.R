@@ -76,20 +76,24 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param From string. Directory of AAII StockInvestor Pro installation directory.  Defaults to "C:/Program Files (x86)/Stock Investor/Professional".
 #' @param To string. Location of the target directory. Default is in the TEMPDIR.
+#' @param CaseChange string. Default is NULL(no change).  Change to target file name to the desired case: NULL(no change), "UpperCase", "LowerCase".
 #' @return string. Date of the SIPro update, in days since the UNIX epoch (birthday of UNIX: January 1st, 1970). Returned is the "Current as of date" of StockInvestor Pro.  This is the same data found by doing Help -> About (and then reading the bottom line).
 #' @examples
 #' \dontrun{
 #'
-#' # example of copyAAIISIProDBFs(Copy SIPro .DBF Files to a Target Directory)
+#' # copyAAIISIProDBFs(Copy SIPro .DBF Files to a Target Directory) example
 #'
 #' copyAAIISIProDBFs(
-#'     from = "C:/Program Files (x86)/Stock Investor/Professional"
-#'   , to   = paste0("W:/AAIISIProDBFs","/",getAAIISIProDate())
+#'     From = "C:/Program Files (x86)/Stock Investor/Professional",
+#'     To   = paste0(tempdir(),"/", getAAIISIProDate()),
+#'     CaseChange = "UpperCase"
 #' )
+#' dir(paste0(tempdir(),"/", getAAIISIProDate()))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 copyAAIISIProDBFs <- function(From = "C:/Program Files (x86)/Stock Investor/Professional",
-                              To = tempdir()) {
+                              To = tempdir(),
+                              CaseChange = "UpperCase") {
 tryCatchLog::tryCatchLog({
 
   SubDirs <- c("","/Dbfs","/User","/Static","/Temp","/Datadict")
@@ -98,7 +102,8 @@ tryCatchLog::tryCatchLog({
 
     # it DOES not overwrite what is ALREADY there
     R.utils__copyDirectoryByPattern(from = paste0(From, SubDir),
-                                    pattern = "(*\\.dbf$|\\.*DBF$|\\.*DBF$|*.chm$|ReadMe\\.txt)", to=To,  tolower = TRUE
+                                    pattern = "(*\\.dbf$|\\.*DBF$|\\.*DBF$|*.chm$|ReadMe\\.txt)",
+                                    to = To, CaseChange = CaseChange
     )
 
   }

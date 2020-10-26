@@ -54,26 +54,39 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' copy Directory using a Regular Expression
+#' copy Files and Directories Using a Regular Expression
 #'
 #' @description
 #' \preformatted{
 #' Code copy of R.utils::copyDirectory.default with the addition of the
-#' parameter (and feature) "tolower".  The function is renamed to
-#' be R.utils__copyDirectoryByPattern
+#' features pattern(source files) CaseChange(destination files).
+#' The function is renamed to be R.utils__copyDirectoryByPattern
 #' }
-#' @inheritParams R.utils::copyDirectory.default
-#' @param tolower default is F. Convert the target file names to lower case.
-#' @inherit R.utils::copyDirectory.default return details
+#' @param from	The pathname of the source directory to be copied.
+#' @param to	The pathname of the destination directory.
+#' @param ...	Additional arguments passed to file.copy(), e.g. overwrite.
+#' @param private	If TRUE, files (and directories) starting with a period is also copied, otherwise not.
+#' @param recursive	If TRUE, subdirectories are copied too, otherwise not.  Note, the name of the subdirectory also must in in "pattern".
+#' @param pattern regular expression of the names of the source files
+#' @param CaseChange string. Default is NULL(no change).  Change to target file name to the desired case: NULL(no change), "UpperCase", "LowerCase".
 #' @examples
 #' \dontrun{
+#'
+#' # R.utils__copyDirectoryByPattern example
+#'
+#' R.utils__copyDirectoryByPattern("C:/Program Files (x86)/Stock Investor/Professional",
+#'   to = tempdir(), pattern = "(*\\.dbf$|\\.*DBF$|\\.*DBF$|*.chm$|ReadMe\\.txt)",
+#'   CaseChange = "UpperCase"
+#' )
+#' dir(tempdir())
 #' }
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom R.oo throw
 #' @importFrom R.utils isDirectory Arguments isFile filePath
 #' @export
 R.utils__copyDirectoryByPattern <- function(from, to=".", ...,
-                                   private=TRUE, recursive=TRUE,
-                                   pattern = NULL, tolower = FALSE) {
+                                   private=T, recursive=T,
+                                   pattern = NULL, CaseChange = NULL) {
 tryCatchLog::tryCatchLog({
 
   # BACKWARD COMPATIBILITY: file.copy() gained argument copy.mode=TRUE in
@@ -98,7 +111,7 @@ tryCatchLog::tryCatchLog({
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'from':
   if (!R.utils::isDirectory(from))
-    throw("Argument 'from' is not a directory: ", from);
+    R.oo::throw("Argument 'from' is not a directory: ", from);
 
   # Argument 'to':
   to <- R.utils::Arguments$getWritablePath(to, mkdirs=TRUE, absolutePath=FALSE);
@@ -109,6 +122,8 @@ tryCatchLog::tryCatchLog({
   # Argument 'recursive':
   recursive <- R.utils::Arguments$getLogical(recursive);
 
+  # NOTE: to copy a directory recursive-ly,
+  # the name of the directory ALSO ALSO BE in "pattern"
   # Use relative pathnames
   files <- list.files(from, all.files=private, pattern = pattern, full.names=FALSE);
   files <- files[!basename(files) %in% c(".", "..")];
@@ -118,13 +133,22 @@ tryCatchLog::tryCatchLog({
   for (file in files) {
     basename <- basename(file);
     if (R.utils::isFile(file)) {
-      if (.file.copy(from=file, to=R.utils::filePath(to, if(!tolower) { basename } else { tolower(basename) } ), ...)) {
+      TargetFileName <- basename
+      if(!is.null(CaseChange)) {
+        if(CaseChange == "UpperCase") {
+          TargetFileName <- toupper(TargetFileName)
+        }
+        if(CaseChange == "LowerCase") {
+          TargetFileName <- tolower(TargetFileName)
+        }
+      }
+      if (.file.copy(from=file, to=R.utils::filePath(to, TargetFileName), ...)) {
         copiedFiles <- c(copiedFiles, file);
       }
     } else if (R.utils::isDirectory(file)) {
       if (recursive) {
         copiedFiles <- c(copiedFiles,
-                         copyDirectoryByPattern(file, to=R.utils::filePath(to, basename), ..., recursive=TRUE));
+                         R.utils__copyDirectoryByPattern(file, to=R.utils::filePath(to, basename), ..., recursive=TRUE));
       }
     }
   }

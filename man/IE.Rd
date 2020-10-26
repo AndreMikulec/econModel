@@ -4,7 +4,7 @@
 \alias{IE}
 \title{If Then Else}
 \usage{
-IE(x, y, n)
+IE(x, y, n, ...)
 }
 \arguments{
 \item{x}{xts object}
