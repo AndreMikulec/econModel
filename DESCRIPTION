@@ -25,7 +25,8 @@ Imports:
     timeDate,
     curl,
     xts,
-    quantmod
+    quantmod,
+    TTR
 RoxygenNote: 7.1.1
 Suggests: 
     testthat,

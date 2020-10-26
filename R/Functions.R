@@ -1056,3 +1056,84 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' rolling ranks using TTR::runPercentRank
+#'
+#' @rdname runRanks
+#'
+#' @description
+#' This is a wrapper around TTR runPercentRank.
+#' TTR runPercentRank gives skewed values
+#' (but with the value are in the correct order).
+#' This function uses that "proper ordering" and makes
+#' usable running ranks.
+#'
+#' @param x xts object
+#' @param window 10(default) lag to determine the ranks.
+#' If cumulative=TRUE, the number of observations to use
+#' before the first result is returned. Not tested. So beware.
+#' Must be between 1 and nrow(x), inclusive
+#' @param ranks 4(default) number of ranks. A lower value
+#' means a lower rank number.
+#' @param cumulative FALSE(default) use from-inception calculation?
+#' Not tested. So beware.
+#' @param exact.multiplier The weight applied to identical values
+#' in the window. Must be between 0 and 1, inclusive.
+#' See ? TTR::runPercentRank
+#' @return xts object
+#' @references
+#'\cite{last Fortran version of percentRank.f (but the newer C version has a fix)
+#'\url{https://github.com/joshuaulrich/TTR/blob/9b30395f7604c37ea12a865961d81666bc167616/src/percentRank.f}
+#'}
+#' @examples
+#' \dontrun{
+#'
+#' # runRanks(rolling ranks using TTR::runPercentRank) examples
+#'
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4)
+#'
+#' 1970-01-01          NA
+#' 1970-01-02          NA
+#' 1970-01-03          NA
+#' 1970-01-04           3
+#'
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4)
+#'
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 3, ranks = 3)
+#'
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4, ranks = 2)
+#'
+#' runRanks(xts(c(3, 1, 2, 3), zoo::as.Date(0:3)), window = 4, cumulative = TRUE)
+#'}
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom TTR runPercentRank
+#' @export
+runRanks <- function(x, window = 10, ranks = 4, cumulative = F, exact.multiplier = 0.5) {
+tryCatchLog::tryCatchLog({
+
+  if(ranks <= 1 || window <= 1) {
+    stop(paste0("\"windows\" and \"ranks\" must be greater than one(1)"))
+  }
+
+  if(window <= NROW(x)) {
+      # number between zero(0) and one(1)
+    y   <- TTR::runPercentRank(x, n = window, cumulative = cumulative, exact.multiplier = exact.multiplier)
+        # number between zero(0) and "rank"
+    y   <- y * ranks                                      # very important
+                           # splitter sequence # 1, 2, ... rank-1
+    res <- findInterval(y, vec = { seq_len(ranks - 1) }, left.open = TRUE) + 1
+  } else {
+     res <- rep(NA_real_, NROW(x))
+  }
+
+  xTs <- xts(res, index(x))
+
+  # override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rnk"),".",  window, ".", ranks)
+  }
+  xTs
+})}
+#' @rdname runRanks
+#'
+#' @export
+RNKS <- runRanks
