@@ -1,5 +1,5 @@
 
-#' Perform is.na About Each Column in an xts Object
+#' Perform is.na About an xts Object
 #'
 #' @description
 #' \preformatted{
@@ -12,9 +12,7 @@
 #' @examples
 #' \dontrun{
 #'
-#' is.na.xts examples
-#'
-#' library(xts)
+#' is.na.xts(Perform is.na About an xts Object) examples
 #'
 #' xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 #'
@@ -57,17 +55,19 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Perform is.na About Each Column in an xts Object
+#' Perform is.na About an xts Object
 #'
 #' @description
 #' \preformatted{
 #' Without the function, INA, is.na(xts) strips the index.
 #' Probably this function should be an xts enhancement.
 #' }
+#' @inheritParams is.na.xts
+#' @inherit is.na.xts return details
 #' @examples
 #' \dontrun{
 #'
-#' # INA(is na?) examples
+#' # INA(Perform is.na About an xts Object) examples
 #'
 #' xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 #'
@@ -98,8 +98,6 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-09                    FALSE
 #' 1970-01-12                    FALSE
 #' }
-#' @inheritParams is.na.xts
-#' @inherit is.na.xts return details
 #' @export
 INA <- function(x, ...) {
 tryCatchLog::tryCatchLog({
@@ -112,6 +110,58 @@ tryCatchLog::tryCatchLog({
   xTs
 })}
 
+
+#' Perform na.locf About an xts Object
+#'
+#' @description
+#' \preformatted{
+#' Perform na.locf About an xts Object
+#' }
+#' @param x xts object
+#' @param d direction. "f"(default) forward.  The other option is "b" backward.
+#' @param ... dots passed
+#' @return xts object
+#' @examples
+#' \dontrun{
+#'
+#' # NC(Perform na.locf About an xts Object) example
+#'
+#' xts(c(NA_real_, 3, NA_real_,5, NA_real_), zoo::as.Date(0:4))
+#'            [,1]
+#' 1970-01-01   NA
+#' 1970-01-02    3
+#' 1970-01-03   NA
+#' 1970-01-04    5
+#' 1970-01-05   NA
+#'
+#' NC(xts(c(NA_real_, 3, NA_real_,5, NA_real_), zoo::as.Date(0:4)))
+#'            V1nc.f
+#' 1970-01-01     NA
+#' 1970-01-02      3
+#' 1970-01-03      3
+#' 1970-01-04      5
+#' 1970-01-05      5
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo na.locf
+#' @export
+NC <- function(x, d = "f", ...) {
+tryCatchLog::tryCatchLog({
+
+  if(d == "f") {
+    fromLast <- F # forward
+  }
+  if(d == "b") {
+    fromLast <- T # forward
+  }
+
+  xTs <- zoo::na.locf(x, fromLast = fromLast)
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"nc")), ".", d, ".", T)
+  }
+  xTs
+})}
 
 
 

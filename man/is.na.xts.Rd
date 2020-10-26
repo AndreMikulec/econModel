@@ -2,7 +2,7 @@
 % Please edit documentation in R/Functions.R
 \name{is.na.xts}
 \alias{is.na.xts}
-\title{Perform is.na About Each Column in an xts Object}
+\title{Perform is.na About an xts Object}
 \usage{
 \method{is.na}{xts}(x, ...)
 }
@@ -23,9 +23,7 @@ Probably this function should be an xts enhancement.
 \examples{
 \dontrun{
 
-is.na.xts examples
-
-library(xts)
+is.na.xts(Perform is.na About an xts Object) examples
 
 xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Functions.R
 \name{INA}
 \alias{INA}
-\title{Perform is.na About Each Column in an xts Object}
+\title{Perform is.na About an xts Object}
 \usage{
 INA(x, ...)
 }
@@ -23,7 +23,7 @@ Probably this function should be an xts enhancement.
 \examples{
 \dontrun{
 
-# INA(is na?) examples
+# INA(Perform is.na About an xts Object) examples
 
 xts(c(NA_real_, 0, NA_real_), zoo::as.Date(0:2))
 

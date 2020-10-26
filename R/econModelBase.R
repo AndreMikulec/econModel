@@ -1,5 +1,46 @@
 
 
+#' Print Proper (and short)
+#'
+#' @description
+#' \preformatted{
+#' Print Proper (and short)
+#' }
+#' @param x object
+#' @param ... dots passed
+#' @return x object or "print proper" string
+#' @examples
+#' \dontrun{
+#'
+#' # prntPrpr(Print Proper (and short)) example
+#'
+#' prntPrpr(T)
+#' [1] "T"
+#'
+#' prntPrpr(c(T,F))
+#' [1] "T" "F"
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+prntPrpr <- function(x, ...) {
+tryCatchLog::tryCatchLog({
+
+  if(1 < length(x)) {
+    return(unlist(lapply(x, prntPrpr, ...)))
+  }
+
+  if(is.logical(x)) {
+    if(x) {
+      Prnt <- "T"
+    } else {
+      Prnt <- "F"
+    }
+  } else {
+    Prnt <- x
+  }
+  Prnt
+})}
+
 
 #' Better Names
 #'
@@ -11,13 +52,15 @@
 #' }
 #' @param x names
 #' @rdname Names
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
 Names <- function(x) {
+tryCatchLog::tryCatchLog({
   if(is.null(x) || !length(x)) return(character(0))
   names(x) -> res
   if(is.null(res)) return(character(0))
   return(res)
-}
+})}
 
 
 #' Better Names
@@ -32,14 +75,14 @@ Names <- function(x) {
 #' @param x names
 #' @param value result
 #' @rdname Names
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
 `Names<-` <- function(x,value) {
-
+tryCatchLog::tryCatchLog({
    if(is.null(x)     || !length(x))         x <- character(0)
    if(is.null(value) || !length(value)) value <- character(0)
   `names<-`(x = x, value = value)
-
-}
+})}
 
 
 
