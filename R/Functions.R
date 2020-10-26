@@ -158,7 +158,7 @@ tryCatchLog::tryCatchLog({
   xTs <- zoo::na.locf(x, fromLast = fromLast)
   # strait override
   if(NVAR(xTs)) {
-     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"nc")), ".", d, ".", T)
+     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"nc")), ".", d)
   }
   xTs
 })}

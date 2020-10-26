@@ -260,15 +260,15 @@ tryCatchLog::tryCatchLog({
 
   if(is.null(AltName)) {
     if(isCharFun) {
-      NewName <- gsub("[.]|::", FixedSep, Fun)
+      NewName <- tail(strsplit(Fun, "::")[[1]],1)
     } else {
       NewName <- "Anon"
     }
-  } else {
+  } else { # AltName provided: it an only be a character string
     if(is.null(asIsAltName) || asIsAltName == F) {
       # try to fix
-      NewName <- gsub("[.]|::", FixedSep, AltName)
-    } else { # T - just leave the AltName(to become NewName) "as is"
+      NewName <- tail(strsplit(AltName, "::")[[1]],1)
+    } else { # just leave the AltName(to become NewName) "as is"
       NewName <- AltName
     }
 
@@ -279,7 +279,11 @@ tryCatchLog::tryCatchLog({
       if(!is.null(x1) && (NCOL(x1) > 0)) { colnames(x1)[1] } else { NULL },
       if(!is.null(x2) && (NCOL(x2) > 0)) { colnames(x2)[1] } else { NULL }
     ), collapse = FixedSep) -> Colnames
+    # consistency with the following
+    if(Colnames == "") { Colnames <- NULL }
 
+  # "TRUE" -> "T" "FALSE" -> "F"
+  FlagsCombo <- lapply(FlagsCombo, prntPrpr)
   if(length(FlagsCombo)) {
     FlagsCombo <-  paste0(c(interleave(names(FlagsCombo), unlist(FlagsCombo))), collapse = FixedSep)
   } else {
@@ -427,7 +431,7 @@ tryCatchLog::tryCatchLog({
   # if do.call(rlist::list.zip, ) ever fails then
   # then purrr::transpose is an acceptable replacement
   DescTools::DoCall(
-    rlist::list.zip, as.list(DescTools::DoCall(expand.grid, Flags))
+    rlist::list.zip, as.list(DescTools::DoCall(expand.grid, c(list(), Flags, stringsAsFactors = F)))
   ) -> FlagsCombinations
   #
   # user just may want to run without any flag combinations
