@@ -1061,8 +1061,6 @@ tryCatchLog::tryCatchLog({
 
 #' rolling ranks using TTR::runPercentRank
 #'
-#' @rdname runRanks
-#'
 #' @description
 #' This is a wrapper around the R CRAN package TTR function runPercentRank.
 #' TTR runPercentRank gives skewed values
@@ -1157,8 +1155,6 @@ tryCatchLog::tryCatchLog({
 
 #' rolling ranks using TTR::runPercentRank
 #'
-#' @rdname runRanks
-#'
 #' @description
 #' This is a wrapper around the R CRAN package TTR function runPercentRank.
 #' TTR runPercentRank gives skewed values
@@ -1216,6 +1212,5 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rnk"),".",  w, ".", r)
   }
   xTs
-
 })}
 
