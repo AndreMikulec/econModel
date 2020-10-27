@@ -27,7 +27,7 @@ Print Proper (and short)
 prntPrpr(T)
 [1] "T"
 
-prntPrpr(c(T,F))
-[1] "T" "F"
+prntPrpr(c(T,F,NA))
+[1] "T" "F" "N"
 }
 }

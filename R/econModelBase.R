@@ -17,8 +17,8 @@
 #' prntPrpr(T)
 #' [1] "T"
 #'
-#' prntPrpr(c(T,F))
-#' [1] "T" "F"
+#' prntPrpr(c(T,F,NA))
+#' [1] "T" "F" "N"
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -28,15 +28,21 @@ tryCatchLog::tryCatchLog({
   if(1 < length(x)) {
     return(unlist(lapply(x, prntPrpr, ...)))
   }
+  Done <- FALSE
 
-  if(is.logical(x)) {
+  if(!Done && is.na(x)) {
+    Prnt <- "N"; Done <- T
+  }
+  if(!Done && is.logical(x)) {
     if(x) {
-      Prnt <- "T"
+      Prnt <- "T"; Done <- T
     } else {
-      Prnt <- "F"
+      Prnt <- "F" ; Done <- T
     }
-  } else {
-    Prnt <- x
+  }
+  if(!Done)
+  {
+    Prnt <- x; Done <- T
   }
   Prnt
 })}
