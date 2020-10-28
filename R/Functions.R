@@ -111,6 +111,332 @@ tryCatchLog::tryCatchLog({
 })}
 
 
+
+#' Time Near Events or Event Run Identification
+#'
+#' @description
+#' \preformatted{
+#' Counts the number of observations to/from an event.  This is called the time-distance to/from an event.
+#' Alternately, gives the range of an event.
+#' }
+#' @param x xts object
+#' @param zone "after"(default). Before or after the event. "before" is the other option.
+#' @param event T(default). Detect the observation that holds the value of T(TRUE). This can be any value that can be testing on the right hand side of the equals (==) sign. A special option to be an event is NA.
+#' @param not F(default). Do not "!" not-the-event.  T is useful against NA to detect !is.na(NA). The special case of NA internally is handled !is.na(NA).
+#' @param run F(default). Do not generate run range identifiers, instead return(T) the preferred time-distance from the event.
+#' @param ... dots passed
+#' @return xts object
+#' @examples
+#' \dontrun{
+#'
+#' # timeEvent(Time Near Events or Event Run Identification) examples
+#'
+#' xts(c(NA,F,F,T,NA,T,F,F,NA), zoo::as.Date(0:8))
+#'             [,1]
+#' 1970-01-01    NA
+#' 1970-01-02 FALSE
+#' 1970-01-03 FALSE
+#' 1970-01-04  TRUE
+#' 1970-01-05    NA
+#' 1970-01-06  TRUE
+#' 1970-01-07 FALSE
+#' 1970-01-08 FALSE
+#' 1970-01-09    NA
+#'
+#' timeEvent(xts(c(NA,F,F,T,NA,T,F,F,NA), zoo::as.Date(0:8)))
+#'
+#'            V1te
+#' 1970-01-01   NA
+#' 1970-01-02   NA
+#' 1970-01-03   NA
+#' 1970-01-04    0
+#' 1970-01-05    1
+#' 1970-01-06    0
+#' 1970-01-07    1
+#' 1970-01-08    2
+#' 1970-01-09    3
+#'
+#' timeEvent(xts(c(NA,F,F,T,NA,T,F,F,NA), zoo::as.Date(0:8)), run = T)
+#'
+#'            V1te
+#' 1970-01-01   NA
+#' 1970-01-02   NA
+#' 1970-01-03   NA
+#' 1970-01-04    1
+#' 1970-01-05    1
+#' 1970-01-06    2
+#' 1970-01-07    2
+#' 1970-01-08    2
+#' 1970-01-09    2
+#'
+#' timeEvent(xts(c(NA,F,F,T,NA,T,F,F,NA), zoo::as.Date(0:8)), zone = "before")
+#'
+#'            V1te
+#' 1970-01-01    3
+#' 1970-01-02    2
+#' 1970-01-03    1
+#' 1970-01-04    0
+#' 1970-01-05    1
+#' 1970-01-06    0
+#' 1970-01-07   NA
+#' 1970-01-08   NA
+#' 1970-01-09   NA
+#'
+#' timeEvent(xts(c(NA,F,F,T,NA,T,F,F,NA), zoo::as.Date(0:8)), zone = "before", run = T)
+#'
+#'            V1te
+#' 1970-01-01    2
+#' 1970-01-02    2
+#' 1970-01-03    2
+#' 1970-01-04    2
+#' 1970-01-05    1
+#' 1970-01-06    1
+#' 1970-01-07   NA
+#' 1970-01-08   NA
+#' 1970-01-09   NA
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom utils head
+#' @importFrom zoo coredata
+#' @export
+timeEvent <- function(x, zone = "after", event = T, not = F, run = F, ...) {
+tryCatchLog::tryCatchLog({
+
+  if(zone == "a") zone <- "after"
+  if(zone == "b") zone <- "before"
+  xTs <- x
+
+  # limit all of my event down to just: event xor 'not event'
+  # using package::is.na.xts and package::ifelse.xts
+  if( is.na(event)) {
+      xTs <- ifelse( is.na(xTs),                 T, F)
+  }
+  if(!is.na(event)) {
+      xTs <- ifelse(!is.na(xTs) &  xTs == event, T, F)
+  }
+  # could have, instead, done this here
+  # zoo::coredata(xTs) <- ifelse( is.na(zoo::coredata(xTs)),                               T, F)
+  # zoo::coredata(xTs) <- ifelse(!is.na(zoo::coredata(xTs)) & zoo::coredata(xTs) == event, T, F)
+
+  RunLenEnc <- rle(as.vector(coredata(xTs)))
+  # list of each run
+  Runs <- mapply(function(...) { do.call(rep, rev(list(...))) }, RunLenEnc$lengths, RunLenEnc$values, SIMPLIFY = F)
+
+  # prepare to test each run to see if the run obs
+  # is/are event(s) and/or not event(s)
+  if(not) {
+    whatIs <- function(x) {! whatExpr(x) }
+  } else {
+    whatIs <- function(x) {  whatExpr(x) }
+  }
+  if( is.na(event)) { # is.na event
+    whatExpr <- function(x) { identity(x)  }
+    whatIsEvent <- function(x) { whatIs(is.na(x[1])) }
+  }
+  if (!is.na(event))  { # not is.na event
+    whatExpr <- function(x) { x[1] == event }
+    whatIsEvent <- function(x) { whatIs(x) }
+  }
+
+  # actually perform the test
+  TimeAboutEvents <- unlist(lapply(Runs, function(x) {
+
+    if (whatIsEvent(x)){
+                       # events
+      TimeNearEvent <- rep(0, length(x))
+    } else {
+      # zone == "after"
+      TimeNearEvent <- seq_along(x)
+      if(zone == "before") TimeNearEvent <- rev(TimeNearEvent)
+      TimeNearEvent
+    }
+  }))
+
+  # beginning and end managments
+  #
+  # zone == "after"
+  # NA-out the "fake event that exists before all event runs" and its "time near"
+  # zone == "before"
+  # NA-out the "fake event that exists after all event runs" and its "time near"
+  # reverse
+  if(zone == "before") {
+    TimeAboutEvents <- rev(TimeAboutEvents)
+  }
+  # zone == "after"
+  TimeAboutEvents[seq(0, to = max(0, utils::head(which(0 == TimeAboutEvents),1) -1))] <- NA
+  # then reverse back
+  if(zone == "before") {
+    TimeAboutEvents <- rev(TimeAboutEvents)
+  }
+
+  # want the event zone runs
+  # e.g.
+  # [1] NA NA NA  0  1  0  1  2  3
+  # to
+  # [1] NA NA NA  1  1  2  2  2  2
+  if(run) {
+    # reverse
+    if(zone == "before") {
+      TimeAboutEvents <- rev(TimeAboutEvents)
+    }
+    # zone == "after"
+    StartsAt <- c(which(0 == TimeAboutEvents), length(TimeAboutEvents) + 1)
+    SeqId <- 0
+    SeqRuns <- unlist(mapply(function(x,y) {
+      SeqId <<- SeqId + 1
+      rep(SeqId, y - x)
+    }, StartsAt[-length(StartsAt)], StartsAt[-1], SIMPLIFY = F))
+    # add back those "beginning NAs"
+    TimeAboutEvents <- c(rep(NA, utils::head(StartsAt,1) - 1), SeqRuns)
+    #
+    # reverse again
+    if(zone == "before") {
+      TimeAboutEvents <- rev(TimeAboutEvents)
+    }
+  }
+  zoo::coredata(xTs) <- TimeAboutEvents
+
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"te"))
+  }
+  xTs
+})}
+
+
+
+#' Time Near Events or Event Run Identification
+#'
+#' @description
+#' \preformatted{
+#' Counts the number of observations to/from an event.
+#' This is called the time-distance to/from an event.
+#' Alternately, gives the range of an event.
+#'
+#' Time Event(TE)
+#' }
+#' @param x xts object
+#' @param z "after"(default). Before or after the event. "before" is the other option.
+#' @param e T(default). Detect the observation that holds the value of T(TRUE). This can be any value that can be testing on the right hand side of the equals (==) sign. A special option to be an event is NA.
+#' @param n F(default). Do not "!" not-the-event.  T is useful against NA to detect !is.na(NA). The special case of NA internally is handled !is.na(NA).
+#' @param r F(default). Do not generate run range identifiers, instead return(T) the preferred time-distance from the event.
+#' @param ... dots passed
+#' @return xts object
+#' @examples
+#' \dontrun{
+#'
+#' # TE(Time Near Events or Event Run Identification) examples
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+TE <- function(x, z = "a", e = T, n = F, r = F, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- timeEvent(xTs, zone = z, event = e, not = n, run = r, ...)
+
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"te")), ".", z, ".", e, ".", n, ".", r)
+  }
+  xTs
+})}
+
+
+
+#' Time Near Events or Event Run Identification
+#'
+#' @description
+#' \preformatted{
+#' Counts the number of observations to/from an event.
+#' This is called the time-distance to/from an event.
+#' Alternately, gives the range of an event.
+#'
+#' Time After Event(TAE)
+#' }
+#' @inheritParams TE
+#' @inherit TE
+#' @examples
+#' \dontrun{
+#'
+#' # TAE(Time Near Events or Event Run Identification) examples
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+TAE <- function(x, e = T, n = F, r = F, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- timeEvent(xTs, zone = "a", event = e, not = n, run = r, ...)
+
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"tae")), ".", e, ".", n, ".", r)
+  }
+  xTs
+})}
+
+
+#' Time Near Events or Event Run Identification
+#'
+#' @description
+#' \preformatted{
+#' Counts the number of observations to/from an event.
+#' This is called the time-distance to/from an event.
+#' Alternately, gives the range of an event.
+#'
+#' Time Before Event (TBE)
+#' }
+#' @inheritParams TE
+#' @inherit TE
+#' @examples
+#' \dontrun{
+#'
+#' # TBE(Time Near Events or Event Run Identification) examples
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+TBE <- function(x, e = T, n = F, r = F, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- timeEvent(xTs, zone = "b", event = e, not = n, run = r, ...)
+
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"tbe")), ".", e, ".", n, ".", r)
+  }
+  xTs
+})}
+
+
+#' Time Near Events or Event Run Identification
+#'
+#' @description
+#' \preformatted{
+#' Counts the number of observations to/from an event.
+#' This is called the time-distance to/from an event.
+#' Alternately, gives the range of an event.
+#'
+#' Range of the event - Run - (RN)
+#' }
+#' @inheritParams TE
+#' @inherit TE
+#' @examples
+#' \dontrun{
+#'
+#' # RN(Time Near Events or Event Run Identification) examples
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+RN <- function(x, z = "a", e = T, n = F, ...) {
+tryCatchLog::tryCatchLog({
+
+  xTs <- timeEvent(xTs, zone = z, event = e, not = n, run = T, ...)
+
+  # strait override
+  if(NVAR(xTs)) {
+     Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rn")), ".", z, ".", e, ".", n)
+  }
+  xTs
+})}
+
+
+
+
 #' Perform na.locf About an xts Object
 #'
 #' @description
