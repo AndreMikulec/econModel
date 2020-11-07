@@ -6,6 +6,7 @@
 #' Data typically includes the Title, Series ID, Source, Release, Seasonal Adjustment, Frequency, Units, Date Range, Last Updated, and Notes.
 #'
 #' @param Symbol specifying the name of the symbol to be queried
+#' @param DataSheet Logical. Default is FALSE.  Do not return the data payload. Otherwise, if TRUE, then also return the data payload of all of the data in an R attribute named "DataSheet".
 #' @return data.frame of attributes
 #' @examples
 #' \dontrun{
@@ -27,11 +28,20 @@
 #' $ DateRange         : chr "1967-06-01 to 2020-09-01"
 #' $ LastUpdated       : chr "2020-11-02 7:01 AM CST"
 #' $ Notes             : chr "Smoothed recession probabilities for the United"
+#'
+#' tail(attr(fredAttributes("RECPROUSM156N", DataSheet = T), "DataSheet"))
+#' RECPROUSM156N
+#' 2020-04-01        100.00
+#' 2020-05-01         37.85
+#' 2020-06-01         37.85
+#' 2020-07-01         47.92
+#' 2020-08-01        100.00
+#' 2020-09-01        100.00
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
-fredAttributes <-function(Symbol) {
+fredAttributes <-function(Symbol, DataSheet = F) {
 tryCatchLog::tryCatchLog({
 
   if(is.null(Symbol)) stop("Symbol can not be NULL.")
@@ -66,26 +76,7 @@ tryCatchLog::tryCatchLog({
   EoDataArea   <- length(fres)
   HeaderArea <- fres[seq(BoHeaderArea,EoHeaderArea,1)]
 
-  # WORKS (not used)
-  # DataArea   <- fres[seq(BoDataArea,EoDataArea ,1)]
 
-  # separate dates and values
-  # WORKS (not used)
-  # DatesAndValues <- strsplit(DataArea, "[[:blank:]]+")
-  #
-  # idea from
-  #
-  # Select first element of nested list
-  # MAR 2017
-  # https://stackoverflow.com/questions/20428742/select-first-element-of-nested-list
-  #
-  # WORKS (not used)
-  # DatesAndValues       <- unlist(DatesAndValues)
-  # DatesAndValuesLength <- length(DatesAndValues)
-  ## every other one
-  # Dates  <- DatesAndValues[seq(1,DatesAndValuesLength,2)]
-  # Values <- DatesAndValues[seq(2,DatesAndValuesLength,2)]
-  # Values[Values %in% "."] <- NA
 
   # read.dcf sometimes does not likes lines with blanks
   HeaderArea <- HeaderArea[!stringr::str_detect(HeaderArea,"^[[:blank:]]+$|^$")]
@@ -101,6 +92,32 @@ tryCatchLog::tryCatchLog({
   SeriesInfo <- te
 
   close(tcon)
+
+  if(DataSheet == T) {
+
+    DataArea   <- fres[seq(BoDataArea,EoDataArea ,1)]
+
+    # separate dates and values
+    DatesAndValues <- strsplit(DataArea, "[[:blank:]]+")
+    #
+    # idea from
+    #
+    # Select first element of nested list
+    # MAR 2017
+    # https://stackoverflow.com/questions/20428742/select-first-element-of-nested-list
+    #
+    DatesAndValues       <- unlist(DatesAndValues)
+    DatesAndValuesLength <- length(DatesAndValues)
+    # every other one
+    Dates  <- DatesAndValues[seq(1,DatesAndValuesLength,2)]
+    Values <- DatesAndValues[seq(2,DatesAndValuesLength,2)]
+    Values[Values %in% "."] <- NA
+
+    # columns are assigned in reverse order
+    Payload <-  as.data.frame(Values, Dates)
+    colnames(Payload)[1] <- Symbol
+    attributes(SeriesInfo)$DataSheet <- Payload
+  }
 
   SeriesInfo
 })}

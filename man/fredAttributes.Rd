@@ -4,10 +4,12 @@
 \alias{fredAttributes}
 \title{Download attributes of Times Series of Federal Reserve Economic Data - FRED(R)}
 \usage{
-fredAttributes(Symbol)
+fredAttributes(Symbol, DataSheet = F)
 }
 \arguments{
 \item{Symbol}{specifying the name of the symbol to be queried}
+
+\item{DataSheet}{Logical. Default is FALSE.  Do not return the data payload. Otherwise, if TRUE, then also return the data payload of all of the data in an R attribute named "DataSheet".}
 }
 \value{
 data.frame of attributes
@@ -35,5 +37,14 @@ $ Units             : chr "Percent"
 $ DateRange         : chr "1967-06-01 to 2020-09-01"
 $ LastUpdated       : chr "2020-11-02 7:01 AM CST"
 $ Notes             : chr "Smoothed recession probabilities for the United"
+
+tail(attr(fredAttributes("RECPROUSM156N", DataSheet = T), "DataSheet"))
+RECPROUSM156N
+2020-04-01        100.00
+2020-05-01         37.85
+2020-06-01         37.85
+2020-07-01         47.92
+2020-08-01        100.00
+2020-09-01        100.00
 }
 }
