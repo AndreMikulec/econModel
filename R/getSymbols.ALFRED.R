@@ -107,6 +107,100 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Estimate the Time Distance Between Observations Dates/Times and Their Corresponding LastUpdated(Publishing) Dates/times
+#'
+#' Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
+#'
+#' @param x Date times of observation dates
+#' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars
+#' @param Frequency No default (required). Values can be Daily(not implemented yet), Weekly(not implemented yet), Monthly, and Quarterly
+#' @param LastUpdated No default (required).  Date time of the published date of the newest(latest) observation
+#' @param LastOfDateRange Default NULL.  If not present, this value will be taken from the last observation of x.  This parameter value represents the earliest of the time between an observation and its corresponding LastUpdated Date time.
+#' @return vector of Date times
+#' @examples
+#' \dontrun{
+#' Title:               Gross Domestic Product
+#' Series ID:           GDP
+#' Source:              U.S. Bureau of Economic Analysis
+#' Release:             Gross Domestic Product
+#' Seasonal Adjustment: Seasonally Adjusted Annual Rate
+#' Frequency:           Quarterly
+#' Units:               Billions of Dollars
+#' Date Range:          1947-01-01 to 2020-07-01
+#' Last Updated:        2020-10-29 7:52 AM CDT
+#'
+#' atr <- fredAttributes("GDP")
+#'
+#' library(quantmod)
+#'
+#' getSymbols("GDP", src = "FRED")
+#'
+#' estimLastUpdated(index(getSymbols("GDP")),
+#'   Frequency = atr$Frequency,
+#'   LastUpdated = atr$LastUpdated,
+#'   LastOfDateRange = tail(strsplit(atr$DateRange, " to "),1)
+#' )
+#'
+#' Title:               Unemployment Rate
+#' Series ID:           UNRATE
+#' Source:              U.S. Bureau of Labor Statistics
+#' Release:             Employment Situation
+#' Seasonal Adjustment: Seasonally Adjusted
+#' Frequency:           Monthly
+#' Units:               Percent
+#' Date Range:          1948-01-01 to 2020-10-01
+#' Last Updated:        2020-11-06 7:47 AM CST
+#'
+#' # LastUpdated (updated) during the first Friday of every month
+#' # if that "first Friday" is not available, then the
+#' # the updated occurs at the next Friday
+#' #
+#' # Schedule of Releases for the Employment Situation
+#' https://www.bls.gov/schedule/news_release/empsit.htm
+#'
+#' # PAY & LEAVE
+#' https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/#url=2020
+#'
+#' atr <- fredAttributes("UNRATE")
+#'
+#' library(quantmod)
+#'
+#' getSymbols("UNRATE", src = "FRED")
+#'
+#' estimLastUpdated(index(getSymbols("UNRATE")),
+#'   Frequency = atr$Frequency,
+#'   LastUpdated = atr$LastUpdated,
+#'   LastOfDateRange = tail(strsplit(atr$DateRange, " to "),1)
+#'   )
+#' }
+#' @export
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom RQuantLib adjust
+estimLastUpdated <- function(x, Calendar = "UnitedStates/GovernmentBond",
+                           Frequency, LastUpdated, LastOfDateRange = NULL
+                           ) {
+tryCatchLog::tryCatchLog({
+
+  stop("Not yet programmed")
+
+  if(is.null(x)) stop("x Date series is required.")
+  if(is.null(Frequency)) stop("Frequency is required.")
+  if(is.null(LastOfDateRange)) {LastOfDateRange <- tail(x,1) }
+  if(is.null(LastUpdated)) stop("LastUpdated is required.")
+  if(is.null(Calendar)) Calendar <- "UnitedStates/GovernmentBond"
+
+  # more direct with GDP
+  # to get the next government/business/other day
+  LastUpdated <- RQuantLib::adjust(Calendar, x, 1)
+
+  # less direct with UNRATE (R CRAN package timeDate) may help
+  # two(2) cases
+  # 1st Friday Monthly
+  # 15th Monthly (OTHERS)
+
+})}
+
+
 #' Download vintage dates of Federal Reserve Economic Data - ALFRED(R)
 #'
 #' Downloads vintage dates of the published tail dates of 'Date Range' of the specified Symbol from 'research.stlouisfed.org'.

@@ -27,6 +27,7 @@ Imports:
     chron,
     timeDate,
     curl,
+    RQuantLib,
     xts,
     quantmod,
     TTR
