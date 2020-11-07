@@ -1,6 +1,112 @@
 
 
 
+#' Download attributes of Times Series of Federal Reserve Economic Data - FRED(R)
+#'
+#' Data typically includes the Title, Series ID, Source, Release, Seasonal Adjustment, Frequency, Units, Date Range, Last Updated, and Notes.
+#'
+#' @param Symbol specifying the name of the symbol to be queried
+#' @return data.frame of attributes
+#' @examples
+#' \dontrun{
+#'
+#' # Smoothed U.S. Recession Probabilities
+#' # Source: Piger, Jeremy Max, Chauvet, Marcelle
+#' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
+#' #
+#' print(str(fredAttributes("RECPROUSM156N")))
+#'
+#' 'data.frame':	1 obs. of  10 variables:
+#' $ Title             : chr "Smoothed U.S. Recession Probabilities"
+#' $ SeriesID          : chr "RECPROUSM156N"
+#' $ Source            : chr "Piger, Jeremy Max, Chauvet, Marcelle"
+#' $ Release           : chr "U.S. Recession Probabilities"
+#' $ SeasonalAdjustment: chr "Not Seasonally Adjusted"
+#' $ Frequency         : chr "Monthly"
+#' $ Units             : chr "Percent"
+#' $ DateRange         : chr "1967-06-01 to 2020-09-01"
+#' $ LastUpdated       : chr "2020-11-02 7:01 AM CST"
+#' $ Notes             : chr "Smoothed recession probabilities for the United"
+#' }
+#' @export
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
+fredAttributes <-function(Symbol) {
+tryCatchLog::tryCatchLog({
+
+  if(is.null(Symbol)) stop("Symbol can not be NULL.")
+
+  # get the meta-data
+  FRED.URL <- "https://fred.stlouisfed.org/data/"
+  URL <- paste0(FRED.URL, Symbol, ".txt")
+
+  # scrape
+  h <- curl::new_handle()
+  useragent <- paste("curl/", curl::curl_version()$version, " function fredAttributes of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+  # debug in Fiddler 4
+  # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+  # Body dropped from POST request when using proxy with NTLM authentication #146
+  # https://github.com/jeroen/curl/issues/146
+  # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
+  curl::handle_setopt(h, .list = list(useragent = useragent))
+  # go for it
+  # Page <- paste0(scan(URL, what = character()), collapse = " ")
+  con <- curl::curl(URL, handle = h)
+  Lines <- readLines(con)
+  # docs say that it does not do much
+  curl::handle_reset(h)
+  close(con)
+
+  fres <- Lines
+
+  # boundary splitter between header area and data area
+  BoHeaderArea <- 1
+  EoHeaderArea <- match(TRUE, grepl("^DATE.*VALUE$", fres)) - 1L
+  BoDataArea   <- EoHeaderArea + 2L
+  EoDataArea   <- length(fres)
+  HeaderArea <- fres[seq(BoHeaderArea,EoHeaderArea,1)]
+
+  # WORKS (not used)
+  # DataArea   <- fres[seq(BoDataArea,EoDataArea ,1)]
+
+  # separate dates and values
+  # WORKS (not used)
+  # DatesAndValues <- strsplit(DataArea, "[[:blank:]]+")
+  #
+  # idea from
+  #
+  # Select first element of nested list
+  # MAR 2017
+  # https://stackoverflow.com/questions/20428742/select-first-element-of-nested-list
+  #
+  # WORKS (not used)
+  # DatesAndValues       <- unlist(DatesAndValues)
+  # DatesAndValuesLength <- length(DatesAndValues)
+  ## every other one
+  # Dates  <- DatesAndValues[seq(1,DatesAndValuesLength,2)]
+  # Values <- DatesAndValues[seq(2,DatesAndValuesLength,2)]
+  # Values[Values %in% "."] <- NA
+
+  # read.dcf sometimes does not likes lines with blanks
+  HeaderArea <- HeaderArea[!stringr::str_detect(HeaderArea,"^[[:blank:]]+$|^$")]
+
+  # collect information about the series
+  tcon <- textConnection(paste0(HeaderArea, collapse = "\n"))
+  # try: keep.white = "Notes"
+
+  # SeriesInfo Xts attributes
+  te <- read.dcf(tcon, keep.white = "Notes")
+  te <- as.data.frame(te, stringsAsFactors = FALSE)
+  colnames(te) <- gsub("\\s" , "",  colnames(te))
+  SeriesInfo <- te
+
+  close(tcon)
+
+  SeriesInfo
+})}
+
+
+
 #' Download vintage dates of Federal Reserve Economic Data - ALFRED(R)
 #'
 #' Downloads vintage dates of the published tail dates of 'Date Range' of the specified Symbol from 'research.stlouisfed.org'.
