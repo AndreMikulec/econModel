@@ -183,11 +183,19 @@ tryCatchLog::tryCatchLog({
 
   stop("Not yet programmed")
 
-  if(is.null(x)) stop("x Date series is required.")
-  if(is.null(Frequency)) stop("Frequency is required.")
-  if(is.null(LastOfDateRange)) {LastOfDateRange <- tail(x,1) }
-  if(is.null(LastUpdated)) stop("LastUpdated is required.")
-  if(is.null(Calendar)) Calendar <- "UnitedStates/GovernmentBond"
+  if(is.null(x))                stop("x Date series is required.")
+  if(is.null(Frequency))        stop("Frequency is required.")
+  if(is.null(LastOfDateRange))  {LastOfDateRange <- tail(x,1) }
+  if(is.null(LastUpdated))      stop("LastUpdated is required.")
+  if(is.null(Calendar))         Calendar <- "UnitedStates/GovernmentBond"
+
+  # see my tradeModel function fancifyXts
+
+  if(Frequency == "Monthly") {
+
+
+
+  }
 
   # more direct with GDP
   # to get the next government/business/other day

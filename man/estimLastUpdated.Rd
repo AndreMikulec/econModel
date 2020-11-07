@@ -31,6 +31,27 @@ Time between LastOfDateRange (or the last Date time observation of x) and LastUp
 }
 \examples{
 \dontrun{
+Title:               Gross Domestic Product
+Series ID:           GDP
+Source:              U.S. Bureau of Economic Analysis
+Release:             Gross Domestic Product
+Seasonal Adjustment: Seasonally Adjusted Annual Rate
+Frequency:           Quarterly
+Units:               Billions of Dollars
+Date Range:          1947-01-01 to 2020-07-01
+Last Updated:        2020-10-29 7:52 AM CDT
+
+atr <- fredAttributes("GDP")
+
+library(quantmod)
+
+getSymbols("GDP", src = "FRED")
+
+estimLastUpdated(index(getSymbols("GDP")),
+  Frequency = atr$Frequency,
+  LastUpdated = atr$LastUpdated,
+  LastOfDateRange = tail(strsplit(atr$DateRange, " to "),1)
+)
 
 Title:               Unemployment Rate
 Series ID:           UNRATE
