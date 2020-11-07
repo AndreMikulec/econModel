@@ -7,7 +7,7 @@
 #'
 #' Used internally by the function getSymbols.ALFRED
 #'
-#' Note, this function does not use the official API.  The official API usage can be performed using the R CRAN package alfred function get_alfred_series.  In some cases, this function getVintages may be faster.
+#' Note, this function does not use the official API.  The official API usage can be performed using the R CRAN package alfred function get_alfred_series.  In some cases, this function vinDates may be faster.
 #'
 #' @param Symbol specifying the name of the symbol to be loaded
 #' @param src see R CRAN package quantmod function getSymbols
@@ -29,14 +29,14 @@
 #' # Source: Piger, Jeremy Max, Chauvet, Marcelle
 #' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #' #
-#' getVintages("RECPROUSM156N")
+#' vinDates("RECPROUSM156N")
 #' Read 2002 items
 #'
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
-getVintages <- function(Symbol, src = "ALFRED") {
+vinDates <- function(Symbol, src = "ALFRED") {
 tryCatchLog::tryCatchLog({
 
   if(length(Symbol) && !class(Symbol) %in% "character") {
@@ -57,7 +57,7 @@ tryCatchLog::tryCatchLog({
     URL <- paste0("https://alfred.stlouisfed.org/series/downloaddata?seid=", Symbol)
     # scrape
     h <- curl::new_handle()
-    useragent <- paste("curl/", curl::curl_version()$version, " function getVintages of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+    useragent <- paste("curl/", curl::curl_version()$version, " function vinDates of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
     # debug in Fiddler 4
     # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
     # Body dropped from POST request when using proxy with NTLM authentication #146
@@ -101,16 +101,16 @@ tryCatchLog::tryCatchLog({
 #' @param Symbols a character vector specifying the names of each symbol to be loaded (from R CRAN package quantmod function getSymbols)
 #' @param env where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)
 #' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
-#' @param VintageId download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function getVintages.
+#' @param VintageId download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function vinDates.
 #' @param nameVintagedId add the VintageId (or the most recent "Last Updated" date VintageId) to the name of what is returned
 #' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}
-#' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function getVintages (xor vintages that have been entered by the user throught the paramter VintageId).  Note, if this paramter EarliestLastUpdDate, is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
+#' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function vinDates (xor vintages that have been entered by the user throught the paramter VintageId).  Note, if this paramter EarliestLastUpdDate, is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
 #' @param LookBack how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3. Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.  . Value can be "Beginning". "Beginning" means lookback to the start.
 #' @param VintagesPerQuery number of vintages per HTTPS GET. A.k.a the number of vintages per sheet.   Default is 12.  Common maximum is 12. Value can be "Max". Practical experience has performed with 192.  The maximum may be different during different with not-a-known reason.  This parameter exists to enhance performance by limiting the number of trips to the server.  This parameter is sometimes (but not often) better than the parameter allowParallel. On many occasions  when using this parameter with values greater than 12, the requested data is missing from the returned data set.
 #' @param FullOldestVintageData if TRUE, then also return the oldest vintage data and keep(prepend) its data.  Default is FALSE. Useful when 'as much data as possible' is important.
 #' @param DataSheet if TRUE, then also return all of the vintages in an xts attribute 'DataSheet'. Default is FALSE.  Useful for debugging.  Useful as a tool of doing more (future) coding or user-end research.
 #' @param allowParallel if TRUE, then collect groups of 'sheets of VintagesPerQuery vintages' in parallel.  Default is FALSE.  (Improved) performance will vary: this is more useful on (more data points) weekly data or daily data. Because this is a server side activity, the number of parallel processes does NOT depend on the local machine CPUs.
-#' @param MaxParallel if allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(getVintages(SYMBOL)/VintagesPerQuery)))' where the vector from getVintages(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host hardware CPU and memory.
+#' @param MaxParallel if allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(vinDates(SYMBOL)/VintagesPerQuery)))' where the vector from vinDates(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host hardware CPU and memory.
 #' @param ... additional parameters
 #' @return as R CRAN package quantmod function getSymbols. See the parameter returnIndex for a user-choice the xts objects returned index
 #'
@@ -160,7 +160,7 @@ tryCatchLog::tryCatchLog({
 #' #
 #' # See: 'Date Range' and
 #' 'Last Updated' in https://fred.stlouisfed.org/data/RECPROUSM156N.txt
-#' # See: getVintages("RECPROUSM156N")
+#' # See: vinDates("RECPROUSM156N")
 #' #
 #' # rough way to get the real story based on 'Date Range' and "Last Updated"
 #' # after the last observation date the "Last Updated" published date is two(2) months later
@@ -425,14 +425,14 @@ getSymbols.ALFRED <- function(Symbols,
 
       # where to get the vintages' 'Last Updated' dates
       if(is.null(VintageId)) {
-        AllLastUpdatedDates <- getVintages(Symbols[[i]])
+        AllLastUpdatedDates <- vinDates(Symbols[[i]])
       } else {
         # instead the user chooses the vintages
         AllLastUpdatedDates <- as.character(zoo::as.Date(VintageId))
       }
 
       # just subtracts off some older 'Last Updated' dates from the results of
-      # calling the function getVintages
+      # calling the function vinDates
       if(!is.null(EarliestLastUpdDate)) {
         AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(EarliestLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
       }
