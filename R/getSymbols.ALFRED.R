@@ -6,12 +6,12 @@
 #'
 #' @param x URL
 #' @param Stucture String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.
-#' @param Collapse String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be "". If Structure != "Page", then this parameter is ignored.
+#' @param Collapse String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.
 #' @param encode Logical. Default is TRUE. Perform URLencoding upon URL.
 #' @param Message String. Default is paste0("function ", "fetchInternet").  Message is appended to the user agent.
-#' @param conClose Logical.  Default is TRUE. After done with work, close the curl connection.  Otherwise, do not close: No closing is needed inside the foreach::foreach construct.
+#' @param conOut Logical.  Default is FALSE. Return instead immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.
 #' @param ... Dots. Passed to URLencode
-#' @return The one element page or many vectors of lines
+#' @return just the connecion object(conOut = T) or the one element page(Page) or many vectors of lines(Lines)
 #' @examples
 #' \dontrun{
 #'
@@ -34,7 +34,7 @@
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
 fetchInternet <- function(x, Structure = "Page", Collapse = "\n",
                           encode = T, Message = paste0("function ", "fetchInternet"),
-                          conClose = T, ...) {
+                          conOut = F, ...) {
 tryCatchLog::tryCatchLog({
 
   if(encode) {
@@ -51,14 +51,13 @@ tryCatchLog::tryCatchLog({
   # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
   curl::handle_setopt(h, .list = list(useragent = useragent))
   con <- curl::curl(URL, handle = h)
-  Lines <- readLines(con)
   # docs say that it does not do much
   curl::handle_reset(h)
-
-  # Withing a foreach::foreach, do not close
-  if(conClose) {
-    close(con)
+  if(conOut) {
+    return(con)
   }
+  Lines <- readLines(con)
+  close(con)
 
   if(Structure == "Lines"){
     Result <- Lines
@@ -123,24 +122,24 @@ tryCatchLog::tryCatchLog({
   FRED.URL <- "https://fred.stlouisfed.org/data/"
   URL <- paste0(FRED.URL, Symbol, ".txt")
 
-  # scrape
-  h <- curl::new_handle()
-  useragent <- paste("curl/", curl::curl_version()$version, " function fredAttributes of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
-  # debug in Fiddler 4
-  # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
-  # Body dropped from POST request when using proxy with NTLM authentication #146
-  # https://github.com/jeroen/curl/issues/146
-  # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
-  curl::handle_setopt(h, .list = list(useragent = useragent))
-  # go for it
-  # Page <- paste0(scan(URL, what = character()), collapse = " ")
-  con <- curl::curl(URL, handle = h)
-  Lines <- readLines(con)
-  # docs say that it does not do much
-  curl::handle_reset(h)
-  close(con)
+  # # scrape
+  # h <- curl::new_handle()
+  # useragent <- paste("curl/", curl::curl_version()$version, " function fredAttributes of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+  # # debug in Fiddler 4
+  # # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+  # # Body dropped from POST request when using proxy with NTLM authentication #146
+  # # https://github.com/jeroen/curl/issues/146
+  # # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
+  # curl::handle_setopt(h, .list = list(useragent = useragent))
+  # # go for it
+  # # Page <- paste0(scan(URL, what = character()), collapse = " ")
+  # con <- curl::curl(URL, handle = h)
+  # Lines <- readLines(con)
+  # # docs say that it does not do much
+  # curl::handle_reset(h)
+  # close(con)
 
-  fres <- Lines
+  fres <- Lines <- fetchInternet(URL, Structure = "Lines")
 
   # boundary splitter between header area and data area
   BoHeaderArea <- 1
@@ -148,8 +147,6 @@ tryCatchLog::tryCatchLog({
   BoDataArea   <- EoHeaderArea + 2L
   EoDataArea   <- length(fres)
   HeaderArea <- fres[seq(BoHeaderArea,EoHeaderArea,1)]
-
-
 
   # read.dcf sometimes does not likes lines with blanks
   HeaderArea <- HeaderArea[!stringr::str_detect(HeaderArea,"^[[:blank:]]+$|^$")]
@@ -353,22 +350,25 @@ tryCatchLog::tryCatchLog({
 
   if(src == "ALFRED") {
     URL <- paste0("https://alfred.stlouisfed.org/series/downloaddata?seid=", Symbol)
-    # scrape
-    h <- curl::new_handle()
-    useragent <- paste("curl/", curl::curl_version()$version, " function vinDates of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
-    # debug in Fiddler 4
-    # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
-    # Body dropped from POST request when using proxy with NTLM authentication #146
-    # https://github.com/jeroen/curl/issues/146
-    # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
-    curl::handle_setopt(h, .list = list(useragent = useragent))
-    # go for it
-    # Page <- paste0(scan(URL, what = character()), collapse = " ")
-    con <- curl::curl(URL, handle = h)
-    Page <- paste0(readLines(con), collapse = " ")
-    # docs say that it does not do much
-    curl::handle_reset(h)
-    close(con)
+    # # scrape
+    # h <- curl::new_handle()
+    # useragent <- paste("curl/", curl::curl_version()$version, " function vinDates of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+    # # debug in Fiddler 4
+    # # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+    # # Body dropped from POST request when using proxy with NTLM authentication #146
+    # # https://github.com/jeroen/curl/issues/146
+    # # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
+    # curl::handle_setopt(h, .list = list(useragent = useragent))
+    # # go for it
+    # # Page <- paste0(scan(URL, what = character()), collapse = " ")
+    # con <- curl::curl(URL, handle = h)
+    # Page <- paste0(readLines(con), collapse = " ")
+    # # docs say that it does not do much
+    # curl::handle_reset(h)
+    # close(con)
+
+    Page <- fetchInternet(URL, Collapse = " ")
+
     # coords of area of interest and non-greedy regex (.*?)
     SubPageCoords <- regexpr("<select id=\"form_selected_vintage_dates\".*?</option></select>", Page)
     # area
@@ -888,20 +888,24 @@ getSymbols.ALFRED <- function(Symbols,
         if (verbose)
           writeLines(URL)
 
-        h <- curl::new_handle()
-        useragent <- paste("curl/", curl::curl_version()$version, " function getSymbols.ALFRED of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
-        # debug in Fiddler 4
-        # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
-        # Body dropped from POST request when using proxy with NTLM authentication #146
-        # https://github.com/jeroen/curl/issues/146
-        # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
-        curl::handle_setopt(h, .list = list(useragent = useragent))
-        # go for it
-        con <- curl::curl(URL, handle = h)
+        # h <- curl::new_handle()
+        # useragent <- paste("curl/", curl::curl_version()$version, " function getSymbols.ALFRED of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+        # # debug in Fiddler 4
+        # # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+        # # Body dropped from POST request when using proxy with NTLM authentication #146
+        # # https://github.com/jeroen/curl/issues/146
+        # # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
+        # curl::handle_setopt(h, .list = list(useragent = useragent))
+        # # go for it
+        # con <- curl::curl(URL, handle = h)
+
+        con <- fetchInternet(URL, conOut = T)
+
+        # can be a readable text-mode connection
+        # (which will be opened for reading if necessary,
+        # and if so closed (and hence destroyed)
+        # at the end of the function call)
         fr <- utils::read.csv(con, na.string = ".")
-        # docs say that it does not do much
-        curl::handle_reset(h)
-        # close(con) # DO NOT CLOSE INSIDE foreach::foreach
 
         ColnamesFR <- colnames(fr)
 

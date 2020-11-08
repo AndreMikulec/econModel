@@ -10,27 +10,27 @@ fetchInternet(
   Collapse = "\\n",
   encode = T,
   Message = paste0("function ", "fetchInternet"),
-  conClose = T,
+  conOut = F,
   ...
 )
 }
 \arguments{
 \item{x}{URL}
 
-\item{Collapse}{String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be "". If Structure != "Page", then this parameter is ignored.}
+\item{Collapse}{String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.}
 
 \item{encode}{Logical. Default is TRUE. Perform URLencoding upon URL.}
 
 \item{Message}{String. Default is paste0("function ", "fetchInternet").  Message is appended to the user agent.}
 
-\item{conClose}{Logical.  Default is TRUE. After done with work, close the curl connection.  Otherwise, do not close: No closing is needed inside the foreach::foreach construct.}
+\item{conOut}{Logical.  Default is FALSE. Return instead immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.}
 
 \item{...}{Dots. Passed to URLencode}
 
 \item{Stucture}{String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.}
 }
 \value{
-The one element page or many vectors of lines
+just the connecion object(conOut = T) or the one element page(Page) or many vectors of lines(Lines)
 }
 \description{
 Returned data is either a page or a collection of vector lines
