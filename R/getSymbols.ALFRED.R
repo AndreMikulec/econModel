@@ -196,7 +196,7 @@ tryCatchLog::tryCatchLog({
 
 #' Estimate the Time Distance Between Observations Dates/Times and Their Corresponding LastUpdated(Publishing) Dates/times
 #'
-#' Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
+#' DO NOT USE.  NO IMPEMENTED YET. Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
 #'
 #' @param x Date times of observation dates
 #' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars
