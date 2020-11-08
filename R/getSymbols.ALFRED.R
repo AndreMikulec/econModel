@@ -1,5 +1,78 @@
 
 
+#' Scrape the Internet
+#'
+#' Returned data is either a page or a collection of vector lines
+#'
+#' @param x URL
+#' @param Stucture String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.
+#' @param Collapse String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be "". If Structure != "Page", then this parameter is ignored.
+#' @param encode Logical. Default is TRUE. Perform URLencoding upon URL.
+#' @param Message String. Default is paste0("function ", "fetchInternet").  Message is appended to the user agent.
+#' @param conClose Logical.  Default is TRUE. After done with work, close the curl connection.  Otherwise, do not close: No closing is needed inside the foreach::foreach construct.
+#' @param ... Dots. Passed to URLencode
+#' @return The one element page or many vectors of lines
+#' @examples
+#' \dontrun{
+#'
+#' writeLines(fetchInternet("https://fred.stlouisfed.org/data/RECPROUSM156N.txt"))
+#' Title:               Smoothed U.S. Recession Probabilities
+#' Series ID:           RECPROUSM156N
+#' Source:              Piger, Jeremy Max, Chauvet, Marcelle
+#' Release:             U.S. Recession Probabilities
+#' Seasonal Adjustment: Not Seasonally Adjusted
+#' Frequency:           Monthly
+#' Units:               Percent
+#' Date Range:          1967-06-01 to 2020-09-01
+#' Last Updated:        2020-11-02 7:01 AM CST
+#'
+#' fetchInternet("https://fred.stlouisfed.org/data/RECPROUSM156N.txt", Structure = "Lines")
+#'
+#' }
+#' @export
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
+fetchInternet <- function(x, Structure = "Page", Collapse = "\n",
+                          encode = T, Message = paste0("function ", "fetchInternet"),
+                          conClose = T, ...) {
+tryCatchLog::tryCatchLog({
+
+  if(encode) {
+    URL <- URLencode(x, ...)
+  }
+
+  # scrape
+  h <- curl::new_handle()
+  useragent <- paste("curl/", curl::curl_version()$version, " ", Message, " of R CRAN package econModel calling function curl of R CRAN package curl", sep = "")
+  # debug in Fiddler 4
+  # curl --proxy 127.0.0.1:8888 --insecure -A "custom agent" https://alfred.stlouisfed.org/series/downloaddata?seid=GDP
+  # Body dropped from POST request when using proxy with NTLM authentication #146
+  # https://github.com/jeroen/curl/issues/146
+  # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
+  curl::handle_setopt(h, .list = list(useragent = useragent))
+  con <- curl::curl(URL, handle = h)
+  Lines <- readLines(con)
+  # docs say that it does not do much
+  curl::handle_reset(h)
+
+  # Withing a foreach::foreach, do not close
+  if(conClose) {
+    close(con)
+  }
+
+  if(Structure == "Lines"){
+    Result <- Lines
+  }
+  if(Structure == "Page") {
+    Result <- paste0(Lines, collapse = Collapse)
+  }
+  Result
+
+})}
+
+
+
+
 
 #' Download attributes of Times Series of Federal Reserve Economic Data - FRED(R)
 #'
