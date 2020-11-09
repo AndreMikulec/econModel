@@ -193,10 +193,9 @@ tryCatchLog::tryCatchLog({
 })}
 
 
-
-#' Estimate the Time Distance Between Observations Dates/Times and Their Corresponding LastUpdated(Publishing) Dates/times
+#' Determine LastUpdated(Publishing) Dates
 #'
-#' DO NOT USE.  NO IMPEMENTED YET. Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
+#' Estimate the time distance between observations Dates/times and their corresponding LastUpdated(Publishing) Dates/times.
 #'
 #' @param x Date times of observation dates
 #' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars
@@ -204,6 +203,8 @@ tryCatchLog::tryCatchLog({
 #' @param LastUpdated No default (required).  Date time of the published date of the newest(latest) observation
 #' @param LastOfDateRange Default NULL.  If not present, this value will be taken from the last observation of x.  This parameter value represents the earliest of the time between an observation and its corresponding LastUpdated Date time.
 #' @return vector of Date times
+#' @references
+#' \cite{Schedule of Releases for the Employment Situation \url{https://www.bls.gov/schedule/news_release/empsit.htm}}
 #' @examples
 #' \dontrun{
 #' Title:               Gross Domestic Product
@@ -245,7 +246,7 @@ tryCatchLog::tryCatchLog({
 #' # Schedule of Releases for the Employment Situation
 #' https://www.bls.gov/schedule/news_release/empsit.htm
 #'
-#' # PAY & LEAVE
+#' # PAY & LEAVE (UNRATE data is not released during these days)
 #' https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/#url=2020
 #'
 #' atr <- fredAttributes("UNRATE")
@@ -254,21 +255,26 @@ tryCatchLog::tryCatchLog({
 #'
 #' getSymbols("UNRATE", src = "FRED")
 #'
+#' # UNRATE is released on the First Friday that is
+#' # not a weekend day no holiday
+#' #
 #' estimLastUpdated(index(UNRATE),
-#'   Frequency = atr$Frequency,
+#'   Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
 #'   LastUpdated = atr$LastUpdated,
 #'   LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
-#'   )
+#' )
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom RQuantLib adjust
+#' @importFrom zoo as.Date
+#' @importFrom DescTools AddMonths
+#' @importFrom Hmisc truncPOSIXt
+#' @importFrom RQuantLib businessDaysBetween adjust
 estimLastUpdated <- function(x, Calendar = "UnitedStates/GovernmentBond",
                            Frequency, LastUpdated, LastOfDateRange = NULL
                            ) {
 tryCatchLog::tryCatchLog({
 
-  # stop("Not yet programmed")
 
   if(is.null(x))                stop("x Date series is required.")
   if(is.null(Frequency))        stop("Frequency is required.")
@@ -276,27 +282,44 @@ tryCatchLog::tryCatchLog({
   if(is.null(LastUpdated))      stop("LastUpdated is required.")
   if(is.null(Calendar))         Calendar <- "UnitedStates/GovernmentBond"
 
-  # see my tradeModel function fancifyXts
+  # original index class
+  OrigIndexClass <- class(x)[1]
 
+  # time partial
   LastUpdatedDayTimeDiff <- as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p") - Hmisc::truncPOSIXt(as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p"), "days")
 
   if(Frequency %in%  c("Quarterly","Monthly")) {
-
     if(Frequency == "Quarterly") MonthsAdjust <- 3L
     if(Frequency == "Monthly")   MonthsAdjust <- 1L
-                                                                                      # next month(s)
-    WorkDaysAfterBeginOfNextPeriod <- RQuantLib::businessDaysBetween(Calendar, from = DescTools::AddMonths(zoo::as.Date(LastOfDateRange), MonthsAdjust), to = zoo::as.Date(LastUpdated))
-                                       # next month(s)
-    x <- RQuantLib::advance(Calendar,  DescTools::AddMonths(zoo::as.Date(x), MonthsAdjust), WorkDaysAfterBeginOfNextPeriod, 0) # 0 Days
-
+    DateReference <- DescTools::AddMonths(zoo::as.Date(LastOfDateRange), MonthsAdjust)
+  }
+  if(Frequency %in%  c("Weekly", "Daily")) {
+    DateReference <- zoo::as.Date(LastOfDateRange)
   }
 
-  TheEnd <- 1L
+  WorkDaysAfterBeginOfDateReference <- RQuantLib::businessDaysBetween(Calendar, from = DateReference, to = zoo::as.Date(LastUpdated))
+                                       # next month(s)
+
+  if(Frequency %in%  c("Quarterly","Monthly")) {
+    NewDatesReferences <- DescTools::AddMonths(zoo::as.Date(x), MonthsAdjust)
+  }
+  if(Frequency %in%  c("Weekly", "Daily")) {
+    NewDatesReferences <- zoo::as.Date(x)
+  }
+  x <- RQuantLib::advance(Calendar, NewDatesReferences, WorkDaysAfterBeginOfDateReference, 0) # 0 Days
+
+  # add back the time partial
+  x <- Hmisc::truncPOSIXt(as.POSIXct(x), "days") + LastUpdatedDayTimeDiff
+
+  # put back the original index class
+  x <- eval(parse(text = paste0("as.", OrigIndexClass, "(x)")))
 
   # less direct with UNRATE (R CRAN package timeDate) may help
   # two(2) cases
-  # 1st Friday Monthly
+  # 1st Friday Monthly (UNRATE)
   # 15th Monthly (OTHERS)
+
+  x
 
 })}
 

@@ -16,6 +16,7 @@ Imports:
     R.utils,
     rlist,
     DescTools,
+    Hmisc,
     tryCatchLog,
     utils,
     stats,

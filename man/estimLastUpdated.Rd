@@ -2,7 +2,7 @@
 % Please edit documentation in R/getSymbols.ALFRED.R
 \name{estimLastUpdated}
 \alias{estimLastUpdated}
-\title{Estimate the Time Distance Between Observations Dates/Times and Their Corresponding LastUpdated(Publishing) Dates/times}
+\title{Determine LastUpdated(Publishing) Dates}
 \usage{
 estimLastUpdated(
   x,
@@ -27,7 +27,7 @@ estimLastUpdated(
 vector of Date times
 }
 \description{
-DO NOT USE.  NO IMPEMENTED YET. Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
+Estimate the time distance between observations Dates/times and their corresponding LastUpdated(Publishing) Dates/times.
 }
 \examples{
 \dontrun{
@@ -70,7 +70,7 @@ Last Updated:        2020-11-06 7:47 AM CST
 # Schedule of Releases for the Employment Situation
 https://www.bls.gov/schedule/news_release/empsit.htm
 
-# PAY & LEAVE
+# PAY & LEAVE (UNRATE data is not released during these days)
 https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/#url=2020
 
 atr <- fredAttributes("UNRATE")
@@ -79,10 +79,16 @@ library(quantmod)
 
 getSymbols("UNRATE", src = "FRED")
 
+# UNRATE is released on the First Friday that is
+# not a weekend day no holiday
+#
 estimLastUpdated(index(UNRATE),
-  Frequency = atr$Frequency,
+  Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
   LastUpdated = atr$LastUpdated,
   LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
-  )
+)
 }
+}
+\references{
+\cite{Schedule of Releases for the Employment Situation \url{https://www.bls.gov/schedule/news_release/empsit.htm}}
 }
