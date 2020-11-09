@@ -200,11 +200,13 @@ tryCatchLog::tryCatchLog({
 #' @param x Date times of observation dates
 #' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars
 #' @param Frequency No default (required). Values can be Daily(not implemented yet), Weekly(not implemented yet), Monthly, and Quarterly
-#' @param LastUpdated No default (required).  Date time of the published date of the newest(latest) observation
+#' @param LastUpdated Date time.  Default NULL.  Date time of the published date of the newest(latest) observation
+#' @param NdayInMonth Integer.  Default NULL.  This only applied to the Frequency of "Quarterly" or "Monthly". If this parameter is present, then this parameter provides additiona information to parameter LastUpdated.  Use this parameter NdayInMonth to as the Day after the Reference period to estimate.  See ? timeDate::timeNthNdayInMonth
 #' @param LastOfDateRange Default NULL.  If not present, this value will be taken from the last observation of x.  This parameter value represents the earliest of the time between an observation and its corresponding LastUpdated Date time.
 #' @return vector of Date times
 #' @references
-#' \cite{Schedule of Releases for the Employment Situation \url{https://www.bls.gov/schedule/news_release/empsit.htm}}
+#' \cite{Schedule of Releases for the Employment Situation
+#' \url{https://www.bls.gov/schedule/news_release/empsit.htm}}
 #' @examples
 #' \dontrun{
 #' Title:               Gross Domestic Product
@@ -258,32 +260,54 @@ tryCatchLog::tryCatchLog({
 #' # UNRATE is released on the First Friday that is
 #' # not a weekend day no holiday
 #' #
-#' estimLastUpdated(index(UNRATE),
+#' tail(estimLastUpdated(index(UNRATE),
 #'   Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
 #'   LastUpdated = atr$LastUpdated,
 #'   LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
-#' )
+#' ),4)
+#'
+#' [1] "2020-08-06" "2020-09-08" "2020-10-07" "2020-11-05"
+#'
+#' # first Friday (better)
+#' tail(estimLastUpdated(index(UNRATE),
+#'                  Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
+#'                  LastUpdated = atr$LastUpdated,
+#'                  NdayInMonth = 5L, # 1st Friday
+#'                  LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
+#' ),4)
+#'
+#' [1] "2020-08-07" "2020-09-04" "2020-10-02" "2020-11-06"
+#'
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo as.Date
 #' @importFrom DescTools AddMonths
 #' @importFrom Hmisc truncPOSIXt
-#' @importFrom RQuantLib businessDaysBetween adjust
+#' @importFrom timeDate timeNthNdayInMonth
+#' @importFrom RQuantLib businessDaysBetween isHoliday adjust
 estimLastUpdated <- function(x, Calendar = "UnitedStates/GovernmentBond",
-                           Frequency, LastUpdated, LastOfDateRange = NULL
+                           Frequency, LastUpdated = NULL, NdayInMonth = NULL, LastOfDateRange = NULL
                            ) {
 tryCatchLog::tryCatchLog({
 
 
   if(is.null(x))                stop("x Date series is required.")
-  if(is.null(Frequency))        stop("Frequency is required.")
-  if(is.null(LastOfDateRange))  {LastOfDateRange <- tail(x,1) }
-  if(is.null(LastUpdated))      stop("LastUpdated is required.")
   if(is.null(Calendar))         Calendar <- "UnitedStates/GovernmentBond"
+  if(is.null(Frequency))        stop("Frequency is required.")
 
-  # original index class
-  OrigIndexClass <- class(x)[1]
+  if(is.null(LastUpdated)) stop("LastUpdated xor NdayInMonth is required.")
+  if(is.null(LastUpdated) && !is.null(NdayInMonth)) stop("LastUpdated is still required when NdayInMonth is used.")
+
+  if(is.null(LastOfDateRange))  {LastOfDateRange <- tail(x,1) }
+
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="UTC") {
+    Sys.setenv(TZ="UTC")
+  }
+
+  # original Date/time class
+  OrigDateTimeClass <- class(x)[1]
 
   # time partial
   LastUpdatedDayTimeDiff <- as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p") - Hmisc::truncPOSIXt(as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p"), "days")
@@ -297,11 +321,21 @@ tryCatchLog::tryCatchLog({
     DateReference <- zoo::as.Date(LastOfDateRange)
   }
 
+  # will not be used(be overridden) if using NdayInMonth
   WorkDaysAfterBeginOfDateReference <- RQuantLib::businessDaysBetween(Calendar, from = DateReference, to = zoo::as.Date(LastUpdated))
-                                       # next month(s)
+
 
   if(Frequency %in%  c("Quarterly","Monthly")) {
+
+    # always ran
     NewDatesReferences <- DescTools::AddMonths(zoo::as.Date(x), MonthsAdjust)
+
+    if(!is.null(NdayInMonth)) {
+      NewDatesReferences <- as.Date(timeDate::timeNthNdayInMonth(as.character(NewDatesReferences), nday = NdayInMonth, nth = 1, format = "%Y-%m-%d"))
+      # if a holiday, then try next week (7 days later)
+      NewDatesReferences <- NewDatesReferences + ifelse(RQuantLib::isHoliday(Calendar, NewDatesReferences), 7L, 0L)
+      WorkDaysAfterBeginOfDateReference <- 0L
+    }
   }
   if(Frequency %in%  c("Weekly", "Daily")) {
     NewDatesReferences <- zoo::as.Date(x)
@@ -311,14 +345,15 @@ tryCatchLog::tryCatchLog({
   # add back the time partial
   x <- Hmisc::truncPOSIXt(as.POSIXct(x), "days") + LastUpdatedDayTimeDiff
 
-  # put back the original index class
-  x <- eval(parse(text = paste0("as.", OrigIndexClass, "(x)")))
+  # put back the original Date/time class
+  x <- eval(parse(text = paste0("as.", OrigDateTimeClass, "(x)")))
 
   # less direct with UNRATE (R CRAN package timeDate) may help
   # two(2) cases
   # 1st Friday Monthly (UNRATE)
   # 15th Monthly (OTHERS)
 
+  Sys.setenv(TZ=oldtz)
   x
 
 })}

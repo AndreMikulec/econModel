@@ -8,7 +8,8 @@ estimLastUpdated(
   x,
   Calendar = "UnitedStates/GovernmentBond",
   Frequency,
-  LastUpdated,
+  LastUpdated = NULL,
+  NdayInMonth = NULL,
   LastOfDateRange = NULL
 )
 }
@@ -19,7 +20,9 @@ estimLastUpdated(
 
 \item{Frequency}{No default (required). Values can be Daily(not implemented yet), Weekly(not implemented yet), Monthly, and Quarterly}
 
-\item{LastUpdated}{No default (required).  Date time of the published date of the newest(latest) observation}
+\item{LastUpdated}{Date time.  Default NULL.  Date time of the published date of the newest(latest) observation}
+
+\item{NdayInMonth}{Integer.  Default NULL.  This only applied to the Frequency of "Quarterly" or "Monthly". If this parameter is present, then this parameter provides additiona information to parameter LastUpdated.  Use this parameter NdayInMonth to as the Day after the Reference period to estimate.  See ? timeDate::timeNthNdayInMonth}
 
 \item{LastOfDateRange}{Default NULL.  If not present, this value will be taken from the last observation of x.  This parameter value represents the earliest of the time between an observation and its corresponding LastUpdated Date time.}
 }
@@ -82,13 +85,27 @@ getSymbols("UNRATE", src = "FRED")
 # UNRATE is released on the First Friday that is
 # not a weekend day no holiday
 #
-estimLastUpdated(index(UNRATE),
+tail(estimLastUpdated(index(UNRATE),
   Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
   LastUpdated = atr$LastUpdated,
   LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
-)
+),4)
+
+[1] "2020-08-06" "2020-09-08" "2020-10-07" "2020-11-05"
+
+# first Friday (better)
+tail(estimLastUpdated(index(UNRATE),
+                 Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
+                 LastUpdated = atr$LastUpdated,
+                 NdayInMonth = 5L, # 1st Friday
+                 LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
+),4)
+
+[1] "2020-08-07" "2020-09-04" "2020-10-02" "2020-11-06"
+
 }
 }
 \references{
-\cite{Schedule of Releases for the Employment Situation \url{https://www.bls.gov/schedule/news_release/empsit.htm}}
+\cite{Schedule of Releases for the Employment Situation
+\url{https://www.bls.gov/schedule/news_release/empsit.htm}}
 }
