@@ -89,7 +89,7 @@ tail(estimLastUpdated(index(UNRATE),
   Frequency =  head(strsplit(atr$Frequency, ", ")[[1]],1),
   LastUpdated = atr$LastUpdated,
   LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
-),4)
+), 4)
 
 [1] "2020-08-06" "2020-09-08" "2020-10-07" "2020-11-05"
 
@@ -99,7 +99,7 @@ tail(estimLastUpdated(index(UNRATE),
                  LastUpdated = atr$LastUpdated,
                  NdayInMonth = 5L, # 1st Friday
                  LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
-),4)
+), 4)
 
 [1] "2020-08-07" "2020-09-04" "2020-10-02" "2020-11-06"
 
