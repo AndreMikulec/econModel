@@ -27,7 +27,7 @@ estimLastUpdated(
 vector of Date times
 }
 \description{
-Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
+DO NOT USE.  NO IMPEMENTED YET. Time between LastOfDateRange (or the last Date time observation of x) and LastUpdated is used to estimate
 }
 \examples{
 \dontrun{
@@ -79,10 +79,10 @@ library(quantmod)
 
 getSymbols("UNRATE", src = "FRED")
 
-estimLastUpdated(index(getSymbols("UNRATE")),
+estimLastUpdated(index(UNRATE),
   Frequency = atr$Frequency,
   LastUpdated = atr$LastUpdated,
-  LastOfDateRange = tail(strsplit(atr$DateRange, " to "),1)
+  LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
   )
 }
 }

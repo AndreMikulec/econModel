@@ -254,10 +254,10 @@ tryCatchLog::tryCatchLog({
 #'
 #' getSymbols("UNRATE", src = "FRED")
 #'
-#' estimLastUpdated(index(getSymbols("UNRATE")),
+#' estimLastUpdated(index(UNRATE),
 #'   Frequency = atr$Frequency,
 #'   LastUpdated = atr$LastUpdated,
-#'   LastOfDateRange = tail(strsplit(atr$DateRange, " to "),1)
+#'   LastOfDateRange = tail(strsplit(atr$DateRange, " to ")[[1]],1)
 #'   )
 #' }
 #' @export
@@ -268,7 +268,7 @@ estimLastUpdated <- function(x, Calendar = "UnitedStates/GovernmentBond",
                            ) {
 tryCatchLog::tryCatchLog({
 
-  stop("Not yet programmed")
+  # stop("Not yet programmed")
 
   if(is.null(x))                stop("x Date series is required.")
   if(is.null(Frequency))        stop("Frequency is required.")
@@ -278,15 +278,20 @@ tryCatchLog::tryCatchLog({
 
   # see my tradeModel function fancifyXts
 
-  if(Frequency == "Monthly") {
+  LastUpdatedDayTimeDiff <- as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p") - Hmisc::truncPOSIXt(as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p"), "days")
 
+  if(Frequency %in%  c("Quarterly","Monthly")) {
 
+    if(Frequency == "Quarterly") MonthsAdjust <- 3L
+    if(Frequency == "Monthly")   MonthsAdjust <- 1L
+                                                                                      # next month(s)
+    WorkDaysAfterBeginOfNextPeriod <- RQuantLib::businessDaysBetween(Calendar, from = DescTools::AddMonths(zoo::as.Date(LastOfDateRange), MonthsAdjust), to = zoo::as.Date(LastUpdated))
+                                       # next month(s)
+    x <- RQuantLib::advance(Calendar,  DescTools::AddMonths(zoo::as.Date(x), MonthsAdjust), WorkDaysAfterBeginOfNextPeriod, 0) # 0 Days
 
   }
 
-  # more direct with GDP
-  # to get the next government/business/other day
-  LastUpdated <- RQuantLib::adjust(Calendar, x, 1)
+  TheEnd <- 1L
 
   # less direct with UNRATE (R CRAN package timeDate) may help
   # two(2) cases
@@ -707,7 +712,7 @@ getSymbols.ALFRED <- function(Symbols,
   }
   if(length(MaxParallel)) MaxParallel <- floor(MaxParallel)
 
-  ALFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
+  ANYFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
   returnSym <- Symbols
   noDataSym <- NULL
   for (i in seq_along(Symbols)) {
@@ -793,7 +798,7 @@ getSymbols.ALFRED <- function(Symbols,
         cat(paste0("Processing vintages: ", LastUpdatedDates[1], " ... ", LastUpdatedDates[LengthOfLastUpdatedDates]), "of", returnSym, "\n")
 
         # vintages
-        URL <- paste(ALFRED.URL, "?id=",           paste0(rep(Symbols[[i]], LengthOfLastUpdatedDates), collapse = ","), sep = "")
+        URL <- paste(ANYFRED.URL, "?id=",           paste0(rep(Symbols[[i]], LengthOfLastUpdatedDates), collapse = ","), sep = "")
         # vintages last updated dates (validation)
         URL <- paste(       URL, "&vintage_date=", paste0(LastUpdatedDates,                            collapse = ","), sep = "")
 
