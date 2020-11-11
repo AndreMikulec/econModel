@@ -626,11 +626,12 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @examples
 #' \dontrun{
-#' x <- xts(c(2,362), zoo::as.Date(c(2,362)))
-#' toPeriod(x,  Period="months")
-#' toPeriod(x,  Period="weeks")
+#' x <- xts(c(3,363), zoo::as.Date(c(3,363)))
+#' toPeriod(x, Period = "weeks", PeriodEnd = 4L)
+#' toPeriod(x, Period = "weeks", PeriodEnd = 3L)
+#' toPeriod(x, Period = "weeks", PeriodEnd = 2L)
+#' toPeriod(x, Period = "weeks", PeriodEnd = 1L)
 #'}
-#' @importFrom DescTools Weekday
 #' @importFrom xts first last
 #' @export
 toPeriod <- function(x, Period="months", PeriodEnd = NULL,
@@ -654,37 +655,46 @@ tryCatchLog::tryCatchLog({
   y <- as.xts( x[,0], index(x))
   y <- as.xts(     y, as.POSIXct(index(x)))
 
-  DateTimes <- seq(first(index(y)), to = last(index(y)),  by = Period)
-  if(Period == "weeks" && PeriodEnd < DescTools::Weekday(last(index(y)))) {
-    # append one more generated observation
-    DateTimes <- seq(first(DateTimes), by = Period, length.out = length(DateTimes) + 1L)
-  }
-  if(!Period == "weeks" && last(DateTimes) < last(index(y))) {
-    # append one more generated observation
-    DateTimes <- seq(first(DateTimes), by = Period, length.out = length(DateTimes) + 1L)
-  }
+  # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
-  if(!Period == "weeks") {
-    DateTimes <- as.POSIXct(cut(DateTimes, Period))
-  } else {
+  DateTimes <- seq(as.POSIXct(cut(first(index(y)), Period)), to = last(index(y)),  by = Period)
+  if(last(DateTimes) < last(index(y))) {
+    # append one more generated observations
+    DateTimes <- seq(as.POSIXct(cut(first(index(y)), Period)), by = Period, length.out = length(DateTimes) + 1L)
+  }
+
+  # if an irregular start/end of period
+  # case "weeks"
+  if(Period == "weeks")  {
     # Weekday returns the week day of the input date. (1 - Monday, 2 - Tuesday, ... 7 - Sunday
     # Monday, PeriodStart == 1L (start of Week)
     # Sunday, PeriodEnd   == 7L (end of week)
-    Shift <- abs(PeriodEnd - 7L) * 24L * 3600L
-    DateTimes <- DateTimes + Shift
-    # put at beginning of week at the beginning of time
-    DateTimes <- as.POSIXct(cut(DateTimes  , "weeks")) - Shift
-    # put at the end of the week at the end of time
-    DateTimes <-  DateTimes + 7L * 24L * 3600L
+    # Because index(y) is contained in the range of DateTimes,
+    #   then tail(DateTimes) is the end of period
+    #   then I want to go backwards toward(and land on) the correct
+    #     end of period (defined by PeriodEnd).
+    #       Therefore, Shift is a (-)negative number.
+    #       See DescTools::Weekday(DateTimes)
+    Shift <- (PeriodEnd - 7L) * 24L * 3600L
+    if(last(index(y)) < last(DateTimes + Shift - 1) ) {
+      # ok to shift backwards
+      DateTimes <- DateTimes + Shift
+
+    } else {
+      # shift forward
+      DateTimes <- DateTimes + PeriodEnd  * 24L * 3600L
+    }
   }
 
   # keep later duplicates
   DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
-  # remove 1st value
-  # DateTimes <- tail(DateTimes, length(DateTimes) - 1L)
   # subtract off one to get endOfUNIT
   DateTimes <- DateTimes - 1  # .Machine$double.xmin
 
+  # beginning may not needed (keep what is needed)
+  DateTimes <-  DateTimes[!DateTimes < first(index(y))]
+
+  # new
   y <- xts(, DateTimes)
 
   indexYunremoved <- index(y)
@@ -702,7 +712,7 @@ tryCatchLog::tryCatchLog({
   tzone(x) <- Origtzone
   xtsAttributes(x) <- OrigxtsAttributes
 
-  # if the tclass of x (e.g. Date) is less fine grained than POSIXct
+  # if the tclass of x (e.g. Date) is more corse than POSIXct
   # then keep the later duplicates (if any)
   index(x) <- index(x)[!duplicated(index(x), fromLast = T)]
 

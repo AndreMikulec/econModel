@@ -16,7 +16,7 @@ toPeriod(
 \arguments{
 \item{x}{xts object}
 
-\item{PeriodEnd}{String. Default is NULL meaning use the expected period end.  If Period is "weeks", this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday}
+\item{PeriodEnd}{Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday}
 
 \item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.}
 
@@ -37,8 +37,10 @@ NOT IMPEMENTED YET
 }
 \examples{
 \dontrun{
-x <- xts(c(2,362), zoo::as.Date(c(2,362)))
-toPeriod(x,  Period="months")
-toPeriod(x,  Period="weeks")
+x <- xts(c(3,363), zoo::as.Date(c(3,363)))
+toPeriod(x, Period = "weeks", PeriodEnd = 4L)
+toPeriod(x, Period = "weeks", PeriodEnd = 3L)
+toPeriod(x, Period = "weeks", PeriodEnd = 2L)
+toPeriod(x, Period = "weeks", PeriodEnd = 1L)
 }
 }
