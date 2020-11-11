@@ -2,86 +2,43 @@
 % Please edit documentation in R/toPeriod.R
 \name{toPeriod}
 \alias{toPeriod}
-\title{Convert time series data to an monthly OHLC series}
+\title{Convert a Date time series to a series of another frequency}
 \usage{
 toPeriod(
   x,
-  period = "months",
-  indexAt = "firstof",
-  drop.time = TRUE,
-  name = NULL,
-  return.class = "xts",
-  fillMissingDates = T,
-  fillMissingData = F,
-  Alignment = "regular",
-  ...
+  Period = "months",
+  PeriodEnd = NULL,
+  fillMissing = T,
+  fillMissingBy = "days",
+  Calendar = "UnitedStates/GovernmentBond"
 )
 }
 \arguments{
-\item{x}{? xts::to.monthly and the index(x) class must
-have an S3 method for "seq(by = "months")".
-Classes "Date" and POSIXt are provided  S3 methods in package "base".}
+\item{x}{xts object}
 
-\item{period}{period to convert to. Default is "months".
-See ? xts::to.period: "seconds", "minutes", "hours", "days", "weeks", "months", "quarters", and "years"
+\item{PeriodEnd}{String. Default is NULL meaning use the expected period end.  If Period is "weeks", this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday}
+
+\item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.}
+
+\item{period}{Period to convert to. Default is "months".
+See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
 This is the aggregation (summary)}
 
-\item{indexAt}{"firstof"(default). Different from xts::to.monthly.
-See ? xts::to.period: 'yearmon', 'yearqtr', 'firstof', 'lastof', 'startof', or 'endof'.
-This is the data item date time type. ERROR: startof and endof return the same dates (endof dates).}
+\item{fillInterior}{Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.}
 
-\item{drop.time}{See ? xts::to.period}
-
-\item{name}{See ? xts::to.period}
-
-\item{return.class}{See ? quantmod::getSymbols.FRED: ts, zoo, xts, or timeSeries}
-
-\item{fillMissingDates}{TRUE(default). If indexAt is one of "firstof"
-or "lastof", then fill in missing month dates, if any.
-Otherwise FALSE, just pass throught to xts::to.monthly.}
-
-\item{fillMissingData}{FALSE(default).  Estimate value.  See timeSeries::na.omit .Meant for test data (not prediction data and not validation data).  If TRUE, then the parameter fillMissingDates become TRUE. NOT IMPLEMENTED YET.}
-
-\item{Alignment}{Does the x period start date match the calendar period start date? If TRUE, then Alignment is "regular." Default is "regular".  Otherwise, choose "irregular". NOT IMPLEMENTED YET.}
-
-\item{...}{dots See. ? xts::to.monthly}
+\item{fillInteriorBy}{String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.}
 }
 \value{
-See. ? xts::to.monthly
+modified
 }
 \description{
-\preformatted{
-
-This is a wrapper around xts to.period.
-In the case of period="months"
-Months between the first date and the last
-date will have and entry filled in.
-It will get the "firstof" or "lastof"
-months between dates as the same in the call.
-
-x note, "firstof", "lastof" broken in indexAt
-x should have generated _new_ dates (It did not.)
-x the first time of the period, the last time of the period
-x use (program in) zoo yearmon and yearqtr to generate these
-x x <- xts(2:363, zoo::as.Date(1:362))
-
-# weirdness or bugs of xts::to.period
-# indexAt "startof" and "endof" return the same dates ("endof" dates)
-# if indexAt == "firstof" then the returned index class is "POSIXct" "POSIXt"
-# if indexAt == "lastof" then the returned index class is "Date"
-
-# STILL HAS WEEK AND DAY DEBUGGING TO GO
-
-}
+fillInteriorBy data values are done by "last observation carried forward".
+NOT IMPEMENTED YET
 }
 \examples{
 \dontrun{
-x <- xts(2:362, zoo::as.Date(2:362))
 x <- xts(c(2,362), zoo::as.Date(c(2,362)))
-x <- xts(c(2,362), as.POSIXct(zoo::as.Date(c(2,362))))
-toPeriod(x, indexAt = "firstof")
-toPeriod(x, indexAt = "lastof")
-toPeriod(x, indexAt = "yearmon")
-toPeriod(x, indexAt = "yearqtr")
+toPeriod(x,  Period="months")
+toPeriod(x,  Period="weeks")
 }
 }

@@ -429,7 +429,7 @@ tryCatchLog::tryCatchLog({
 #' toPeriod(x, indexAt = "yearqtr")
 #'}
 #' @export
-toPeriod <- function(x, period='months',indexAt='firstof',drop.time=TRUE, name = NULL,
+toPeriodOLD <- function(x, period='months',indexAt='firstof',drop.time=TRUE, name = NULL,
                      return.class = 'xts',
                      fillMissingDates = T, fillMissingData = F, Alignment = 'regular', ...) {
 tryCatchLog::tryCatchLog({
@@ -606,4 +606,114 @@ tryCatchLog::tryCatchLog({
   Period
 
 })}
+
+
+
+#' Convert a Date time series to a series of another frequency
+#'
+#' fillInteriorBy data values are done by "last observation carried forward".
+#' NOT IMPEMENTED YET
+#'
+#' @param x xts object
+#' @param period Period to convert to. Default is "months".
+#' See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
+#' This is the aggregation (summary)
+#' @param PeriodEnd Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday
+#' @param fillInterior Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.
+#' @param fillInteriorBy String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.
+#' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.
+#' @return modified
+#' @importFrom tryCatchLog tryCatchLog
+#' @examples
+#' \dontrun{
+#' x <- xts(c(2,362), zoo::as.Date(c(2,362)))
+#' toPeriod(x,  Period="months")
+#' toPeriod(x,  Period="weeks")
+#'}
+#' @importFrom DescTools Weekday
+#' @importFrom xts first last
+#' @export
+toPeriod <- function(x, Period="months", PeriodEnd = NULL,
+                     fillMissing = T, fillMissingBy = "days",
+                     Calendar = "UnitedStates/GovernmentBond") {
+tryCatchLog::tryCatchLog({
+
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="UTC") {
+    Sys.setenv(TZ="UTC")
+  }
+  assign("oldtz", oldtz, envir = environment())
+
+  if(Period == "weeks" && is.null(PeriodEnd)) PeriodEnd <- 7L # Sunday
+
+  Origtclass <- tclass(x)
+  Origtformat <- tformat(x)
+  Origtzone <- tzone(x)
+  OrigxtsAttributes <- xtsAttributes(x)
+
+  y <- as.xts( x[,0], index(x))
+  y <- as.xts(     y, as.POSIXct(index(x)))
+
+  DateTimes <- seq(first(index(y)), to = last(index(y)),  by = Period)
+  if(Period == "weeks" && PeriodEnd < DescTools::Weekday(last(index(y)))) {
+    # append one more generated observation
+    DateTimes <- seq(first(DateTimes), by = Period, length.out = length(DateTimes) + 1L)
+  }
+  if(!Period == "weeks" && last(DateTimes) < last(index(y))) {
+    # append one more generated observation
+    DateTimes <- seq(first(DateTimes), by = Period, length.out = length(DateTimes) + 1L)
+  }
+  # put at start of Period
+  if(!Period == "weeks") {
+    DateTimes <- as.POSIXct(cut(DateTimes, Period))
+  } else {
+    # Weekday returns the week day of the input date. (1 - Monday, 2 - Tuesday, ... 7 - Sunday
+    # Monday, PeriodStart == 1L (start of Week)
+    # Sunday, PeriodEnd   == 7L (end of week)
+    Shift <- abs(PeriodEnd - 7L) * 24L * 3600L
+    DateTimes <- DateTimes + Shift
+    # put at beginning of week at the beginning of time
+    DateTimes <- as.POSIXct(cut(DateTimes  , "weeks")) - Shift
+    # put at the end of the week at the end of time
+    DateTimes <-  DateTimes + 7L * 24L * 3600L
+  }
+
+  # keep later duplicates
+  DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
+  # remove 1st value
+  # DateTimes <- tail(DateTimes, length(DateTimes) - 1L)
+  # subtract off one to get endOfUNIT
+  DateTimes <- DateTimes - 1  # .Machine$double.xmin
+
+  y <- xts(, DateTimes)
+
+  indexYunremoved <- index(y)
+  # remove y index values if they already exist in index x
+  index(y) <- index(y)[!index(y) %in% as.POSIXct(index(x))]
+  # dangerously assume that they will be merged in order
+  x <- merge(xts(x, as.POSIXct(index(x))),y)
+  # Ops (whatever)
+  x <- na.locf(x)
+  # only interested in keeping the end of period values
+  x <- x[index(x) %in% indexYunremoved]
+
+  tclass(x) <- Origtclass
+  tformat(x) <- Origtformat
+  tzone(x) <- Origtzone
+  xtsAttributes(x) <- OrigxtsAttributes
+
+  # if the tclass of x (e.g. Date) is less fine grained than POSIXct
+  # then keep the later duplicates (if any)
+  index(x) <- index(x)[!duplicated(index(x), fromLast = T)]
+
+  colnames(x)[1] <- "V1"
+
+  Sys.setenv(TZ=oldtz)
+
+  x
+
+})}
+
+
+
 
