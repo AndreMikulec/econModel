@@ -163,7 +163,6 @@ tryCatchLog::tryCatchLog({
 
 
 
-
 #' remove rows with NA vaues
 #'
 #' @description
