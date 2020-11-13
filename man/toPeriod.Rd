@@ -16,6 +16,10 @@ toPeriod(
 \arguments{
 \item{x}{xts object}
 
+\item{Period}{Period to convert to. Default is "months".
+See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
+This is the aggregation (summary)}
+
 \item{PeriodEnd}{Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday}
 
 \item{fillInterior}{Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.}
@@ -23,10 +27,6 @@ toPeriod(
 \item{fillInteriorBy}{String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.}
 
 \item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.}
-
-\item{period}{Period to convert to. Default is "months".
-See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
-This is the aggregation (summary)}
 }
 \value{
 modified
