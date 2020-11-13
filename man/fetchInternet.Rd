@@ -17,17 +17,17 @@ fetchInternet(
 \arguments{
 \item{x}{URL}
 
-\item{Collapse}{String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.}
+\item{Structure}{String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.}
+
+\item{Collapse}{String. Default is the newline escape character. If Structure == "Page" then separate the lines by the newline escape character. Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.}
 
 \item{encode}{Logical. Default is TRUE. Perform URLencoding upon URL.}
 
 \item{Message}{String. Default is paste0("function ", "fetchInternet").  Message is appended to the user agent.}
 
-\item{conOut}{Logical.  Default is FALSE. Return instead immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.}
+\item{conOut}{Logical.  Default is FALSE. If TRUE, instead return immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.}
 
 \item{...}{Dots. Passed to URLencode}
-
-\item{Stucture}{String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.}
 }
 \value{
 just the connecion object(conOut = T) or the one element page(Page) or many vectors of lines(Lines)

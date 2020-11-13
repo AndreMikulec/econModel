@@ -4,8 +4,11 @@
 .*SCRATCH\.txt
 ^\.RData[.]*
 ^\.Rhistory
+
+^docs$
+^doc$
+^Meta$
+
 dump.*
 tryCatchLog\.logged\.txt
 debug\.log
-^doc$
-^Meta$

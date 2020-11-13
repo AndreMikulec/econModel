@@ -155,3 +155,46 @@ tryCatchLog::tryCatchLog({
 
   invisible(copiedFiles);
 })}
+
+
+#' Force the assignment of new items in a namespace
+#'
+#' Adapted from Rcpp. Based on the original function forceAssignMyNamespace by Willem Ligtenberg.
+#'
+#' @param x name of the symbol/function inside a string
+#' @param value new value of the symbol/function
+#' @param namespace namespace
+#' @author Willem Ligtenberg
+#' @references
+#' \cite{forceAssignMyNamespace
+#' \url{https://github.com/openanalytics/Rango/blob/adc99e077b71c8c6826cabb7ff1266050898718a/Rango/R/utils.R}
+#' }
+#' @examples
+#' \dontrun{
+#' library(econModel)
+#' forceAssignMyNamespace("prnt", function(x) {
+#'   print(x)
+#' }, namespace = "econModel")
+#'
+#' econModel::prnt("Do it.")
+#' }
+#' @useDynLib econModel
+#' @export
+forceAssignInNamespace <- function(x, value, namespace){
+tryCatchLog::tryCatchLog({
+  if(x %in% ls(.getNamespace(namespace))){
+    warning(paste0("Table name clashes with internal functions, ",
+                   "please use generateClasses to generate the R code and either ",
+                   "source that code, or include that in your package."))
+  }else{
+    unlocker <- get("unlockBinding", baseenv())
+    if(exists(x, envir = .getNamespace(namespace), inherits = FALSE) &&
+       bindingIsLocked(x, .getNamespace(namespace))){
+      unlocker(x, .getNamespace(namespace))
+    }
+    assign(x, value, .getNamespace(namespace))
+    lockBinding(x, .getNamespace(namespace))
+  }
+})}
+
+

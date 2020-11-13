@@ -24,16 +24,11 @@ Note, this function does not use the official API.  The official API usage can b
 }
 \examples{
 \dontrun{
-
-library(quantmod)
-
 # Smoothed U.S. Recession Probabilities
 # Source: Piger, Jeremy Max, Chauvet, Marcelle
 # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #
 vinDates("RECPROUSM156N")
-Read 2002 items
-
 }
 }
 \references{

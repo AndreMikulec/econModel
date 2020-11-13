@@ -5,11 +5,11 @@
 #' Returned data is either a page or a collection of vector lines
 #'
 #' @param x URL
-#' @param Stucture String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.
-#' @param Collapse String. Default is "\n". If Structure == "Page" then separate the lines by "\n". Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.
+#' @param Structure String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.
+#' @param Collapse String. Default is the newline escape character. If Structure == "Page" then separate the lines by the newline escape character. Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.
 #' @param encode Logical. Default is TRUE. Perform URLencoding upon URL.
 #' @param Message String. Default is paste0("function ", "fetchInternet").  Message is appended to the user agent.
-#' @param conOut Logical.  Default is FALSE. Return instead immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.
+#' @param conOut Logical.  Default is FALSE. If TRUE, instead return immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.
 #' @param ... Dots. Passed to URLencode
 #' @return just the connecion object(conOut = T) or the one element page(Page) or many vectors of lines(Lines)
 #' @examples
@@ -31,6 +31,7 @@
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom utils URLencode
 #' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
 fetchInternet <- function(x, Structure = "Page", Collapse = "\n",
                           encode = T, Message = paste0("function ", "fetchInternet"),
@@ -38,7 +39,7 @@ fetchInternet <- function(x, Structure = "Page", Collapse = "\n",
 tryCatchLog::tryCatchLog({
 
   if(encode) {
-    URL <- URLencode(x, ...)
+    URL <- utils::URLencode(x, ...)
   }
 
   # scrape
@@ -149,7 +150,7 @@ tryCatchLog::tryCatchLog({
   HeaderArea <- fres[seq(BoHeaderArea,EoHeaderArea,1)]
 
   # read.dcf sometimes does not likes lines with blanks
-  HeaderArea <- HeaderArea[!stringr::str_detect(HeaderArea,"^[[:blank:]]+$|^$")]
+  HeaderArea <- HeaderArea[!grepl("^[[:blank:]]+$|^$", HeaderArea)]
 
   # collect information about the series
   tcon <- textConnection(paste0(HeaderArea, collapse = "\n"))
@@ -310,6 +311,7 @@ tryCatchLog::tryCatchLog({
   OrigDateTimeClass <- class(x)[1]
 
   # time partial
+  # cut.POSIXt does not have parameter format
   LastUpdatedDayTimeDiff <- as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p") - Hmisc::truncPOSIXt(as.POSIXct(LastUpdated, format = "%Y-%m-%d %I:%M %p"), "days")
 
   if(Frequency %in%  c("Quarterly","Monthly")) {
@@ -385,8 +387,6 @@ tryCatchLog::tryCatchLog({
 #' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
 #' #
 #' vinDates("RECPROUSM156N")
-#' Read 2002 items
-#'
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog

@@ -375,7 +375,7 @@ tryCatchLog::tryCatchLog({
 #' NOT IMPEMENTED YET
 #'
 #' @param x xts object
-#' @param period Period to convert to. Default is "months".
+#' @param Period Period to convert to. Default is "months".
 #' See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
 #' This is the aggregation (summary)
 #' @param PeriodEnd Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday
@@ -395,7 +395,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom xts first last
 #' @export
 toPeriod <- function(x, Period="months", PeriodEnd = NULL,
-                     fillMissing = T, fillMissingBy = "days",
+                     fillInterior = T, fillInteriorBy = "days",
                      Calendar = "UnitedStates/GovernmentBond") {
 tryCatchLog::tryCatchLog({
 
