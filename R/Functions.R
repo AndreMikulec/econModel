@@ -113,6 +113,31 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' If Then Else
+#'
+#' @description
+#' \preformatted{
+#' If Then Else
+#' See ? ifelse.xts
+#' }
+#' @param x xts object
+#' @param y if T, select this value
+#' @param n if F, select this value
+#' @param ... dots passed
+#' @return xts object
+#' @export
+IE <- function(x, y, n, ...) {
+tryCatchLog::tryCatchLog({
+  xTs <- ifelse.xts(test = x, yes = y, no = n, ...)
+
+  # strait override
+  if(NVAR(xTs)) {
+    Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ie"),".", y, ".", n)
+  }
+  xTs
+})}
+
+
 
 
 
@@ -435,31 +460,6 @@ tryCatchLog::tryCatchLog({
   # strait override
   if(NVAR(xTs)) {
      Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rn")), ".", z, ".", e, ".", n)
-  }
-  xTs
-})}
-
-
-#' If Then Else
-#'
-#' @description
-#' \preformatted{
-#' If Then Else
-#' See ? ifelse.xts
-#' }
-#' @param x xts object
-#' @param y if T, select this value
-#' @param n if F, select this value
-#' @param ... dots passed
-#' @return xts object
-#' @export
-IE <- function(x, y, n, ...) {
-tryCatchLog::tryCatchLog({
-  xTs <- ifelse.xts(test = x, yes = y, no = n, ...)
-
-  # strait override
-  if(NVAR(xTs)) {
-    Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ie"),".", y, ".", n)
   }
   xTs
 })}
