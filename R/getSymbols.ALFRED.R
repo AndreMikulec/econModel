@@ -380,9 +380,6 @@ tryCatchLog::tryCatchLog({
 #'}
 #' @examples
 #' \dontrun{
-#'
-#' library(quantmod)
-#'
 #' # Smoothed U.S. Recession Probabilities
 #' # Source: Piger, Jeremy Max, Chauvet, Marcelle
 #' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
