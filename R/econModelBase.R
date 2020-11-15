@@ -232,18 +232,16 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog  tryCatchLog
 #' @importFrom zoo coredata
+#' @importFrom data.table fifelse
 #' @export
 ifelse.xts <- function(test, yes, no, ...) {
 tryCatchLog::tryCatchLog({
-
-  # NOTE: There exists better/faster ifelse out there
-  # e.g. ifelseC
 
   # ifelse.zoo is not a method (because ifelse is not a generic)
   # ? zoo
   xTs <- test
   zoo::coredata(xTs) <- apply(zoo::coredata(xTs), MARGIN = 2, FUN = function(x) {
-    ifelse(x, yes, no)
+    data.table::fifelse(x, yes, no)
   })
   # strait override
   if(NVAR(xTs)) {
