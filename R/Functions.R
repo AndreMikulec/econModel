@@ -228,6 +228,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom utils head
 #' @importFrom zoo coredata
+#' @importFrom TSrepr rleC
 #' @export
 timeEvent <- function(x, zone = "after", event = T, not = F, run = F, ...) {
 tryCatchLog::tryCatchLog({
@@ -248,7 +249,9 @@ tryCatchLog::tryCatchLog({
   # zoo::coredata(xTs) <- ifelse( is.na(zoo::coredata(xTs)),                               T, F)
   # zoo::coredata(xTs) <- ifelse(!is.na(zoo::coredata(xTs)) & zoo::coredata(xTs) == event, T, F)
 
-  RunLenEnc <- rle(as.vector(coredata(xTs)))
+  # RunLenEnc <- rle(as.vector(coredata(xTs)))
+  # run length encoding of x ( in C )
+  RunLenEnc <- structure(TSrepr::rleC(as.vector(coredata(xTs))), class = "rle")
   # list of each run
   Runs <- mapply(function(...) { do.call(rep, rev(list(...))) }, RunLenEnc$lengths, RunLenEnc$values, SIMPLIFY = F)
 
