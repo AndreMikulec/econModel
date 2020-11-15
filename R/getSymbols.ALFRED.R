@@ -284,6 +284,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo as.Date
 #' @importFrom DescTools AddMonths
+#' @importFrom data.table fifelse
 #' @importFrom Hmisc truncPOSIXt
 #' @importFrom timeDate timeNthNdayInMonth
 #' @importFrom RQuantLib businessDaysBetween isHoliday adjust
@@ -335,7 +336,7 @@ tryCatchLog::tryCatchLog({
     if(!is.null(NdayInMonth)) {
       NewDatesReferences <- as.Date(timeDate::timeNthNdayInMonth(as.character(NewDatesReferences), nday = NdayInMonth, nth = 1, format = "%Y-%m-%d"))
       # if a holiday, then try next week (7 days later)
-      NewDatesReferences <- NewDatesReferences + ifelse(RQuantLib::isHoliday(Calendar, NewDatesReferences), 7L, 0L)
+      NewDatesReferences <- NewDatesReferences + data.table::fifelse(RQuantLib::isHoliday(Calendar, NewDatesReferences), 7L, 0L)
       WorkDaysAfterBeginOfDateReference <- 0L
     }
   }

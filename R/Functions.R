@@ -240,14 +240,14 @@ tryCatchLog::tryCatchLog({
   # limit all of my event down to just: event xor 'not event'
   # using package::is.na.xts and package::ifelse.xts
   if( is.na(event)) {
-      xTs <- ifelse( is.na(xTs),                 T, F)
+      xTs <- ifelse.xts( is.na(xTs),                 T, F)
   }
   if(!is.na(event)) {
-      xTs <- ifelse(!is.na(xTs) &  xTs == event, T, F)
+      xTs <- ifelse.xts(!is.na(xTs) &  xTs == event, T, F)
   }
   # could have, instead, done this here
-  # zoo::coredata(xTs) <- ifelse( is.na(zoo::coredata(xTs)),                               T, F)
-  # zoo::coredata(xTs) <- ifelse(!is.na(zoo::coredata(xTs)) & zoo::coredata(xTs) == event, T, F)
+  # zoo::coredata(xTs) <- data.table::fifelse( is.na(zoo::coredata(xTs)),                               T, F)
+  # zoo::coredata(xTs) <- data.table::fifelse(!is.na(zoo::coredata(xTs)) & zoo::coredata(xTs) == event, T, F)
 
   # RunLenEnc <- rle(as.vector(coredata(xTs)))
   # run length encoding of x ( in C )
