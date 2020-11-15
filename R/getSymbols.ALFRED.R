@@ -445,6 +445,73 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' @examples
+#' \dontrun{
+#'
+#' # Smoothed U.S. Recession Probabilities (RECPROUSM156N)
+#' # Source: Piger, Jeremy Max, Chauvet, Marcelle
+#' # https://fred.stlouisfed.org/series/RECPROUSM156N
+#' # and
+#' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
+#'
+#' library(quantmod)
+#'
+#' getSymbols("RECPROUSM156N", src =   "FRED")
+#' [1] "RECPROUSM156N"
+#'
+#' # src = "ALFRED"
+#' getALFRED("RECPROUSM156N", LookBack = 4)
+#'
+#' Processing vintages: 2012-09-04 ... 2013-08-08 of RECPROUSM156N.vin
+#' Processing vintages: 2013-09-03 ... 2014-08-01 of RECPROUSM156N.vin
+#' Processing vintages: 2014-09-01 ... 2015-08-06 of RECPROUSM156N.vin
+#' Processing vintages: 2015-09-01 ... 2016-08-05 of RECPROUSM156N.vin
+#' Processing vintages: 2016-09-01 ... 2017-08-03 of RECPROUSM156N.vin
+#' Processing vintages: 2017-09-01 ... 2018-08-01 of RECPROUSM156N.vin
+#' Processing vintages: 2018-09-03 ... 2019-09-03 of RECPROUSM156N.vin
+#' Processing vintages: 2019-10-01 ... 2020-09-01 of RECPROUSM156N.vin
+#' Processing vintages: 2020-10-01 ... 2020-10-01 of RECPROUSM156N.vin
+#' [1] "RECPROUSM156N.vin"
+#' }
+#' @rdname getSymbols.ALFRED
+#' @export
+#' @importFrom tryCatchLog tryCatchLog
+getALFRED <- function(Symbols,
+                      env = parent.frame(),
+                      return.class = "xts",
+                      returnIndex = "ObservationDate",
+                      VintageId = NULL,
+                      nameVintagedId = F,
+                      EarliestLastUpdDate = NULL,
+                      LookBack = 3,
+                      VintagesPerQuery = 12,
+                      FullOldestVintageData = F,
+                      DataSheet = F,
+                      allowParallel = F,
+                      MaxParallel = NULL,
+                      ...) {
+tryCatchLog::tryCatchLog({
+
+  getSymbols(Symbols = Symbols,
+             src = "ALFRED",
+             env = env,
+             return.class = return.class,
+             returnIndex = returnIndex,
+             VintageId = VintageId,
+             nameVintagedId = nameVintagedId,
+             EarliestLastUpdDate = EarliestLastUpdDate,
+             LookBack = LookBack,
+             VintagesPerQuery = VintagesPerQuery,
+             FullOldestVintageData = FullOldestVintageData,
+             DataSheet = DataSheet,
+             allowParallel = allowParallel,
+             MaxParallel = MaxParallel,
+             ...)
+
+})}
+
+
+
 
 #' Download Federal Reserve Economic Data - ALFRED(R)
 #'
@@ -489,16 +556,6 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @examples
 #' \dontrun{
-#'
-#' # Smoothed U.S. Recession Probabilities (RECPROUSM156N)
-#' # Source: Piger, Jeremy Max, Chauvet, Marcelle
-#' # https://fred.stlouisfed.org/series/RECPROUSM156N
-#' # and
-#' # https://fred.stlouisfed.org/data/RECPROUSM156N.txt
-#' #
-#' getSymbols("RECPROUSM156N", src =   "FRED")
-#' [1] "RECPROUSM156N"
-#'
 #' getSymbols("RECPROUSM156N", src = "ALFRED", LookBack = 4)
 #'
 #' Processing vintages: 2012-09-04 ... 2013-08-08 of RECPROUSM156N.vin
@@ -1174,3 +1231,7 @@ getSymbols.ALFRED <- function(Symbols,
     return(setdiff(returnSym, noDataSym))
   return(fr)
 }
+
+
+
+
