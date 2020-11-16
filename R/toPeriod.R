@@ -472,7 +472,7 @@ tryCatchLog::tryCatchLog({
   tzone(x) <- Origtzone
   xtsAttributes(x) <- OrigxtsAttributes
 
-  # if the tclass of x (e.g. Date) is more corse than POSIXct
+  # if the tclass of x (e.g. Date) is more course than POSIXct
   # then keep the later duplicates (if any)
   index(x) <- index(x)[!duplicated(index(x), fromLast = T)]
 
