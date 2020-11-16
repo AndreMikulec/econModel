@@ -62,7 +62,7 @@ tryCatchLog::tryCatchLog({
 
   return(NewRepositoryEntryName)
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -111,6 +111,6 @@ tryCatchLog::tryCatchLog({
 
   }
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 

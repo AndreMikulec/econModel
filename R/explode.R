@@ -302,7 +302,7 @@ tryCatchLog::tryCatchLog({
 
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -485,4 +485,4 @@ tryCatchLog::tryCatchLog({
   # xts::xtsAttributes(x) <- xtsAttributes(x1)
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}

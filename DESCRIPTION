@@ -20,6 +20,7 @@ Imports:
     rlist,
     DescTools,
     Hmisc,
+    futile.logger,
     tryCatchLog,
     utils,
     stats,

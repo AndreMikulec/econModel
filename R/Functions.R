@@ -51,7 +51,7 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -108,7 +108,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ina"))
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -135,7 +135,7 @@ tryCatchLog::tryCatchLog({
     Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ie"),".", y, ".", n)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -334,7 +334,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"te"))
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -371,7 +371,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"te")), ".", z, ".", e, ".", n, ".", r)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -403,7 +403,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"tae")), ".", e, ".", n, ".", r)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Time Near Events or Event Run Identification
@@ -434,7 +434,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"tbe")), ".", e, ".", n, ".", r)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Time Near Events or Event Run Identification
@@ -465,7 +465,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rn")), ".", z, ".", e, ".", n)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -519,7 +519,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"nc")), ".", d)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -612,7 +612,7 @@ tryCatchLog::tryCatchLog({
   colnames(xTs) <- DescTools::DoCall(c, NewColNames)
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Lag an xts Object
@@ -659,7 +659,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"lg"),".", k)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Lead an xts Object
@@ -706,7 +706,7 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -757,7 +757,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ac"),".", base, ".", lag)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -800,7 +800,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"ac"),".", b, ".", l)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -852,7 +852,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"apc"),".", b, ".", l)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -892,7 +892,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"apcp"),".", b, ".", l)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -938,7 +938,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rpc"),".", b, ".", l)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -982,7 +982,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rpcp"),".", b, ".", l)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1097,7 +1097,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rc"),".", base, ".", lag)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1143,7 +1143,7 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1187,7 +1187,7 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1229,7 +1229,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rrc"),".", b, ".", l)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1351,7 +1351,7 @@ tryCatchLog::tryCatchLog({
 
   }
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Differences by using Absolute Change
@@ -1406,7 +1406,7 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1461,7 +1461,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"dfr"),".", l, ".", d)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1556,7 +1556,7 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rnk"),".",  window, ".", ranks)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1619,5 +1619,5 @@ tryCatchLog::tryCatchLog({
      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"rnk"),".",  w, ".", r)
   }
   xTs
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 

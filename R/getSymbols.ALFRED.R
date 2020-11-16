@@ -68,7 +68,7 @@ tryCatchLog::tryCatchLog({
   }
   Result
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -191,7 +191,7 @@ tryCatchLog::tryCatchLog({
   }
 
   SeriesInfo
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Determine LastUpdated(Publishing) Dates
@@ -359,7 +359,7 @@ tryCatchLog::tryCatchLog({
   Sys.setenv(TZ=oldtz)
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Download vintage dates of Federal Reserve Economic Data - ALFRED(R)
@@ -442,7 +442,7 @@ tryCatchLog::tryCatchLog({
   # oldest vintage to youngest vintage
   return(LastUpdatedDates)
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -509,7 +509,7 @@ tryCatchLog::tryCatchLog({
              MaxParallel = MaxParallel,
              ...)
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1213,7 +1213,7 @@ getSymbols.ALFRED <- function(Symbols,
       if (auto.assign)
         assign(Symbols[[i]], fr, env)
     # }, silent = TRUE)
-    }, error = function(e) { Sys.setenv(TZ=oldtz); test <- 0L; class(test) <- "try-error"; test  })
+    }, error = function(e) {Sys.setenv(TZ=oldtz); test <- 0L; class(test) <- "try-error"; test}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))
 
     Sys.setenv(TZ=oldtz)
 

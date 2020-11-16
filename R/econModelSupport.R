@@ -49,7 +49,7 @@ tryCatchLog::tryCatchLog({
                     " 'xts' class returned"))
     }
   }
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -152,7 +152,7 @@ tryCatchLog::tryCatchLog({
   }
 
   invisible(copiedFiles);
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Force the assignment of new items in a namespace
@@ -193,6 +193,6 @@ tryCatchLog::tryCatchLog({
     assign(x, value, .getNamespace(namespace))
     lockBinding(x, .getNamespace(namespace))
   }
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 

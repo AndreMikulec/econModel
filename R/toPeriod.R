@@ -166,7 +166,7 @@ tryCatchLog::tryCatchLog({
   }
   res
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' zoo seq.yearqtr
@@ -335,7 +335,7 @@ tryCatchLog::tryCatchLog({
   }
   res
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -365,7 +365,7 @@ tryCatchLog::tryCatchLog({
   unique(if (length(x) || length(y))
       x[match(x, y, 0L) == 0L]
   else x)
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -482,7 +482,7 @@ tryCatchLog::tryCatchLog({
 
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 

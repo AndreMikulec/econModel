@@ -1,8 +1,5 @@
 
 
-
-
-
 #' detect rows with non-NA vaues
 #'
 #' @description
@@ -46,7 +43,7 @@ tryCatchLog::tryCatchLog({
   x <- Reduce(Test, lapply(x[, Var, drop = FALSE], function(x2) { !is.na(unlist(x2)) } ))
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -107,7 +104,7 @@ tryCatchLog::tryCatchLog({
   x <- xVar & xNotVar
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -159,7 +156,7 @@ tryCatchLog::tryCatchLog({
   x <- Reduce(Test, lapply(x[, Var, drop = FALSE], function(x2) { is.na(unlist(x2)) } ))
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -210,7 +207,8 @@ tryCatchLog::tryCatchLog({
 
   # rows to keep
   x <- x[!DetectEmptyRows(x, Var = Var, Ele = Ele),,drop = FALSE]
+  log("a")
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 

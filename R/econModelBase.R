@@ -45,7 +45,7 @@ tryCatchLog::tryCatchLog({
     Prnt <- x; Done <- T
   }
   Prnt
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Better Names
@@ -66,7 +66,7 @@ tryCatchLog::tryCatchLog({
   names(x) -> res
   if(is.null(res)) return(character(0))
   return(res)
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' Better Names
@@ -88,7 +88,7 @@ tryCatchLog::tryCatchLog({
    if(is.null(x)     || !length(x))         x <- character(0)
    if(is.null(value) || !length(value)) value <- character(0)
   `names<-`(x = x, value = value)
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -148,7 +148,7 @@ tryCatchLog::tryCatchLog({
   if(!length(x)) return(0L)
   NCOL(x)
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -174,7 +174,7 @@ tryCatchLog::tryCatchLog({
   }
   return(res)
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -249,7 +249,7 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -319,6 +319,6 @@ tryCatchLog::tryCatchLog({
   }
   xTs
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
