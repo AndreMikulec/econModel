@@ -46,6 +46,8 @@ tryCatchLog::tryCatchLog({
     Sys.setenv(TZ="UTC")
   }
 
+  From <- normalizePath(From, winslash = "/")
+
   SetupFile <- suppressWarnings(suppressMessages(foreign::read.dbf(file=paste0(From,"/","Setup.dbf"), as.is = TRUE)))
 
   if(length(unique(
@@ -96,6 +98,7 @@ copyAAIISIProDBFs <- function(From = "C:/Program Files (x86)/Stock Investor/Prof
                               CaseChange = "UpperCase") {
 tryCatchLog::tryCatchLog({
 
+  From <- normalizePath(From, winslash = "/")
   SubDirs <- c("","/Dbfs","/User","/Static","/Temp","/Datadict")
 
   for(SubDir in SubDirs) {
