@@ -19,6 +19,7 @@
 #' fredAttributes
 #' estimLastUpdated
 #' vinDates
+#' getFRED
 #' getALFRED
 #' getSymbols.ALFRED
 #'

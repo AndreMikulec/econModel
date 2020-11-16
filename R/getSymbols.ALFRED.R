@@ -446,6 +446,44 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' @rdname getSymbols.ALFRED
+#' @export
+#' @importFrom tryCatchLog tryCatchLog
+getFRED <- function(Symbols,
+                    env = parent.frame(),
+                    return.class = "xts",
+                    returnIndex = "ObservationDate",
+                    VintageId = "Latest",
+                    nameVintagedId = F,
+                    EarliestLastUpdDate = NULL,
+                    LookBack = "Beginning",
+                    VintagesPerQuery = 12,
+                    FullOldestVintageData = F,
+                    DataSheet = F,
+                    allowParallel = F,
+                    MaxParallel = NULL,
+                    ...) {
+tryCatchLog::tryCatchLog({
+
+  getALFRED(Symbols = Symbols,
+             env = env,
+             return.class = return.class,
+             returnIndex = returnIndex,
+             VintageId = VintageId,
+             nameVintagedId = nameVintagedId,
+             EarliestLastUpdDate = EarliestLastUpdDate,
+             LookBack = LookBack,
+             VintagesPerQuery = VintagesPerQuery,
+             FullOldestVintageData = FullOldestVintageData,
+             DataSheet = DataSheet,
+             allowParallel = allowParallel,
+             MaxParallel = MaxParallel,
+             ...)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
 #' @examples
 #' \dontrun{
 #'
@@ -527,7 +565,7 @@ tryCatchLog::tryCatchLog({
 #' @param Symbols a character vector specifying the names of each symbol to be loaded (from R CRAN package quantmod function getSymbols)
 #' @param env where to create objects. (.GlobalEnv) (from R CRAN package quantmod function getSymbols)
 #' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
-#' @param VintageId download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function vinDates.
+#' @param VintageId download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function vinDates.  The parameter value can also be "Latest".
 #' @param nameVintagedId add the VintageId (or the most recent "Last Updated" date VintageId) to the name of what is returned
 #' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}
 #' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function vinDates (xor vintages that have been entered by the user throught the paramter VintageId).  Note, if this paramter EarliestLastUpdDate, is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
@@ -591,6 +629,14 @@ tryCatchLog::tryCatchLog({
 #' getSymbols("RECPROUSM156N", src = "ALFRED", returnIndex = "LastUpdatedDate", LookBack = 4)
 #' dygraphs::dygraph(merge(RECPROUSM156N, RECPROUSM156N.vin))
 #'
+#' # get the most recent vintage (most recent VintageId)
+#' getALFRED("RECPROUSM156N", VintageId = "Latest", LookBack = "Beginning", verbose = T)
+#' # same
+#' getFRED("RECPROUSM156N", verbose = T)
+#' downloading  RECPROUSM156N .....
+#'
+#' Processing vintages: 2020-10-01 ... 2020-10-01 of RECPROUSM156N.vin
+#'
 #' # get just this exact vintage data and all of its data
 #' # To get all of the data the user chooses look back 100 years)
 #' # (This series has known periods of one month long in duration)
@@ -604,7 +650,7 @@ tryCatchLog::tryCatchLog({
 #' # that is restricted by the default short time Lookback
 #' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02")
 #'
-#' # same as above, and include the vintageid in the column name
+#' # same as above, and include the VintageId in the column name
 #' getSymbols("RECPROUSM156N", src = "ALFRED", VintageId = "2020-01-02", nameVintagedId = T)
 #' # Processing vintages: 2020-01-02 ... 2020-01-02 of RECPROUSM156N.vin.2020.01.02
 #' # [1] "RECPROUSM156N.vin.2020.01.02"
@@ -718,7 +764,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom zoo as.Date as.yearmon as.yearqtr na.trim coredata index `index<-`
 #' @importFrom xts xts as.xts last periodicity
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-`  xtsAttributes `xtsAttributes<-`
-#' @importFrom xts as.xts
+#' @importFrom xts as.xts last
 #' @importFrom quantmod importDefaults getSymbols
 getSymbols.ALFRED <- function(Symbols,
                               env,
@@ -762,8 +808,9 @@ getSymbols.ALFRED <- function(Symbols,
 
   if(length(VintageId) && !class(VintageId) %in% c("Date", "character")) {
     stop("VintageId must be NULL or of class \"Date\" or \"character\"")
+  } else if(VintageId == "Latest") { # good, so skip
   } else if(length(VintageId) && class(try( {zoo::as.Date(VintageId)}, silent = F)) == "try-error") {
-    stop("VintageId must be NULL or convertible to a Date-like")
+    stop("VintageId must be NULL, convertible to a Date-like, or \"Latest\"")
   } else if(1L < length(VintageId)) {
     stop("VintageId must be just one element")
   }
@@ -842,6 +889,8 @@ getSymbols.ALFRED <- function(Symbols,
       # where to get the vintages' 'Last Updated' dates
       if(is.null(VintageId)) {
         AllLastUpdatedDates <- vinDates(Symbols[[i]])
+      } else if(VintageId == "Latest") {
+        AllLastUpdatedDates <- xts::last(vinDates(Symbols[[i]]))
       } else {
         # instead the user chooses the vintages
         AllLastUpdatedDates <- as.character(zoo::as.Date(VintageId))
