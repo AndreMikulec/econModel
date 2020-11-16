@@ -14,7 +14,6 @@
 #' @importFrom stats as.ts
 #' @importFrom zoo as.zoo
 #' @importFrom timeSeries timeSeries
-#' @export
 quantmod___convert.time.series <- function (fr, return.class){
 tryCatchLog::tryCatchLog({
 
@@ -83,7 +82,6 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom R.oo throw
 #' @importFrom R.utils isDirectory Arguments isFile filePath
-#' @export
 R.utils__copyDirectoryByPattern <- function(from, to=".", ...,
                                    private=T, recursive=T,
                                    pattern = NULL, CaseChange = NULL) {
