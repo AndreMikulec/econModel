@@ -743,9 +743,9 @@ tryCatchLog::tryCatchLog({
 #'                        nameVintagedId = T,
 #'                        LookBack = LookBack, env = .GlobalEnv)
 #'   },
-#'   c("RECPROUSM156N",  "RECPROUSM156N", "GDP"),           # symbol
-#'   c("2020-01-02",     "2019-01-02",    "2019-12-20"),    # vintageid
-#'   c(18,                12,              6)               # lookback # months and quarters
+#'   c("RECPROUSM156N",  "RECPROUSM156N", "GDP"),           # Symbol
+#'   c("2020-01-02",     "2019-01-02",    "2019-12-20"),    # VintageId
+#'   c(18,                12,              6)               # LookBack # months and quarters
 #' )
 #' Processing vintages: 2020-01-02 ... 2020-01-02 of RECPROUSM156N.vin.2020.01.02
 #' Processing vintages: 2019-01-02 ... 2019-01-02 of RECPROUSM156N.vin.2019.01.02
@@ -808,7 +808,7 @@ getSymbols.ALFRED <- function(Symbols,
 
   if(length(VintageId) && !class(VintageId) %in% c("Date", "character")) {
     stop("VintageId must be NULL or of class \"Date\" or \"character\"")
-  } else if(VintageId == "Latest") { # good, so skip
+  } else if(length(VintageId) && VintageId == "Latest") { # good, so skip
   } else if(length(VintageId) && class(try( {zoo::as.Date(VintageId)}, silent = F)) == "try-error") {
     stop("VintageId must be NULL, convertible to a Date-like, or \"Latest\"")
   } else if(1L < length(VintageId)) {
