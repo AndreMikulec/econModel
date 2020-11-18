@@ -7,6 +7,8 @@
 toPeriod(
   x,
   Period = "months",
+  k = 1L,
+  kOfx = 1L,
   PeriodEnd = NULL,
   FunEach = identity,
   FunAll = NC,
@@ -21,9 +23,13 @@ toPeriod(
 
 \item{Period}{Period to convert to. Default is "months".
 See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
-This is the aggregation (summary)}
+This is the aggregation (summary).  ONLY "weeks" IS IMPLEMENTED.  OTHERS ARE NOT YET IMPLEMENTED.}
 
-\item{PeriodEnd}{Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday}
+\item{k}{Integer. Default is 1L.  Number of k Periods. NOT YET IMPLEMENTED.}
+
+\item{kOfx}{Integer. Default is 1L. This is the SubPeriod of the Period where the last observation of x exists.  If Period = "weeks" and k == 2L, then kOfx has possible values of 1L(week 1) or 2L(week 2). NOT YET IMPLEMENTED}
+
+\item{PeriodEnd}{Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday. If Period = "weeks" and k > 1, then PeriodEnd can be greater than 7L.  E.g. if k == 2L and PeriodEnd == 11L, then  PeriodEnd is the 2nd Thursday.}
 
 \item{FunEach}{Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).}
 

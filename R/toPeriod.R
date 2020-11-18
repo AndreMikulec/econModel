@@ -377,8 +377,10 @@ tryCatchLog::tryCatchLog({
 #' @param x xts object
 #' @param Period Period to convert to. Default is "months".
 #' See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
-#' This is the aggregation (summary)
-#' @param PeriodEnd Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday
+#' This is the aggregation (summary).  ONLY "weeks" IS IMPLEMENTED.  OTHERS ARE NOT YET IMPLEMENTED.
+#' @param k Integer. Default is 1L.  Number of k Periods. NOT YET IMPLEMENTED.
+#' @param kOfx Integer. Default is 1L. This is the SubPeriod of the Period where the last observation of x exists.  If Period = "weeks" and k == 2L, then kOfx has possible values of 1L(week 1) or 2L(week 2). NOT YET IMPLEMENTED
+#' @param PeriodEnd Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday. If Period = "weeks" and k > 1, then PeriodEnd can be greater than 7L.  E.g. if k == 2L and PeriodEnd == 11L, then  PeriodEnd is the 2nd Thursday.
 #' @param FunEach Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).
 #' @param FunAll Function. Default is econModel::NC. Has two argemetnss: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function to be applied across all periods.
 #' @param fillInterior Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.
@@ -397,11 +399,11 @@ tryCatchLog::tryCatchLog({
 #'}
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom RQuantLib adjust
-#' @importFrom zoo index na.locf
+#' @importFrom zoo index
 #' @importFrom xts xts as.xts first last
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
-toPeriod <- function(x, Period="months", PeriodEnd = NULL,
+toPeriod <- function(x, Period="months", k = 1L, kOfx = 1L, PeriodEnd = NULL,
                      FunEach = identity, FunAll = NC,
                      fillInterior = T, fillInteriorBy = "days",
                      Calendar = "UnitedStates/GovernmentBond",
@@ -417,6 +419,8 @@ tryCatchLog::tryCatchLog({
 
   if(Period == "weeks" && is.null(PeriodEnd)) PeriodEnd <- 7L # Sunday
 
+  if(!(1 <= kOfx && kOfx <= k)) stop("kOfx must be between 1L and k inclusive.")
+
   FunEach <- match.fun(FunEach)
   FunAll  <- match.fun(FunAll)
 
@@ -428,15 +432,15 @@ tryCatchLog::tryCatchLog({
 
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
-  DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), to = xts::last(zoo::index(y)),  by = Period)
+  DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), to = xts::last(zoo::index(y)),  by = paste0(k, " ", Period))
   if(xts::last(DateTimes) < xts::last(index(y))) {
     # append one more generated observations
-    DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), by = Period, length.out = length(DateTimes) + 1L)
+    DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
   }
 
   # if an irregular start/end of period
   # case "weeks"
-  if(Period == "weeks")  {
+  if(Period == "weeks" && k == 1L && kOfx == 1L)  {
     # Weekday returns the week day of the input date. (1 - Monday, 2 - Tuesday, ... 7 - Sunday
     # Monday, PeriodStart == 1L (start of Week)
     # Sunday, PeriodEnd   == 7L (end of week)
@@ -446,22 +450,27 @@ tryCatchLog::tryCatchLog({
     #     end of period (defined by PeriodEnd).
     #       Therefore, Shift is a (-)negative number.
     #       See DescTools::Weekday(DateTimes)
+    # negative or zero(0L)
     Shift <- (PeriodEnd - 7L) * 24L * 3600L
-    if(xts::last(zoo::index(y)) < xts::last(DateTimes + Shift - 1) ) {
-      # ok to shift backwards
+    # y is "later than" the predicted "DateTimes EOP"       # - .Machine$double.xmin WOULD HAVE BEEN BETTER
+    if(xts::last(zoo::index(y)) < xts::last(DateTimes) + Shift - 1/19884107.8518 ) {
+      # ok to shift "eventual EOP" backwards
       DateTimes <- DateTimes + Shift
 
     } else {
-      # shift forward
+      # shift "eventual EOP" forward
       DateTimes <- DateTimes + PeriodEnd  * 24L * 3600L
     }
   }
 
   # keep later duplicates
   DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
-  # subtract off one small number to get EOP
+  # subtract off one small number to
+  # get the "eventual[ly-and-now-realized ]EOP"
+  #
   # smallest number without R rounding
-  DateTimes <- DateTimes - 1/19884107.8518 # .Machine$double.xmin
+  #                    # - .Machine$double.xmin WOULD HAVE BEEN BETTER
+  DateTimes <- DateTimes - 1/19884107.8518 #
 
   # beginning may not be needed (keep what is needed)
   DateTimes <-  DateTimes[!DateTimes < xts::first(index(y))]
