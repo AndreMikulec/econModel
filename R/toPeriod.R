@@ -393,6 +393,9 @@ tryCatchLog::tryCatchLog({
 #' \dontrun{
 #' x <- xts(c(3,363), zoo::as.Date(c(3,363)))
 #' toPeriod(x, Period = "weeks", PeriodEnd = 4L)
+#' toPeriod(x, Period = "weeks", k = 2L, kOfx = 2L, PeriodEnd = 4L)
+#' toPeriod(x, Period = "weeks", k = 2L, kOfx = 1L, PeriodEnd = 11L)
+#'
 #' toPeriod(x, Period = "weeks", PeriodEnd = 3L)
 #' toPeriod(x, Period = "weeks", PeriodEnd = 2L)
 #' toPeriod(x, Period = "weeks", PeriodEnd = 1L)
@@ -433,34 +436,53 @@ tryCatchLog::tryCatchLog({
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
   DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), to = xts::last(zoo::index(y)),  by = paste0(k, " ", Period))
-  if(xts::last(DateTimes) < xts::last(index(y))) {
-    # append one more generated observations
-    DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
-  }
+  # Begin force all to the BOP
+  Shift <- -1L * (DescTools::Weekday(xts::first(zoo::index(y))) - DescTools::Weekday(xts::first(DateTimes)))
+  # BOP math
+  zoo::index(y) <- zoo::index(y) + Shift * 24 * 3600
+  PeriodEnd <- PeriodEnd + Shift
 
-  # if an irregular start/end of period
-  # case "weeks"
-  if(Period == "weeks" && k == 1L && kOfx == 1L)  {
-    # Weekday returns the week day of the input date. (1 - Monday, 2 - Tuesday, ... 7 - Sunday
-    # Monday, PeriodStart == 1L (start of Week)
-    # Sunday, PeriodEnd   == 7L (end of week)
-    # Because index(y) is contained in the range of DateTimes,
-    #   then tail(DateTimes) is the end of period
-    #   then I want to go backwards toward(and land on) the correct
-    #     end of period (defined by PeriodEnd).
-    #       Therefore, Shift is a (-)negative number.
-    #       See DescTools::Weekday(DateTimes)
-    # negative or zero(0L)
-    Shift <- (PeriodEnd - 7L) * 24L * 3600L
-    # y is "later than" the predicted "DateTimes EOP"       # - .Machine$double.xmin WOULD HAVE BEEN BETTER
-    if(xts::last(zoo::index(y)) < xts::last(DateTimes) + Shift - 1/19884107.8518 ) {
-      # ok to shift "eventual EOP" backwards
-      DateTimes <- DateTimes + Shift
+  # # append one more generated observations
+  # DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
+  # pre-pend an extra value (that because of later shifting) that may be needed later
+  # DateTimes <- c(xts::last(seq(xts::first(DateTimes), by = paste0(-1 * k, " ", Period), length.out = 2)) , DateTimes)
+  # too-early DateTimes values will later be chopped-off. See below.
 
-    } else {
-      # shift "eventual EOP" forward
-      DateTimes <- DateTimes + PeriodEnd  * 24L * 3600L
-    }
+  # # if an irregular start/end of period
+  # # case "weeks"
+  # if(Period == "weeks" && k == 1L && kOfx == 1L)  {
+  #   # Weekday returns the week day of the input date. (1 - Monday, 2 - Tuesday, ... 7 - Sunday
+  #   # Monday, PeriodStart == 1L (start of Week)
+  #   # Sunday, PeriodEnd   == 7L (end of week)
+  #   # Because index(y) is contained in the range of DateTimes,
+  #   #   then tail(DateTimes) is the end of period
+  #   #   then I want to go backwards toward(and land on) the correct
+  #   #     end of period (defined by PeriodEnd).
+  #   #       Therefore, Shift is a (-)negative number.
+  #   #       See DescTools::Weekday(DateTimes)
+  #   # negative or zero(0L)
+  #   Shift <- (PeriodEnd - 7L) * 24L * 3600L
+  #   # y is "later than" the predicted "DateTimes EOP"       # - .Machine$double.xmin WOULD HAVE BEEN BETTER
+  #   if(xts::last(zoo::index(y)) < xts::last(DateTimes) + Shift - 1/19884107.8518 ) {
+  #     # ok to shift "eventual EOP" backwards
+  #     DateTimes <- DateTimes + Shift
+  #
+  #   } else {
+  #     # shift "eventual EOP" forward
+  #     DateTimes <- DateTimes + PeriodEnd  * 24L * 3600L
+  #   }
+  # }
+  if(Period == "weeks") {
+    # move DateTimes, so that the right most value is an EOP
+    # and lands on the correct "weekdays()" (determined by Period)
+    DateTimes <- DateTimes + (PeriodEnd - DescTools::Weekday(DateTimes)) * 24 * 3600
+    # vec of Points (members of the SubInterval)
+    SubPeriodsFirstInterval <- c(xts::first(DateTimes) + seq_len(k) * 7 * 24 * 3600, xts::last(DateTimes))
+    # in which SubPeriod does xts::first(index(y)) exist?
+    # rightmost.closed = FALSE
+    FirstExistsInSubPeriodsFirstInterval <- findInterval(xts::first(zoo::index(y)), SubPeriodsFirstInterval)
+    # move DateTimes as apropriate, so xts::last(index(y)) is in the correct SubPeriod
+    DateTimes <- DateTimes + (kOfx - FirstExistsInSubPeriodsFirstInterval) * 7L * 24 * 3600
   }
 
   # keep later duplicates
@@ -474,6 +496,11 @@ tryCatchLog::tryCatchLog({
 
   # beginning may not be needed (keep what is needed)
   DateTimes <-  DateTimes[!DateTimes < xts::first(index(y))]
+
+  # end may not be needed (keep what is needed)
+  isDateTimesGreater <- xts::last(index(y)) < DateTimes
+  DateTimesGreaterItemKept <- DateTimes[cumsum(isDateTimesGreater) == 1L]
+  Datetimes <- c(DateTimes[!isDateTimesGreater], DateTimesGreaterItemKept)
 
   # new
   y <- xts::xts(, DateTimes)

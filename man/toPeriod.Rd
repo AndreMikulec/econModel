@@ -54,6 +54,9 @@ NOT IMPEMENTED YET
 \dontrun{
 x <- xts(c(3,363), zoo::as.Date(c(3,363)))
 toPeriod(x, Period = "weeks", PeriodEnd = 4L)
+toPeriod(x, Period = "weeks", k = 2L, kOfx = 2L, PeriodEnd = 4L)
+toPeriod(x, Period = "weeks", k = 2L, kOfx = 1L, PeriodEnd = 11L)
+
 toPeriod(x, Period = "weeks", PeriodEnd = 3L)
 toPeriod(x, Period = "weeks", PeriodEnd = 2L)
 toPeriod(x, Period = "weeks", PeriodEnd = 1L)
