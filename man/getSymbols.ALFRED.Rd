@@ -276,9 +276,9 @@ mapply(
                        nameVintagedId = T,
                        LookBack = LookBack, env = .GlobalEnv)
   },
-  c("RECPROUSM156N",  "RECPROUSM156N", "GDP"),           # symbol
-  c("2020-01-02",     "2019-01-02",    "2019-12-20"),    # vintageid
-  c(18,                12,              6)               # lookback # months and quarters
+  c("RECPROUSM156N",  "RECPROUSM156N", "GDP"),           # Symbol
+  c("2020-01-02",     "2019-01-02",    "2019-12-20"),    # VintageId
+  c(18,                12,              6)               # LookBack # months and quarters
 )
 Processing vintages: 2020-01-02 ... 2020-01-02 of RECPROUSM156N.vin.2020.01.02
 Processing vintages: 2019-01-02 ... 2019-01-02 of RECPROUSM156N.vin.2019.01.02

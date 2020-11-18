@@ -392,7 +392,11 @@ tryCatchLog::tryCatchLog({
 #' toPeriod(x, Period = "weeks", PeriodEnd = 2L)
 #' toPeriod(x, Period = "weeks", PeriodEnd = 1L)
 #'}
-#' @importFrom xts first last
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom RQuantLib adjust
+#' @importFrom zoo index
+#' @importFrom xts xts as.xts first last
+#' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
 toPeriod <- function(x, Period="months", PeriodEnd = NULL,
                      fillInterior = T, fillInteriorBy = "days",
@@ -407,20 +411,20 @@ tryCatchLog::tryCatchLog({
 
   if(Period == "weeks" && is.null(PeriodEnd)) PeriodEnd <- 7L # Sunday
 
-  Origtclass <- tclass(x)
-  Origtformat <- tformat(x)
-  Origtzone <- tzone(x)
-  OrigxtsAttributes <- xtsAttributes(x)
+  Origtclass <- xts::tclass(x)
+  Origtformat <- xts::tformat(x)
+  Origtzone <- xts::tzone(x)
+  OrigxtsAttributes <- xts::xtsAttributes(x)
 
-  y <- as.xts( x[,0], index(x))
-  y <- as.xts(     y, as.POSIXct(index(x)))
+  y <- xts::as.xts( x[,0], zoo::index(x))
+  y <- xts::as.xts(     y, as.POSIXct(index(x)))
 
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
-  DateTimes <- seq(as.POSIXct(cut(first(index(y)), Period)), to = last(index(y)),  by = Period)
-  if(last(DateTimes) < last(index(y))) {
+  DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), to = xts::last(zoo::index(y)),  by = Period)
+  if(xts::last(DateTimes) < xts::last(index(y))) {
     # append one more generated observations
-    DateTimes <- seq(as.POSIXct(cut(first(index(y)), Period)), by = Period, length.out = length(DateTimes) + 1L)
+    DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), by = Period, length.out = length(DateTimes) + 1L)
   }
 
   # if an irregular start/end of period
@@ -436,7 +440,7 @@ tryCatchLog::tryCatchLog({
     #       Therefore, Shift is a (-)negative number.
     #       See DescTools::Weekday(DateTimes)
     Shift <- (PeriodEnd - 7L) * 24L * 3600L
-    if(last(index(y)) < last(DateTimes + Shift - 1) ) {
+    if(xts::last(zoo::index(y)) < xts::last(DateTimes + Shift - 1) ) {
       # ok to shift backwards
       DateTimes <- DateTimes + Shift
 
@@ -451,30 +455,32 @@ tryCatchLog::tryCatchLog({
   # subtract off one to get endOfUNIT
   DateTimes <- DateTimes - 1  # .Machine$double.xmin
 
-  # beginning may not needed (keep what is needed)
-  DateTimes <-  DateTimes[!DateTimes < first(index(y))]
+  # beginning may not be needed (keep what is needed)
+  DateTimes <-  DateTimes[!DateTimes < xts::first(index(y))]
 
   # new
-  y <- xts(, DateTimes)
+  y <- xts::xts(, DateTimes)
 
-  indexYunremoved <- index(y)
+  indexYunremoved <- zoo::index(y)
   # remove y index values if they already exist in index x
-  index(y) <- index(y)[!index(y) %in% as.POSIXct(index(x))]
+  zoo::index(y) <- zoo::index(y)[!zoo::index(y) %in% as.POSIXct(zoo::index(x))]
   # dangerously assume that they will be merged in order
-  x <- merge(xts(x, as.POSIXct(index(x))),y)
+  x <- merge(xts::xts(x, as.POSIXct(zoo::index(x))),y)
+  PeriodsList <- cut(zoo::index(x), breaks = indexYunremoved,  labels = FALSE)
+
   # Ops (whatever)
-  x <- na.locf(x)
+  x <- zoo::na.locf(x)
   # only interested in keeping the end of period values
   x <- x[index(x) %in% indexYunremoved]
 
-  tclass(x) <- Origtclass
-  tformat(x) <- Origtformat
-  tzone(x) <- Origtzone
-  xtsAttributes(x) <- OrigxtsAttributes
+  xts::tclass(x) <- Origtclass
+  xts::tformat(x) <- Origtformat
+  xts::tzone(x) <- Origtzone
+  xts::xtsAttributes(x) <- OrigxtsAttributes
 
-  # if the tclass of x (e.g. Date) is more course than POSIXct
+  # if the tclass of x (e.g. Date) is more coarse than POSIXct
   # then keep the later duplicates (if any)
-  index(x) <- index(x)[!duplicated(index(x), fromLast = T)]
+  zoo::index(x) <- zoo::index(x)[!duplicated(index(x), fromLast = T)]
 
   colnames(x)[1] <- "V1"
 
