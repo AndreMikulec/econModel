@@ -8,9 +8,12 @@ toPeriod(
   x,
   Period = "months",
   PeriodEnd = NULL,
+  FunEach = identity,
+  FunAll = NC,
   fillInterior = T,
   fillInteriorBy = "days",
-  Calendar = "UnitedStates/GovernmentBond"
+  Calendar = "UnitedStates/GovernmentBond",
+  BusDayConv = 0L
 )
 }
 \arguments{
@@ -22,14 +25,20 @@ This is the aggregation (summary)}
 
 \item{PeriodEnd}{Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday}
 
+\item{FunEach}{Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).}
+
+\item{FunAll}{Function. Default is econModel::NC. Has two argemetnss: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function to be applied across all periods.}
+
 \item{fillInterior}{Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.}
 
 \item{fillInteriorBy}{String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.}
 
 \item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.}
+
+\item{BusDayConv}{Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum ? RQuantLib::adjust and parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.}
 }
 \value{
-modified
+modified xts object
 }
 \description{
 fillInteriorBy data values are done by "last observation carried forward".

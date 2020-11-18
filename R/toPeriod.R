@@ -379,10 +379,13 @@ tryCatchLog::tryCatchLog({
 #' See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
 #' This is the aggregation (summary)
 #' @param PeriodEnd Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday
+#' @param FunEach Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).
+#' @param FunAll Function. Default is econModel::NC. Has two argemetnss: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function to be applied across all periods.
 #' @param fillInterior Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.
 #' @param fillInteriorBy String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.
 #' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.
-#' @return modified
+#' @param BusDayConv Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum ? RQuantLib::adjust and parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.
+#' @return modified xts object
 #' @importFrom tryCatchLog tryCatchLog
 #' @examples
 #' \dontrun{
@@ -394,13 +397,16 @@ tryCatchLog::tryCatchLog({
 #'}
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom RQuantLib adjust
-#' @importFrom zoo index
+#' @importFrom zoo index na.locf
 #' @importFrom xts xts as.xts first last
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
 toPeriod <- function(x, Period="months", PeriodEnd = NULL,
+                     FunEach = identity, FunAll = NC,
                      fillInterior = T, fillInteriorBy = "days",
-                     Calendar = "UnitedStates/GovernmentBond") {
+                     Calendar = "UnitedStates/GovernmentBond",
+                     BusDayConv = 0L
+                     ) {
 tryCatchLog::tryCatchLog({
 
   oldtz <- Sys.getenv("TZ")
@@ -411,9 +417,10 @@ tryCatchLog::tryCatchLog({
 
   if(Period == "weeks" && is.null(PeriodEnd)) PeriodEnd <- 7L # Sunday
 
-  Origtclass <- xts::tclass(x)
-  Origtformat <- xts::tformat(x)
-  Origtzone <- xts::tzone(x)
+  FunEach <- match.fun(FunEach)
+  FunAll  <- match.fun(FunAll)
+
+  Origtclass <- xts::tclass(x); Origtformat <- xts::tformat(x); Origtzone <- xts::tzone(x)
   OrigxtsAttributes <- xts::xtsAttributes(x)
 
   y <- xts::as.xts( x[,0], zoo::index(x))
@@ -452,8 +459,9 @@ tryCatchLog::tryCatchLog({
 
   # keep later duplicates
   DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
-  # subtract off one to get endOfUNIT
-  DateTimes <- DateTimes - 1  # .Machine$double.xmin
+  # subtract off one small number to get EOP
+  # smallest number without R rounding
+  DateTimes <- DateTimes - 1/19884107.8518 # .Machine$double.xmin
 
   # beginning may not be needed (keep what is needed)
   DateTimes <-  DateTimes[!DateTimes < xts::first(index(y))]
@@ -466,19 +474,49 @@ tryCatchLog::tryCatchLog({
   zoo::index(y) <- zoo::index(y)[!zoo::index(y) %in% as.POSIXct(zoo::index(x))]
   # dangerously assume that they will be merged in order
   x <- merge(xts::xts(x, as.POSIXct(zoo::index(x))),y)
-  PeriodsList <- cut(zoo::index(x), breaks = indexYunremoved,  labels = FALSE)
-
-  # Ops (whatever)
-  x <- zoo::na.locf(x)
+  # operations almost
+  # just the index values
+  UnShiftedPeriodRegions <- cut(index(x), breaks = indexYunremoved,  labels = FALSE)
+  # except I want backwards (not forward), so . . .
+  # shift to the right (and remove one excess element located at the "last" )
+  # new "last" positions of each PerodRegion is the EOP
+  PeriodRegions <-  c(NA_integer_, UnShiftedPeriodRegions)[seq_along(zoo::index(x))]
+  # early head NA values become region zero(0L)
+  PeriodRegions[is.na(PeriodRegions)] <- 0L
+  PeriodsList <- split(zoo::index(x), f = PeriodRegions)
+  # Ops Each
+  # apply per period and at "last" position is the EOP
+  PeriodsListUpdated <- lapply(PeriodsList, function(xx) {FunEach(x[xx])})
+  # rbind.xts
+  x <- DescTools::DoCall(rbind, c(list(), PeriodsListUpdated))
+  # Ops All
+  x <- FunAll(x, EOPIndex = indexYunremoved)
+  #
   # only interested in keeping the end of period values
+  # note this contradicts:  fillInterior and  fillInteriorBy (COME_BACK)
   x <- x[index(x) %in% indexYunremoved]
 
   xts::tclass(x) <- Origtclass
   xts::tformat(x) <- Origtformat
   xts::tzone(x) <- Origtzone
   xts::xtsAttributes(x) <- OrigxtsAttributes
-
   # if the tclass of x (e.g. Date) is more coarse than POSIXct
+  # then keep the later duplicates (if any)
+  zoo::index(x) <- zoo::index(x)[!duplicated(index(x), fromLast = T)]
+
+  # Business Day Conventions adjustment
+  # if the day moves, then the new time
+  # would be the "same time" on the new(moved) date
+  IndexDates <- zoo::as.Date(zoo::index(x))
+  IndexTimes <- as.POSIXct(IndexDates)
+  indexTimeDiffs <- IndexTimes - as.POSIXct(IndexDates)
+  NewDates <-  RQuantLib::adjust(Calendar, dates = zoo::as.Date(zoo::index(x)), bdc = BusDayConv)
+  NewTimes <- as.POSIXct(NewDates) + indexTimeDiffs
+  index(x) <- NewTimes
+
+  xts::tclass(x) <- Origtclass; xts::tformat(x) <- Origtformat; xts::tzone(x) <- Origtzone
+  xts::xtsAttributes(x) <- OrigxtsAttributes
+  # if the tclass of x (e.g. Date) is more coarse than Origtclass[1]
   # then keep the later duplicates (if any)
   zoo::index(x) <- zoo::index(x)[!duplicated(index(x), fromLast = T)]
 
