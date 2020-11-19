@@ -379,8 +379,7 @@ tryCatchLog::tryCatchLog({
 #' See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
 #' This is the aggregation (summary).  ONLY "weeks" IS IMPLEMENTED.  OTHERS ARE NOT YET IMPLEMENTED.
 #' @param k Integer. Default is 1L.  Number of k Periods. NOT YET IMPLEMENTED.
-#' @param kOfx Integer. Default is 1L. This is the SubPeriod of the Period where the last observation of x exists.  If Period = "weeks" and k == 2L, then kOfx has possible values of 1L(week 1) or 2L(week 2). NOT YET IMPLEMENTED
-#' @param PeriodEnd Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday. If Period = "weeks" and k > 1, then PeriodEnd can be greater than 7L.  E.g. if k == 2L and PeriodEnd == 11L, then  PeriodEnd is the 2nd Thursday.
+#' @param PeriodEnd Date time. Default is NULL.  Required. Date time of the end of the Period. Must be convertible by S3 to a POSIXct by as.POSIXct(PeriodEnd).
 #' @param FunEach Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).
 #' @param FunAll Function. Default is econModel::NC. Has two argemetnss: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function to be applied across all periods.
 #' @param fillInterior Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.
@@ -406,7 +405,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom xts xts as.xts first last
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
-toPeriod <- function(x, Period="months", k = 1L, kOfx = 1L, PeriodEnd = NULL,
+toPeriod <- function(x, Period="months", k = 1L, PeriodStart = NULL,
                      FunEach = identity, FunAll = NC,
                      fillInterior = T, fillInteriorBy = "days",
                      Calendar = "UnitedStates/GovernmentBond",
@@ -422,7 +421,8 @@ tryCatchLog::tryCatchLog({
 
   if(Period == "weeks" && is.null(PeriodEnd)) PeriodEnd <- 7L # Sunday
 
-  if(!(1 <= kOfx && kOfx <= k)) stop("kOfx must be between 1L and k inclusive.")
+  if(k < 1L) stop("k can not be less than zero(0)")
+  if(!is.null(PeriodEnd)) stop("PeriodEnd is required")
 
   FunEach <- match.fun(FunEach)
   FunAll  <- match.fun(FunAll)
@@ -433,19 +433,23 @@ tryCatchLog::tryCatchLog({
   y <- xts::as.xts( x[,0], zoo::index(x))
   y <- xts::as.xts(     y, as.POSIXct(index(x)))
 
+  if(Period == "weeks") {
+    PeriodStart <- as.POSIXct(PeriodEnd) - k * 7 * 24 * 3600
+  }
+
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
-  DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), to = xts::last(zoo::index(y)),  by = paste0(k, " ", Period))
+  DateTimes <- seq(cut(PeriodStart, Period), to = xts::last(zoo::index(y)),  by = paste0(k, " ", Period))
   # Begin force all to the BOP
-  Shift <- -1L * (DescTools::Weekday(xts::first(zoo::index(y))) - DescTools::Weekday(xts::first(DateTimes)))
+  # Shift <- -1L * (DescTools::Weekday(xts::first(zoo::index(y))) - DescTools::Weekday(xts::first(DateTimes)))
   # BOP math
-  zoo::index(y) <- zoo::index(y) + Shift * 24 * 3600
-  PeriodEnd <- PeriodEnd + Shift
+  # zoo::index(y) <- zoo::index(y) + Shift * 24 * 3600
+  # PeriodEnd <- PeriodEnd + Shift
 
-  # # append one more generated observations
-  # DateTimes <- seq(as.POSIXct(cut(xts::first(zoo::index(y)), Period)), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
+  # append one more generated observations
+  DateTimes <- seq(cut(PeriodStart, Period), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
   # pre-pend an extra value (that because of later shifting) that may be needed later
-  # DateTimes <- c(xts::last(seq(xts::first(DateTimes), by = paste0(-1 * k, " ", Period), length.out = 2)) , DateTimes)
+  DateTimes <- c(xts::last(seq(cut(PeriodStart, Period), by = paste0(-1 * k, " ", Period), length.out = 2)) , DateTimes)
   # too-early DateTimes values will later be chopped-off. See below.
 
   # # if an irregular start/end of period
