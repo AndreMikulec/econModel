@@ -31,8 +31,6 @@
 #' @param along.with  See ? seq.Date
 #' @param ... See ? seq.Date
 #' @return zoo as.yearmon class
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom zoo as.yearmon
 #' @examples
 #' \dontrun{
 #'
@@ -69,6 +67,8 @@
 #' # [1] "Jul 2000" "Jun 2000" "May 2000" "Apr 2000" "Mar 2000" "Feb 2000" "Jan 2000"
 #'
 #' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo as.yearmon
 #' @export
 seq.yearmon <- function(from, to, by, length.out = NULL, along.with = NULL, ...) {
 tryCatchLog::tryCatchLog({
@@ -198,8 +198,6 @@ tryCatchLog::tryCatchLog({
 #' @param along.with  See ? seq.Date
 #' @param ... See ? seq.Date
 #' @return zoo as.yearqtr class
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom zoo as.yearqtr
 #' @examples
 #' \dontrun{
 #' seq.yearqtr(as.yearqtr("2000 Q1"), to = as.yearqtr("2002 Q1"))
@@ -238,6 +236,8 @@ tryCatchLog::tryCatchLog({
 #' # [8] "2000 Q2" "2000 Q1"
 #'
 #'}
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo as.yearmon
 #' @export
 seq.yearqtr <- function(from, to, by, length.out = NULL, along.with = NULL, ...) {
 tryCatchLog::tryCatchLog({

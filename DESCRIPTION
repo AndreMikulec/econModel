@@ -29,6 +29,7 @@ Imports:
     doParallel,
     timeSeries,
     zoo,
+    zoocat,
     chron,
     timeDate,
     curl,
