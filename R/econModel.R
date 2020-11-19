@@ -37,10 +37,12 @@
 #' getAAIISIProDate
 #' copyAAIISIProDBFs
 #' }
-#' @section Willem Ligtenberg:
+#' @section Willem Ligtenberg and Andre Mikulec:
 #' \preformatted{
 #' unlockEnvironment
 #' forceAssignInNamespace
+#' lsNamespaceInfo
+#' AllInfoNS
 #' }
 #' @section Miscellaneous:
 #' \preformatted{

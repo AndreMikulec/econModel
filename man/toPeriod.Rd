@@ -8,12 +8,12 @@ toPeriod(
   x,
   Period = "months",
   k = 1L,
-  kOfx = 1L,
-  PeriodEnd = NULL,
+  PeriodStart = NULL,
   FunEach = identity,
   FunAll = NC,
-  fillInterior = T,
-  fillInteriorBy = "days",
+  KeepOrigValues = F,
+  fillInterior = F,
+  fillInteriorBy = NULL,
   Calendar = "UnitedStates/GovernmentBond",
   BusDayConv = 0L
 )
@@ -23,42 +23,39 @@ toPeriod(
 
 \item{Period}{Period to convert to. Default is "months".
 See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
-This is the aggregation (summary).  ONLY "weeks" IS IMPLEMENTED.  OTHERS ARE NOT YET IMPLEMENTED.}
+This is the aggregation (summary).}
 
-\item{k}{Integer. Default is 1L.  Number of k Periods. NOT YET IMPLEMENTED.}
+\item{k}{Integer. Default is 1L.  Number of k Periods.}
 
-\item{kOfx}{Integer. Default is 1L. This is the SubPeriod of the Period where the last observation of x exists.  If Period = "weeks" and k == 2L, then kOfx has possible values of 1L(week 1) or 2L(week 2). NOT YET IMPLEMENTED}
-
-\item{PeriodEnd}{Integer. Default is NULL meaning use the expected period end.  If Period is "weeks", the default is 7L, and this value can be  (1 - Monday, 2 - Tuesday, ... 7 - Sunday).  See ? DescTools::Weekday. If Period = "weeks" and k > 1, then PeriodEnd can be greater than 7L.  E.g. if k == 2L and PeriodEnd == 11L, then  PeriodEnd is the 2nd Thursday.}
+\item{PeriodStart}{Date time. Default is NULL.  Required. Date time of the beginning of the series. Must be convertible by S3 to a POSIXct by as.POSIXct(PeriodEnd). The user must be sure that his value is less than or equal to the earliest index value of x.}
 
 \item{FunEach}{Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).}
 
-\item{FunAll}{Function. Default is econModel::NC. Has two argemetnss: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function to be applied across all periods.}
+\item{FunAll}{Function. Default is econModel::NC. Has two argements: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function is to be applied across all periods.}
 
-\item{fillInterior}{Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.}
+\item{KeepOrigValues}{Logical. Default is FALSE. Only the New Generated elements are kept and the original xts(x) elements are discarded from the output.  Otherwise, the original xts(x) elements are kept (and the New Generated elements are kept).}
 
-\item{fillInteriorBy}{String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.}
+\item{fillInterior}{Logical. Default is FALSE. Created sub(or super)-Period data points.}
 
-\item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.}
+\item{fillInteriorBy}{String. Default is NULL.  If fillInterior is TRUE, then this value must be provided. See seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years".  Note, this is applied JUST BEFORE the function FunAll is called.}
 
-\item{BusDayConv}{Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum ? RQuantLib::adjust and parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.}
+\item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See the Details section of ?? RQuantLib::Calendars.}
+
+\item{BusDayConv}{Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum, ? RQuantLib::adjust, and the parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.}
 }
 \value{
 modified xts object
 }
 \description{
-fillInteriorBy data values are done by "last observation carried forward".
-NOT IMPEMENTED YET
+This is a smart wrapper over seq.POSIXt.
 }
 \examples{
 \dontrun{
-x <- xts(c(3,363), zoo::as.Date(c(3,363)))
-toPeriod(x, Period = "weeks", PeriodEnd = 4L)
-toPeriod(x, Period = "weeks", k = 2L, kOfx = 2L, PeriodEnd = 4L)
-toPeriod(x, Period = "weeks", k = 2L, kOfx = 1L, PeriodEnd = 11L)
-
-toPeriod(x, Period = "weeks", PeriodEnd = 3L)
-toPeriod(x, Period = "weeks", PeriodEnd = 2L)
-toPeriod(x, Period = "weeks", PeriodEnd = 1L)
+x <- xts::xts(c(3,363), zoo::as.Date(c(3,363)))
+toPeriod(x, Period = "weeks", PeriodStart = zoo::as.Date(2))
+toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2))
+toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2), fillInterior = T, fillInteriorBy = "days")
+toPeriod(x, Period = "months", k = 2L, PeriodStart = zoo::as.Date(2))
+toPeriod(x, Period = "quarters", k = 2L, PeriodStart = zoo::as.Date(-20))
 }
 }

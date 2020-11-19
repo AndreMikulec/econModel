@@ -154,29 +154,139 @@ tryCatchLog::tryCatchLog({
   invisible(copiedFiles);
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
-
-#' Force the assignment of new items in a namespace
+#' x
 #'
+#' Of lsNamespaceInfo, from the name of a namespace, return a character vector of all objects
+#'
+#' @param ns String. Default none. Required. Name of a namespace
+#' @param ... dots.  Passed to ls
+#' @return Of lsNamespaceInfo, return a character vector of objects in a namespace
+#' @author Andre Mikulec is the author of lsNamespaceInfo
+#' @rdname unlockEnvironment
+#' @export
+lsNamespaceInfo <- function(ns, ...) {
+  ns <- asNamespace(ns, base.OK = FALSE)
+  ls(..., envir = get(".__NAMESPACE__.", envir = ns, inherits = FALSE))
+}
+
+
+#' x
+#'
+#' Of AllInfoNS, from the name of a namespace, return information
+#'
+#' @param ns String. Default none. Required. Name of a namspace
+#' @param ... dots.  Passed to ls
+#' @return Of AllInfoNS, return lists and sublists of information about the namespace
+#' @author Andre Mikulec is the author of AllInfoNS
+#' @rdname unlockEnvironment
+#' @examples
+#' \dontrun{
+#' #
+#' # something not-on-the-search() path
+#' #
+#'
+#' # also loads the environment (if not already loaded)
+#' unlockEnvironment("stringi")
+#' Error in unlockEnvironment("stats") :
+#'   Cannot convert object to an environment: [type=character; target=ENVSXP].
+#'
+#' unlockEnvironment(asNamespace("stringi"))
+#' [1] TRUE
+#'
+#' forceAssignInNamespace("prnt", function(x) {print(x)}, namespace = "stringi")
+#'
+#' stringi::prnt
+#' Error: 'prnt' is not an exported object from 'namespace:stringi'
+#'
+#' stringi::prnt("GoThere")
+#' Error: 'prnt' is not an exported object from 'namespace:stringi'
+#'
+#' # not exported
+#' stringi:::prnt("GoThere")
+#' [1] "GoThere"
+#'
+#' stringi:::prnt
+#' function(x) {print(x)}
+#'
+#' # promote that not-on-search-path package function to be exported
+#' assign("prnt","prnt", envir = AllInfoNS("stringi")$exports)
+#' stringi::prnt("GoThere")
+#' [1] "GoThere"
+#'
+#' #
+#' # something on the search() path
+#' #
+#'
+#' seq_along(search())[search() %in% "package:stats"]
+#' [1] 2
+#'
+#' environmentIsLocked(as.environment(2)) # package:stats
+#' [1] TRUE
+#'
+#' is.environment(as.environment(2))
+#' [1] TRUE
+#'
+#' unlockEnvironment(as.environment(2))
+#' [1] TRUE
+#'
+#' environmentIsLocked(as.environment(2))
+#' [1] FALSE
+#'
+#' assign("prnt", function(x) {print(x)}, pos = 2)
+#' stats::prnt("GoHere")
+#' Error: 'prnt' is not an exported object from 'namespace:stats'
+#'
+#' stats:::prnt("GoHere")
+#' Error in get(name, envir = asNamespace(pkg), inherits = FALSE) :
+#'   object 'prnt' not found
+#'
+#' # promote that search path package function to be exported
+#' assign("prnt","prnt", envir = AllInfoNS("stats")$exports)
+#' stats::prnt
+#' function(x) {print(x)}
+#'
+#' stats::prnt("GoHere")
+#' [1] "GoHere"
+#' }
+#' @export
+AllInfoNS <- function(ns) {
+  sapply(lsNamespaceInfo(ns), getNamespaceInfo, ns=ns)
+}
+
+
+#' x
+#'
+#' Of forceAssignInNamespace, force the assignment of a new item into a namespace.
 #' Adapted from Rcpp. Based on the original function forceAssignMyNamespace by Willem Ligtenberg.
 #'
-#' @param x name of the symbol/function inside a string
-#' @param value new value of the symbol/function
-#' @param namespace namespace
-#' @author Willem Ligtenberg
+#' @param x String. Required. Default none. Name of the symbol/function
+#' @param value R Object. Default none. Required. New value of the parameter x symbol/function
+#' @param namespace String. Default none. Required. Name of the namespace to assign parameter x into.
+#' @return Of forceAssignInNamespace, silently assign object x (from parameter x) intoto the namespace non-exported objects collection
+#' @author Willem Ligtenberg is the author of forceAssignInNamespace/forceAssignMyNamespace
 #' @references
-#' \cite{forceAssignMyNamespace
+#' \cite{forceAssignMyNamespace by Willem Ligtenberg
 #' \url{https://github.com/openanalytics/Rango/blob/adc99e077b71c8c6826cabb7ff1266050898718a/Rango/R/utils.R}
 #' }
 #' @examples
 #' \dontrun{
-#' library(econModel)
-#' forceAssignMyNamespace("prnt", function(x) {
-#'   print(x)
-#' }, namespace = "econModel")
+#' library(RSQLite)
 #'
-#' econModel::prnt("Do it.")
+#' unlockEnvironment(asNamespace("RSQLite"))
+#' [1] TRUE
+#'
+#' forceAssignInNamespace("prnt", function(x) {
+#'   print(x)
+#' }, namespace = "RSQLite")
+#'
+#' RSQLite::prnt("HelloEveryWhere")
+#' Error: 'prnt' is not an exported object from 'namespace:RSQLite'
+#'
+#' RSQLite:::prnt("HelloEveryWhere")
+#' [1] "HelloEveryWhere"
 #' }
 #' @useDynLib econModel
+#' @rdname unlockEnvironment
 #' @export
 forceAssignInNamespace <- function(x, value, namespace){
 tryCatchLog::tryCatchLog({

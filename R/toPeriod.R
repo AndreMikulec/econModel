@@ -371,43 +371,42 @@ tryCatchLog::tryCatchLog({
 
 #' Convert a Date time series to a series of another frequency
 #'
-#' fillInteriorBy data values are done by "last observation carried forward".
-#' NOT IMPEMENTED YET
+#' This is a smart wrapper over seq.POSIXt.
 #'
 #' @param x xts object
 #' @param Period Period to convert to. Default is "months".
 #' See ? seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years"
-#' This is the aggregation (summary).  ONLY "weeks" IS IMPLEMENTED.  OTHERS ARE NOT YET IMPLEMENTED.
-#' @param k Integer. Default is 1L.  Number of k Periods. NOT YET IMPLEMENTED.
-#' @param PeriodEnd Date time. Default is NULL.  Required. Date time of the end of the Period. Must be convertible by S3 to a POSIXct by as.POSIXct(PeriodEnd).
+#' This is the aggregation (summary).
+#' @param k Integer. Default is 1L.  Number of k Periods.
+#' @param PeriodStart Date time. Default is NULL.  Required. Date time of the beginning of the series. Must be convertible by S3 to a POSIXct by as.POSIXct(PeriodEnd). The user must be sure that his value is less than or equal to the earliest index value of x.
 #' @param FunEach Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).
-#' @param FunAll Function. Default is econModel::NC. Has two argemetnss: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function to be applied across all periods.
-#' @param fillInterior Logical. Default is TRUE. Created sub-Period data points.  The default is "days". NOT IMPLEMENTED YET.
-#' @param fillInteriorBy String. If fillInterior is TRUE, then default is "days". Put in sub-Period data. NOT IMPLEMENTED YET.
-#' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See ?? RQuantLib::Calendars.  NOT IMPLEMENTED YET.
-#' @param BusDayConv Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum ? RQuantLib::adjust and parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.
+#' @param FunAll Function. Default is econModel::NC. Has two argements: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function is to be applied across all periods.
+#' @param KeepOrigValues Logical. Default is FALSE. Only the New Generated elements are kept and the original xts(x) elements are discarded from the output.  Otherwise, the original xts(x) elements are kept (and the New Generated elements are kept).
+#' @param fillInterior Logical. Default is FALSE. Created sub(or super)-Period data points.
+#' @param fillInteriorBy String. Default is NULL.  If fillInterior is TRUE, then this value must be provided. See seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years".  Note, this is applied JUST BEFORE the function FunAll is called.
+#' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See the Details section of ?? RQuantLib::Calendars.
+#' @param BusDayConv Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum, ? RQuantLib::adjust, and the parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.
 #' @return modified xts object
-#' @importFrom tryCatchLog tryCatchLog
 #' @examples
 #' \dontrun{
-#' x <- xts(c(3,363), zoo::as.Date(c(3,363)))
-#' toPeriod(x, Period = "weeks", PeriodEnd = 4L)
-#' toPeriod(x, Period = "weeks", k = 2L, kOfx = 2L, PeriodEnd = 4L)
-#' toPeriod(x, Period = "weeks", k = 2L, kOfx = 1L, PeriodEnd = 11L)
-#'
-#' toPeriod(x, Period = "weeks", PeriodEnd = 3L)
-#' toPeriod(x, Period = "weeks", PeriodEnd = 2L)
-#' toPeriod(x, Period = "weeks", PeriodEnd = 1L)
+#' x <- xts::xts(c(3,363), zoo::as.Date(c(3,363)))
+#' toPeriod(x, Period = "weeks", PeriodStart = zoo::as.Date(2))
+#' toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2))
+#' toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2), fillInterior = T, fillInteriorBy = "days")
+#' toPeriod(x, Period = "months", k = 2L, PeriodStart = zoo::as.Date(2))
+#' toPeriod(x, Period = "quarters", k = 2L, PeriodStart = zoo::as.Date(-20))
 #'}
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
 #' @importFrom RQuantLib adjust
-#' @importFrom zoo index
+#' @importFrom zoo index as.Date
 #' @importFrom xts xts as.xts first last
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
 toPeriod <- function(x, Period="months", k = 1L, PeriodStart = NULL,
                      FunEach = identity, FunAll = NC,
-                     fillInterior = T, fillInteriorBy = "days",
+                     KeepOrigValues = F,
+                     fillInterior = F, fillInteriorBy = NULL,
                      Calendar = "UnitedStates/GovernmentBond",
                      BusDayConv = 0L
                      ) {
@@ -419,10 +418,8 @@ tryCatchLog::tryCatchLog({
   }
   assign("oldtz", oldtz, envir = environment())
 
-  if(Period == "weeks" && is.null(PeriodEnd)) PeriodEnd <- 7L # Sunday
-
   if(k < 1L) stop("k can not be less than zero(0)")
-  if(!is.null(PeriodEnd)) stop("PeriodEnd is required")
+  if(is.null(PeriodStart)) stop("PeriodStart is required")
 
   FunEach <- match.fun(FunEach)
   FunAll  <- match.fun(FunAll)
@@ -433,64 +430,30 @@ tryCatchLog::tryCatchLog({
   y <- xts::as.xts( x[,0], zoo::index(x))
   y <- xts::as.xts(     y, as.POSIXct(index(x)))
 
-  if(Period == "weeks") {
-    PeriodStart <- as.POSIXct(PeriodEnd) - k * 7 * 24 * 3600
-  }
+  PeriodStart <- as.POSIXct(PeriodStart)
+
+  if(fillInterior && is.null(fillInteriorBy)) stop("Because fillInterior is TRUE, then fillInteriorBy must be provided.")
 
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
-  DateTimes <- seq(cut(PeriodStart, Period), to = xts::last(zoo::index(y)),  by = paste0(k, " ", Period))
-  # Begin force all to the BOP
-  # Shift <- -1L * (DescTools::Weekday(xts::first(zoo::index(y))) - DescTools::Weekday(xts::first(DateTimes)))
-  # BOP math
-  # zoo::index(y) <- zoo::index(y) + Shift * 24 * 3600
-  # PeriodEnd <- PeriodEnd + Shift
+  # trucates
+  DateTimes <- seq(as.POSIXct(cut(PeriodStart, Period)), to = as.POSIXct(xts::last(zoo::index(y))),  by = paste0(k, " ", Period))
+  # store shift (store lost truncation segment)
+  Shift <- PeriodStart - xts::first(DateTimes)
 
   # append one more generated observations
-  DateTimes <- seq(cut(PeriodStart, Period), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
+  DateTimes <- seq(as.POSIXct(cut(PeriodStart, Period)), by = paste0(k, " ", Period), length.out = length(DateTimes) + 1L)
+  # too-late DateTimes values will later be chopped-off. See below.
   # pre-pend an extra value (that because of later shifting) that may be needed later
-  DateTimes <- c(xts::last(seq(cut(PeriodStart, Period), by = paste0(-1 * k, " ", Period), length.out = 2)) , DateTimes)
+  DateTimes <- c(xts::last(seq(as.POSIXct(cut(PeriodStart, Period)), by = paste0(-1 * k, " ", Period), length.out = 2)) , DateTimes)
   # too-early DateTimes values will later be chopped-off. See below.
 
-  # # if an irregular start/end of period
-  # # case "weeks"
-  # if(Period == "weeks" && k == 1L && kOfx == 1L)  {
-  #   # Weekday returns the week day of the input date. (1 - Monday, 2 - Tuesday, ... 7 - Sunday
-  #   # Monday, PeriodStart == 1L (start of Week)
-  #   # Sunday, PeriodEnd   == 7L (end of week)
-  #   # Because index(y) is contained in the range of DateTimes,
-  #   #   then tail(DateTimes) is the end of period
-  #   #   then I want to go backwards toward(and land on) the correct
-  #   #     end of period (defined by PeriodEnd).
-  #   #       Therefore, Shift is a (-)negative number.
-  #   #       See DescTools::Weekday(DateTimes)
-  #   # negative or zero(0L)
-  #   Shift <- (PeriodEnd - 7L) * 24L * 3600L
-  #   # y is "later than" the predicted "DateTimes EOP"       # - .Machine$double.xmin WOULD HAVE BEEN BETTER
-  #   if(xts::last(zoo::index(y)) < xts::last(DateTimes) + Shift - 1/19884107.8518 ) {
-  #     # ok to shift "eventual EOP" backwards
-  #     DateTimes <- DateTimes + Shift
-  #
-  #   } else {
-  #     # shift "eventual EOP" forward
-  #     DateTimes <- DateTimes + PeriodEnd  * 24L * 3600L
-  #   }
-  # }
-  if(Period == "weeks") {
-    # move DateTimes, so that the right most value is an EOP
-    # and lands on the correct "weekdays()" (determined by Period)
-    DateTimes <- DateTimes + (PeriodEnd - DescTools::Weekday(DateTimes)) * 24 * 3600
-    # vec of Points (members of the SubInterval)
-    SubPeriodsFirstInterval <- c(xts::first(DateTimes) + seq_len(k) * 7 * 24 * 3600, xts::last(DateTimes))
-    # in which SubPeriod does xts::first(index(y)) exist?
-    # rightmost.closed = FALSE
-    FirstExistsInSubPeriodsFirstInterval <- findInterval(xts::first(zoo::index(y)), SubPeriodsFirstInterval)
-    # move DateTimes as apropriate, so xts::last(index(y)) is in the correct SubPeriod
-    DateTimes <- DateTimes + (kOfx - FirstExistsInSubPeriodsFirstInterval) * 7L * 24 * 3600
-  }
+  # shift forward
+  DateTimes <- DateTimes + Shift
 
   # keep later duplicates
   DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
+
   # subtract off one small number to
   # get the "eventual[ly-and-now-realized ]EOP"
   #
@@ -502,9 +465,9 @@ tryCatchLog::tryCatchLog({
   DateTimes <-  DateTimes[!DateTimes < xts::first(index(y))]
 
   # end may not be needed (keep what is needed)
-  isDateTimesGreater <- xts::last(index(y)) < DateTimes
-  DateTimesGreaterItemKept <- DateTimes[cumsum(isDateTimesGreater) == 1L]
-  Datetimes <- c(DateTimes[!isDateTimesGreater], DateTimesGreaterItemKept)
+  IsDateTimesGreater <- xts::last(index(y)) < DateTimes
+  DateTimesGreaterItemKept <- DateTimes[cumsum(IsDateTimesGreater) == 1L]
+  DateTimes <- c(DateTimes[!IsDateTimesGreater], DateTimesGreaterItemKept)
 
   # new
   y <- xts::xts(, DateTimes)
@@ -529,20 +492,31 @@ tryCatchLog::tryCatchLog({
   PeriodsListUpdated <- lapply(PeriodsList, function(xx) {FunEach(x[xx])})
   # rbind.xts
   x <- DescTools::DoCall(rbind, c(list(), PeriodsListUpdated))
+
+  if(fillInterior) {
+    fillingindex <- seq(xts::first(index(x)), to = xts::last(index(x)), by = fillInteriorBy)
+    x <- DescTools::DoCall(merge, c(list(), list(xts::xts(, fillingindex)), list(x)))
+    # keep later duplicates
+    x <- x[!duplicated(zoo::index(x), fromLast = T),]
+  }
+
   # Ops All
   x <- FunAll(x, EOPIndex = indexYunremoved)
-  #
-  # only interested in keeping the end of period values
-  # note this contradicts:  fillInterior and  fillInteriorBy (COME_BACK)
-  x <- x[index(x) %in% indexYunremoved]
 
-  xts::tclass(x) <- Origtclass
-  xts::tformat(x) <- Origtformat
-  xts::tzone(x) <- Origtzone
+  # Remove the original x elements, only keeping the New Generated elements
+  if(!KeepOrigValues) {
+    if(!exists("fillingindex")) {
+      x <- x[(index(x) %in% indexYunremoved)]
+    } else {
+      x <- x[(index(x) %in% indexYunremoved) | (index(x) %in% fillingindex)]
+    }
+  }
+
+  xts::tclass(x) <- Origtclass;xts::tformat(x) <- Origtformat; xts::tzone(x) <- Origtzone
   xts::xtsAttributes(x) <- OrigxtsAttributes
   # if the tclass of x (e.g. Date) is more coarse than POSIXct
   # then keep the later duplicates (if any)
-  zoo::index(x) <- zoo::index(x)[!duplicated(index(x), fromLast = T)]
+    x <- x[!duplicated(zoo::index(x), fromLast = T),]
 
   # Business Day Conventions adjustment
   # if the day moves, then the new time
@@ -553,12 +527,14 @@ tryCatchLog::tryCatchLog({
   NewDates <-  RQuantLib::adjust(Calendar, dates = zoo::as.Date(zoo::index(x)), bdc = BusDayConv)
   NewTimes <- as.POSIXct(NewDates) + indexTimeDiffs
   index(x) <- NewTimes
+  # then keep the later duplicates (if any)
+  x <- x[!duplicated(zoo::index(x), fromLast = T),]
 
   xts::tclass(x) <- Origtclass; xts::tformat(x) <- Origtformat; xts::tzone(x) <- Origtzone
   xts::xtsAttributes(x) <- OrigxtsAttributes
   # if the tclass of x (e.g. Date) is more coarse than Origtclass[1]
   # then keep the later duplicates (if any)
-  zoo::index(x) <- zoo::index(x)[!duplicated(index(x), fromLast = T)]
+  x <- x[!duplicated(zoo::index(x), fromLast = T),]
 
   colnames(x)[1] <- "V1"
 

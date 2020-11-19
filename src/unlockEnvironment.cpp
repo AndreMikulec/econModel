@@ -7,12 +7,13 @@ using namespace Rcpp;
 #define FRAME_LOCK_MASK (1<<14)
 #define FRAME_IS_LOCKED(e) (ENVFLAGS(e) & FRAME_LOCK_MASK)
 #define UNLOCK_FRAME(e) SET_ENVFLAGS(e, ENVFLAGS(e) & (~ FRAME_LOCK_MASK))
-//' unlock an R package on the R search() path
+//' Unlock an R Package Enviroment and Assign an Object to the R Package Environment
 //'
-//' Note: R package base is unlocked by design
+//' Of unlockEnvironment, unlock a non-base package environment.  Note: R package base is unlocked (by design)
 //'
-//' @param env environment
-//' @author Willem Ligtenberg
+//' @param env Environment. Default none. Required.
+//' @return Of unlockEnvironment, Logical.  TRUE if this package environment has been successfully unlocked. FALSE otherwise.
+//' @author Willem Ligtenberg is the author of unlockEnvironment
 //' @references
 //' \cite{unlockEnvironment function
 //' \url{https://github.com/openanalytics/Rango/blob/adc99e077b71c8c6826cabb7ff1266050898718a/Rango/src/unlockEnvironment.cpp}
@@ -20,11 +21,6 @@ using namespace Rcpp;
 //' @references
 //' \cite{envir.c in the R 2.15.1 source (still in R 3.3.1)
 //' \url{https://github.com/SurajGupta/r-source/blob/a28e609e72ed7c47f6ddfbb86c85279a0750f0b7/src/main/envir.c}
-//' }
-//' @examples
-//' \dontrun{
-//' library(econModel)
-//' unlockEnvironment(as.environment(2))
 //' }
 //' @export
 // [[Rcpp::export]]

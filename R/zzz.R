@@ -9,8 +9,8 @@
 .onAttach <- function(libname, pkgname) {
   # NOV 2020
   # https://statacumen.com/teach/ShortCourses/R_Packages/R_Package_Development_20180817.html
-  start_message <- c(   "\neconModel: Meaningful Social and Economic Data from ALFRED and elsewhere"
-                      , "\n           by Andre Mikulec\n"
+  start_message <- c(   "\nProviding accesses to social and economic Data from ALFRED and elsewhere"
+                      , "\nby Andre Mikulec\n"
   )
   packageStartupMessage(start_message)
   invisible()
