@@ -435,6 +435,8 @@ tryCatchLog::tryCatchLog({
 
   if(fillInterior && is.null(fillInteriorBy)) stop("Because fillInterior is TRUE, then fillInteriorBy must be provided.")
 
+  # Make BOPs (Beginning of Periods)
+  #
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
   # trucates
@@ -456,7 +458,7 @@ tryCatchLog::tryCatchLog({
   DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
 
   # subtract off one small number to
-  # get the "eventual[ly-and-now-realized ]EOP"
+  # get the "eventual[ly-and-now-realized ]EOP" (End of Period)
   #
   # smallest number without R rounding
   #                    # - .Machine$double.xmin WOULD HAVE BEEN BETTER
@@ -481,6 +483,9 @@ tryCatchLog::tryCatchLog({
   # operations almost
   # just the index values
   UnShiftedPeriodRegions <- cut(index(x), breaks = indexYunremoved,  labels = FALSE)
+
+  # convert BOPs to EOPs (End of Period)s
+  #
   # except I want backwards (not forward), so . . .
   # shift to the right (and remove one excess element located at the "last" )
   # new "last" positions of each PerodRegion is the EOP
