@@ -2,32 +2,125 @@
 % Please edit documentation in R/Df2Xts.R
 \name{castDf2Xts}
 \alias{castDf2Xts}
-\alias{meltDf2Xts}
+\alias{melt.xts}
+\alias{meltXts2Df}
 \alias{indName}
 \alias{indName<-}
-\title{Convert a Dataframe to an xts object}
+\title{Convert a Dataframe to an xts object or Vice Versa}
 \usage{
-castDf2Xts(x, ValueName = NULL, IndexName = NULL, RmNA = F)
-
-meltDf2Xts(
+castDf2Xts(
   x,
   IndexVar = NULL,
   ValueVar = NULL,
   AttrVar = NULL,
   FunAggr = NULL,
-  DelUniqCAttr = NULL
+  DelUniqCAttr = F,
+  RetIndexClass = "POSIXct"
 )
+
+\method{melt}{xts}(
+  data,
+  value.name = "value",
+  index.name = indName(data),
+  na.rm = FALSE,
+  ...
+)
+
+meltXts2Df(x, ValueName = "value", IndexName = indName(data), RmNA = F, ...)
 
 indName(x)
 
 indName(x) <- value
 }
+\arguments{
+\item{x}{Of castDf2Xts, a dataframe. Of meltXts2Df, an xts object. Of indname and `IndName<-` an xts object. Default is NULL. Required.}
+
+\item{IndexVar}{String. Default is NULL. Required. The name of the column to be treated as the index of the xts object. Different from zoocat::cast2zoocat, this can be composed of two or three columns of the column names: c("year", "month") or c("year", "month", "day").}
+
+\item{ValueVar}{String. Default is NULL. Required. The name of the column which stored the values.}
+
+\item{AttrVar}{String.  Default is NULL. The name of the column which will be used as column attributes of the xts object. If NULL, all columns except ValueVar and IndexVar will be used.}
+
+\item{FunAggr}{Function. Default is NULL. Aggregation function needed if variables do not identify a single observation for each output cell. Defaults to length (with a message) if needed but not specified. See ? reshape2::dcast.}
+
+\item{DelUniqCAttr}{Logical. Default is TRUE. If TRUE, the column attributes with unique value will be deleted.}
+
+\item{RetIndexClass}{String. Default is "POSIXct".  Attempt to return the xts with the index of this class.}
+
+\item{data}{Xts object. Default is NULL. Required. Xts object to melt.}
+
+\item{value.name}{String. Default is NULL. The name of the column to store values.}
+
+\item{index.name}{String. String. Default is the result of the function call indName(data).The name of the column used to store the index of the xts object.}
+
+\item{na.rm}{Logical. Default is FALSE. As in R CRAN package reshape2 function melt. Should NA values be removed from the data set?}
+
+\item{...}{Dots Passed.}
+
+\item{ValueName}{String. Default is "value". The name of the column to store values..}
+
+\item{IndexName}{String. Default is the result of the function call indName(x). The name of the column used to store the index of the xts object.}
+
+\item{RmNA}{Logical. Default is FALSE. As in R CRAN package reshape2 function melt. Should NA values be removed from the data set?}
+
+\item{value}{String. Default is NULL. Required. The new value.}
+}
+\value{
+Of castDf2Xts, an xts object.
+
+Of melt.xts, a dataframe.
+
+Of meltXts2Df, a dataframe.
+
+Of indName, String. Index variable name.
+
+Of `indName<-`, silently set index variable name.
+}
 \description{
 Of castDf2Xts, it is a wrapper over the R CRAN package zoocat function cast2zoocat
+Convert a Dataframe to an xts object.
 
-Of meltDf2Xts, it is a wrapper over the R CRAN package zoocat function melt
+#' @param x an object
+#' @rdname Df2Xts
+melt.default <- function(data, ..., na.rm = FALSE, value.name = "value") {
+  stop("no implementation") # not exported
+}
+x
 
-Of indName, it is a wrapper over the R CRAN package zoocat function indname
+Of meltXts2Df, it is a wrapper over the R CRAN package zoocat function melt.
+Convert an xts object to a dataframe.
 
-Of `indName<-`, is a wrapper over the R CRAN package zoocat function `indname<-`
+Of indName, it is a wrapper over the R CRAN package zoocat function indname.
+Get the name of the index variable.
+
+Of `indName<-`, is a wrapper over the R CRAN package zoocat function `indname<-`.
+Set the name of the index variable.
+}
+\details{
+Of melt, convert an xts object to a data.frame. Expects an imported S3 "melt" function of the form of reshape2::melt.
+}
+\examples{
+\dontrun{
+df <- data.frame(year = rep(1991 : 1995, each = 24), month = rep(1 : 12, 10),
+                 varname = rep(c('a', 'b'), each = 12), city = rep(1 : 3, each = 40),
+                 value = 1 : 120)
+
+castDf2Xts(df, IndexVar = "year", ValueVar = "value")
+
+# FunAggr = length
+castDf2Xts(df, IndexVar = "year", ValueVar = "value",
+  AttrVar = "varname")
+
+castDf2Xts(df, IndexVar = "year", ValueVar = "value",
+  AttrVar = "varname", FunAggr = sum)
+
+castDf2Xts(df, IndexVar = c("year","month"), ValueVar = "value")
+
+castDf2Xts(df, IndexVar = "year", ValueVar = "value", RetIndexClass = "Date")
+
+casted <- castDf2Xts(df, IndexVar = c("year", "month"), ValueVar = "value",
+  RetIndexClass = "Date")
+
+meltXts2Df(casted)
+}
 }

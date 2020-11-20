@@ -14,6 +14,7 @@ LinkingTo: Rcpp
 Imports:
     foreign,
     TSrepr,
+    reshape2,
     data.table,
     R.oo,
     R.utils,

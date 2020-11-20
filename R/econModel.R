@@ -14,7 +14,7 @@
 #' diffXts
 #' runRanks
 #' }
-#' @section St. Louis ALFRED (and FRED):
+#' @section Acquire (and Manipulate) St. Louis ALFRED (and FRED) Data:
 #' \preformatted{
 #' fredAttributes
 #' estimLastUpdated
@@ -22,29 +22,33 @@
 #' getFRED
 #' getALFRED
 #' getSymbols.ALFRED
-#'
 #' toPeriod
 #' }
-#' @section Data Combinations:
+#' @section Detect (and Remove) Data Combinations:
 #' \preformatted{
 #' DetectFullRows
 #' DetectOnlyNonEmptyVarsInRows
 #' DetectEmptyRows
 #' RemoveEmptyRows
 #' }
-#' @section American Association of Individual Investors (AAII)  StockInvestor Pro:
+#' @section American Association of Individual Investors (AAII) StockInvestor Pro:
 #' \preformatted{
 #' getAAIISIProDate
 #' copyAAIISIProDBFs
 #' }
-#' @section Willem Ligtenberg and Andre Mikulec:
+#' @section Unlock a Pathed/Loaded R Package:
 #' \preformatted{
 #' unlockEnvironment
 #' forceAssignInNamespace
 #' lsNamespaceInfo
 #' AllInfoNS
 #' }
-#' @section Miscellaneous:
+#' @section Cast a Data.frame Into an xts Object (and Back Again):
+#' \preformatted{
+#' castDf2Xts
+#' meltXts2Df
+#' }
+#' @section Miscellaneous - Custom Sort:
 #' \preformatted{
 #' cSort
 #' }

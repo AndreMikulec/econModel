@@ -392,7 +392,8 @@ tryCatchLog::tryCatchLog({
 #' x <- xts::xts(c(3,363), zoo::as.Date(c(3,363)))
 #' toPeriod(x, Period = "weeks", PeriodStart = zoo::as.Date(2))
 #' toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2))
-#' toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2), fillInterior = T, fillInteriorBy = "days")
+#' toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2),
+#'   fillInterior = T, fillInteriorBy = "days")
 #' toPeriod(x, Period = "months", k = 2L, PeriodStart = zoo::as.Date(2))
 #' toPeriod(x, Period = "quarters", k = 2L, PeriodStart = zoo::as.Date(-20))
 #'}
