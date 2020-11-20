@@ -128,7 +128,7 @@ tryCatchLog::tryCatchLog({
 
   Sys.setenv(TZ=oldtz)
   x
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -184,7 +184,7 @@ tryCatchLog::tryCatchLog({
   data <- zoocat::zoocat(zoo::coredata(data), order.by = zoo::index(data), colattr = as.data.frame(Fields), index.name = index.name, ...)
   x <- melt(data, value.name = value.name, index.name = index.name, na.rm = na.rm, ...)
   x
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' x
@@ -206,7 +206,7 @@ tryCatchLog::tryCatchLog({
 
   x <- melt(x, value.name = ValueName, index.name = IndexName, na.rm = RmNA, ...)
   x
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -227,7 +227,7 @@ tryCatchLog::tryCatchLog({
   x <- attr(x, 'indname')
   x
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' x
@@ -247,7 +247,7 @@ tryCatchLog::tryCatchLog({
 
   attr(x, "indname") <- value
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
