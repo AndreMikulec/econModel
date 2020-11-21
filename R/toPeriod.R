@@ -371,7 +371,8 @@ tryCatchLog::tryCatchLog({
 
 #' Convert a Date time series to a series of another frequency
 #'
-#' This is a smart wrapper over seq.POSIXt.
+#' This finds the End of Periods (EOP)s.
+#' This is a (very) smart wrapper over seq.POSIXt, R CRAN Packages timeDate and RQuantLib.
 #'
 #' @param x xts object
 #' @param Period Period to convert to. Default is "months".
@@ -379,6 +380,8 @@ tryCatchLog::tryCatchLog({
 #' This is the aggregation (summary).
 #' @param k Integer. Default is 1L.  Number of k Periods.
 #' @param PeriodStart Date time. Default is NULL.  Required. Date time of the beginning of the series. Must be convertible by S3 to a POSIXct by as.POSIXct(PeriodEnd). The user must be sure that his value is less than or equal to the earliest index value of x.
+#' @param NthNdayInMonth List. Default is NULL.  The structure is list(nday = #nday, nth = #nth). From the PeriodStart (and going forward), make the End of Period (EOP) to be the nday(Mon through Sun : 1L through 7L ) that is the nth (1L through (4L or 5L)).
+#' @param NextWeek Logical. Default is FALSE. If TRUE, If the End of Period(EOP) is a Holiday(means Weekend or festive Holiday), then make the EOP to be "next week" on the same day. STILL TESTING.
 #' @param FunEach Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).
 #' @param FunAll Function. Default is econModel::NC. Has two argements: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function is to be applied across all periods.
 #' @param KeepOrigValues Logical. Default is FALSE. Only the New Generated elements are kept and the original xts(x) elements are discarded from the output.  Otherwise, the original xts(x) elements are kept (and the New Generated elements are kept).
@@ -396,15 +399,27 @@ tryCatchLog::tryCatchLog({
 #'   fillInterior = T, fillInteriorBy = "days")
 #' toPeriod(x, Period = "months", k = 2L, PeriodStart = zoo::as.Date(2))
 #' toPeriod(x, Period = "quarters", k = 2L, PeriodStart = zoo::as.Date(-20))
+#'
+#' # E.g. "Stock Options Expiry Date"
+#' toPeriod(x, Period = "months", PeriodStart = zoo::as.Date(0),  NthNdayInMonth = list(nday = 5, nth = 3))
+#'
+#' # U.S. Bureau of Labor Statistics Unemployment Report
+#' # Reports on the 1st Friday of the month, unless that Friday is a Holiday,
+#' #   in that case, then reports on the Next Friday
+#' # FRI JAN 01 1971 is a Holiday, so reports the next Friday, FRI JAN 08 1971
+#' toPeriod(x, Period = "months", PeriodStart = zoo::as.Date(0), NthNdayInMonth = list(nday = 5, nth = 1), NextWeek = T)
 #'}
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
-#' @importFrom RQuantLib adjust
+#' @importFrom timeDate timeNthNdayInMonth
+#' @importFrom RQuantLib isHoliday adjust
+#' @importFrom data.table fifelse
 #' @importFrom zoo index as.Date
 #' @importFrom xts xts as.xts first last
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-` xtsAttributes `xtsAttributes<-`
 #' @export
-toPeriod <- function(x, Period="months", k = 1L, PeriodStart = NULL,
+toPeriod <- function(x, Period="months", k = 1L,
+                     PeriodStart = NULL, NthNdayInMonth = NULL, NextWeek = F,
                      FunEach = identity, FunAll = NC,
                      KeepOrigValues = F,
                      fillInterior = F, fillInteriorBy = NULL,
@@ -439,7 +454,7 @@ tryCatchLog::tryCatchLog({
   #
   # seq must start early (because Late sequences (31st) to not expand correctly)
   # put at start of Period
-  # trucates
+  # truncates
   DateTimes <- seq(as.POSIXct(cut(PeriodStart, Period)), to = as.POSIXct(xts::last(zoo::index(y))),  by = paste0(k, " ", Period))
   # store shift (store lost truncation segment)
   Shift <- PeriodStart - xts::first(DateTimes)
@@ -451,14 +466,34 @@ tryCatchLog::tryCatchLog({
   DateTimes <- c(xts::last(seq(as.POSIXct(cut(PeriodStart, Period)), by = paste0(-1 * k, " ", Period), length.out = 2)) , DateTimes)
   # too-early DateTimes values will later be chopped-off. See below.
 
+  # NOTE: still working in POSIXct
+
   # shift forward
   DateTimes <- DateTimes + Shift
+
+  if(!is.null(NthNdayInMonth)) {
+    # e.g. 2nd Monday after this Date
+    # (as.character, no-as.character) (Sys.Date, Sys.time) - 4 COMBOS - ALL WORK
+    # returns item of class timeDate              # MON  # 2nd
+    # as.POSIXct(timeDate::timeNthNdayInMonth("2020-11-20", 1, 2))
+    # "2020-11-30 GMT"
+    #
+    # # GMT -> UTC (to avoid a warning complaint)
+    DateTimes <- as.POSIXct(timeDate::timeNthNdayInMonth(DateTimes, nday = NthNdayInMonth[["nday"]], nth = NthNdayInMonth[["nth"]]), tz = "UTC")
+    #
+    # because LATER(see below) I am going to do (- 1/19884107.8518)
+    # so I need this(+ 3600 * 24) NOW to land backwards on the SAME day
+    DateTimes <- DateTimes + 3600 * 24
+  }
+
+  # that DAY for AFTER
+
 
   # keep later duplicates
   DateTimes <- DateTimes[!duplicated(DateTimes, fromLast = T)]
 
   # subtract off one small number to
-  # get the "eventual[ly-and-now-realized ]EOP" (End of Period)
+  # get the "eventual[ly-and-now-realized]EOP" (End of Period)
   #
   # smallest number without R rounding
   #                    # - .Machine$double.xmin WOULD HAVE BEEN BETTER
@@ -524,15 +559,29 @@ tryCatchLog::tryCatchLog({
   # then keep the later duplicates (if any)
     x <- x[!duplicated(zoo::index(x), fromLast = T),]
 
-  # Business Day Conventions adjustment
   # if the day moves, then the new time
   # would be the "same time" on the new(moved) date
-  IndexDates <- zoo::as.Date(zoo::index(x))
-  IndexTimes <- as.POSIXct(IndexDates)
-  indexTimeDiffs <- IndexTimes - as.POSIXct(IndexDates)
-  NewDates <-  RQuantLib::adjust(Calendar, dates = zoo::as.Date(zoo::index(x)), bdc = BusDayConv)
-  NewTimes <- as.POSIXct(NewDates) + indexTimeDiffs
-  index(x) <- NewTimes
+  # SAVED: difference (in seconds) from early morning Midnight until Now.
+  indexTimeDiffs <- as.POSIXct(zoo::index(x)) - as.POSIXct(zoo::as.Date(zoo::index(x)))
+
+  # attempt Business Day Conventions adjustment (if any)
+  #
+  if(!NextWeek) {
+                 # will truncate
+    NewDates <-  as.Date(RQuantLib::adjust(Calendar, dates = zoo::as.Date(zoo::index(x)), bdc = BusDayConv))
+  } else {
+    # land on a Holiday? if so, just move 7 days later
+                # will truncate
+    NewDates <- zoo::as.Date(zoo::index(x)) + data.table::fifelse(RQuantLib::isHoliday(Calendar, dates = zoo::as.Date(zoo::index(x))), 7L, 0L)
+
+    # try [again(if any)]
+                 # will truncate
+    NewDates <-  as.Date(RQuantLib::adjust(Calendar, dates = NewDates, bdc = BusDayConv))
+  }
+
+  # New Times (add back the SAVED difference)
+  index(x)  <- as.POSIXct(NewDates) + indexTimeDiffs
+
   # then keep the later duplicates (if any)
   x <- x[!duplicated(zoo::index(x), fromLast = T),]
 

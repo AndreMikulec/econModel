@@ -9,6 +9,8 @@ toPeriod(
   Period = "months",
   k = 1L,
   PeriodStart = NULL,
+  NthNdayInMonth = NULL,
+  NextWeek = F,
   FunEach = identity,
   FunAll = NC,
   KeepOrigValues = F,
@@ -29,6 +31,10 @@ This is the aggregation (summary).}
 
 \item{PeriodStart}{Date time. Default is NULL.  Required. Date time of the beginning of the series. Must be convertible by S3 to a POSIXct by as.POSIXct(PeriodEnd). The user must be sure that his value is less than or equal to the earliest index value of x.}
 
+\item{NthNdayInMonth}{List. Default is NULL.  The structure is list(nday = #nday, nth = #nth). From the PeriodStart (and going forward), make the End of Period (EOP) to be the nday(Mon through Sun : 1L through 7L ) that is the nth (1L through (4L or 5L)).}
+
+\item{NextWeek}{Logical. Default is FALSE. If TRUE, If the End of Period(EOP) is a Holiday(means Weekend or festive Holiday), then make the EOP to be "next week" on the same day. STILL TESTING.}
+
 \item{FunEach}{Function. Has one argument: x; that is the xts object of the period. Default is identity. Function to be applied per period.  The value at the, per period, "last" positions is the "end of period"(EOP).}
 
 \item{FunAll}{Function. Default is econModel::NC. Has two argements: x; that is the xts object of all periods; EOPIndex is the index of EOP index values. This function is to be applied across all periods.}
@@ -47,7 +53,8 @@ This is the aggregation (summary).}
 modified xts object
 }
 \description{
-This is a smart wrapper over seq.POSIXt.
+This finds the End of Periods (EOP)s.
+This is a (very) smart wrapper over seq.POSIXt, R CRAN Packages timeDate and RQuantLib.
 }
 \examples{
 \dontrun{
@@ -58,5 +65,14 @@ toPeriod(x, Period = "weeks", k = 2L, PeriodStart = zoo::as.Date(2),
   fillInterior = T, fillInteriorBy = "days")
 toPeriod(x, Period = "months", k = 2L, PeriodStart = zoo::as.Date(2))
 toPeriod(x, Period = "quarters", k = 2L, PeriodStart = zoo::as.Date(-20))
+
+# E.g. "Stock Options Expiry Date"
+toPeriod(x, Period = "months", PeriodStart = zoo::as.Date(0),  NthNdayInMonth = list(nday = 5, nth = 3))
+
+# U.S. Bureau of Labor Statistics Unemployment Report
+# Reports on the 1st Friday of the month, unless that Friday is a Holiday,
+#   in that case, then reports on the Next Friday
+# FRI JAN 01 1971 is a Holiday, so reports the next Friday, FRI JAN 08 1971
+toPeriod(x, Period = "months", PeriodStart = zoo::as.Date(0), NthNdayInMonth = list(nday = 5, nth = 1), NextWeek = T)
 }
 }
