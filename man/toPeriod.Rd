@@ -17,7 +17,8 @@ toPeriod(
   fillInterior = F,
   fillInteriorBy = NULL,
   Calendar = "UnitedStates/GovernmentBond",
-  BusDayConv = 0L
+  BusDayConv = 0L,
+  alignTime = T
 )
 }
 \arguments{
@@ -48,6 +49,8 @@ This is the aggregation (summary).}
 \item{Calendar}{Default is "UnitedStates/GovernmentBond". Calendar to use.  See the Details section of ?? RQuantLib::Calendars.}
 
 \item{BusDayConv}{Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum, ? RQuantLib::adjust, and the parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.}
+
+\item{alignTime}{Logical.  Default is TRUE. The EOP is slightly early. Put the time on the exact time data point.}
 }
 \value{
 modified xts object

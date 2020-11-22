@@ -19,6 +19,8 @@ Set the values quantmod object slots.
 \examples{
 \dontrun{
 data(sample_matrix, package = "xts")
-modelData(specmodel) <- list(model.data = as.xts(sample.matrix))
+modelData(specmodel) <- list(
+  training.data = zoo::index(as.xts(sample.matrix))
+)
 }
 }

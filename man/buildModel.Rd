@@ -54,7 +54,7 @@ tg <- expand.grid(
   subsample        = 1
 )
 
-tc <- caret::trainControl(method = "cv", number = 5, allowParallel = T)
+tc <- caret::trainControl(method = "cv", number = 5, summaryFunction = tradeModelSummary)
 
 # of variable "specmodel", see
 ? econModel::specifyModel

@@ -175,7 +175,7 @@ tryCatchLog::tryCatchLog({
       }
     }
     # "new" additional flexibility
-    if(list(data.window)) {
+    if(list(data.window) &&  1L <= length(list(data.window))) {
       model.data <- lapply(data.window, function(x) {
         if (length(data.window) > 2) {
           model.data <- model.data[index(model.data) %in% data.window]
@@ -215,7 +215,9 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' data(sample_matrix, package = "xts")
-#' modelData(specmodel) <- list(model.data = as.xts(sample.matrix))
+#' modelData(specmodel) <- list(
+#'   training.data = zoo::index(as.xts(sample.matrix))
+#' )
 #' }
 #' @param x quantmod object
 #' @param ... list of name-value pairs
@@ -555,13 +557,13 @@ tryCatchLog::tryCatchLog({
                                                as.character( end.date.index)))
   }
   # "new" additional flexibility
-  if(is.list(training.per)) {
+  if(is.list(training.per)  &&  1L <= length(list(training.per))) {
     training.dates <- lapply(training.per, function(training.per) {
       if (length(training.per) != 2) {
-        stop("training.per must be of length 2")
+        stop("training.per vector must be of length 2")
       }
       start.date.index <- index(model.data[which(index(model.data) >=
-                                                   as.POSIXorDate(training.per[1]))])
+                                                 as.POSIXorDate(training.per[1]))])
       end.date.index <- index(model.data[which(index(model.data) <=
                                                  as.POSIXorDate(training.per[2]))])
 
@@ -569,7 +571,10 @@ tryCatchLog::tryCatchLog({
                                                  as.character( end.date.index)))
       training.dates
     })
+  } else {
+    stop("training.per list (if exists) must be of length 1 or greater")
   }
+
   # Dates with lapply and sapply
   # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
   training.dates <- DescTools::DoCall(c, training.dates)
@@ -623,7 +628,7 @@ tryCatchLog::tryCatchLog({
 #'   subsample        = 1
 #' )
 #'
-#' tc <- caret::trainControl(method = "cv", number = 5, allowParallel = T)
+#' tc <- caret::trainControl(method = "cv", number = 5, summaryFunction = tradeModelSummary)
 #'
 #' # of variable "specmodel", see
 #' ? econModel::specifyModel
@@ -697,10 +702,11 @@ tryCatchLog::tryCatchLog({
 
 
 
-
 #' Predict
 #'
-#' Given an R Object and new data make predictions
+#' Given an R Object and new data, make predictions.
+#' Implemented here because R CRAN package quantmod
+#' function predictModel is not exported.
 #'
 #' @param object R Object. Default is none. Required. Machine Learning object.
 #' @param data  New Data.  Default is none. Required.
@@ -708,9 +714,29 @@ tryCatchLog::tryCatchLog({
 #' @return Prediction.
 #' @rdname predictModel
 #' @export
+predictModel <- function (object, data, ...) {
+
+  useMethod("predictModel")
+
+}
+
+
+
+#' Predict
+#'
+#' Given an R Object and new data, make predictions.
+#' Implemented here because R CRAN package quantmod
+#' function predictModel is not exported.
+#'
+#' @param object R Object. Default is none. Required. Machine Learning object.
+#' @param data  New Data.  Default is none. Required.
+#' @param ... Dots Passed.
+#' @return Prediction.
+#' @rdname predictModel
 predictModel.default <- function (object, data, ...) {
+
   predict(object, data, ...)
-  NextMethod("predictModel")
+
 }
 
 
@@ -724,10 +750,238 @@ predictModel.default <- function (object, data, ...) {
 #' @param ... Dots Passed.
 #' @return Prediction.
 #' @importFrom tryCatchLog tryCatchLog
-#' @export
 predictModel.train <- function (object, data, ...) {
 tryCatchLog::tryCatchLog({
   if (is.method.available("train","caret")) {
     predict(object, data, ...)
   }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Simulate Trading of Fitted quantmod Object
+#'
+#' @description
+#' \preformatted{
+#'
+#' NOT IMPLEMENTED YET
+#'
+#' Perform Realization from using the R CRAN package quantmod functions
+#' of modeling. This is real world actual testing (of Prediction).
+#' This is a re-implementation of the R CRAN package
+#' quantmod function tradModel.  It uses the R CRAN package
+#' PerformanceAnalytics function Return.portfolio to do the heavy work.
+#' Several PerformanceAnalytics exported functions replace out
+#' some or part of quantmod non-exported functions
+#' tradeModel, modelReturn, allReturns, periodReturn, and stripModelData.
+#'
+#' This function subtracts off many features from the R CRAN package
+#' quantmod function tradeModel.
+#'
+#' Simulated trading of fitted quantmod object.
+#' Given a fitted model, tradeModel calculates the signal generated
+#' over a given historical period, then applies specified
+#' trade.rule to calculate a return.
+#' }
+#' @details
+#' \preformatted{
+#' Apply a newly constructed model from buildModel to a new dataset
+#' to investigate the model's trading potential.
+#'
+#' At present all parameters are very basic. The near term changes
+#' include allowing for a trade.rule argument to allow for a
+#' dynamic trade rule given a set of signals.
+#'
+#' Additional the application of variable leverage and costs
+#' will become part of the final structure.
+#' }
+#' @param x	quantmod object (from buildModel). Required.
+#' @param signal.threshold Numeric vector. Default is c(0, 0). A numeric vector describing simple lower and upper thresholds before trade occurs.
+#' @param trade.dates Default is NULL. Specific trade interval - defaults to the full dataset. This can be a vector of pairs.  This can be a list of vectors of pairs.
+#' @param exclude.training Logical. Default is TRUE. Exclude the period trained on?
+#' @param ... Dots pass to additional parameters needed by the underlying modeling function, if any.
+#' @return A quantmodResults object. The realizations.
+#' @examples
+#' \dontrun{
+#' tradeModel(specmodel)@returns
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo index
+#' @importFrom xts xts
+#' @importFrom PerformanceAnalytics Return.portfolio
+#' @export
+tradeModel <- function (x, signal.threshold = c(0, 0),
+          trade.dates = NULL, exclude.training = TRUE, ...) {
+tryCatchLog::tryCatchLog({
+
+  stop("To be implemented in PerformanceAnalytics::Return.portfolio")
+
+  quantmod <- getModelData(x)
+  if (class(quantmod) != "quantmod")
+    stop("model must be of class quantmod")
+
+  if (!length(trade.dates)) {
+    stop("trade.dates must exist and must be a vector of pairs \nor a list(of size 1 or greater) of vectors of pairs")
+  }
+
+  if(is.vector(trade.dates)) {
+    if (!is.null(trade.dates) && length(trade.dates) < 2)
+      stop("trade.dates must be of length 2")
+  }
+
+  if(is.list(trade.dates)) {
+    test.results <- unlist(lapply(trade.dates, function(trade.dates) {
+      if (!is.null(trade.dates) && length(trade.dates) < 2) {
+        return(F)
+      } else {
+        return(T)
+      }
+    }))
+    if(!all(test.results)) {
+      stop("trade.dates vector must be of length 2")
+    }
+  }
+
+  model.data <- modelData(quantmod, trade.dates, exclude.training = exclude.training)
+  fitted.results <- predictModel(quantmod@fitted.model, model.data, ...)
+
+  if (!inherits(fitted.reslts, "xts")) {
+    fitted.results <- xts::xts(as.vector(fitted.results), zoo::index(model.data))
+  }
+  # if beyond the extremes (either case)
+  signal.results <- ifelse(fitted.results < signal.threshold[1] |
+                           fitted.results > signal.threshold[2],
+                             ifelse(fitted.results > 0,  1,  # ideal to go long (invest)
+                                                        -1), # ideal to short (invest)
+                                                         0)  # do not invest
+
+  # more here
+
+  market.results <- model.data[,1]
+  signal.results <- merge(market.zoo, signal.results)
+  quantmodResults <- list(model = quantmod, signal = signal.results)
+
+  modelReturn <- function(tR.results, trade.dates = NULL) {
+
+    if(is.vector(trade.dates)) {
+      if (!is.null(trade.dates) && length(trade.dates) < 2)
+        trade.dates <- zoo::index(window(xts(, index(trade.signal[, 1])),
+                            start = trade.dates[1], end = trade.dates[2]
+        ))
+    }
+    if(is.list(trade.dates)) {
+      trade.dates <- unlist(lapply(trade.dates, function(trade.dates) {
+        trade.dates <- zoo::index(window(xts(, index(trade.signal[, 1])),
+                                   start = trade.dates[1], end = trade.dates[2]
+        ))
+        trade.dates
+      }))
+      trade.dates <- order(unique(trade.dates))
+    }
+
+    # rem: in exponential math
+    cash.returns <- xts::xts(matrix(seq_len(0,length(trade.dates)), ncol = 1, dimnames = list(character(), "cash")), order.by = trade.dates)
+
+    # trade.signal[market.data, signal.results]
+    trade.signal <- tR.results$signal
+
+    asset.weights.invest.long  <- ifelse(trade.signal[trade.dates, 2] ==  1, 1.00, 0.00)
+    asset.weights.invest.no    <- ifelse(trade.signal[trade.dates, 2] ==  0, 1.00, 0.00)
+    asset.weights.invest.short <- ifelse(trade.signal[trade.dates, 2] == -1, 1.00, 0.00)
+
+    asset.weights <- xts(cbind(asset.weights.invest.long, asset.weights.invest.no, asset.weight.invest.short), order.by = trade.dates)
+
+    returns <- PerformanceAnalytics::Return.portfolio(
+            # long (invest)               # no invest        # short (invest)
+      merge(trade.signal[trade.dates, 1], cash.returns, -1 * trade.signal[trade.dates, 1]),
+      weights =  asset.weights,
+      value = 10000.00
+    )
+
+    model.results <- returns
+    model.results[which(is.na(model.results))] <- 0
+    model.cumret <- cumprod(1 + model.results)
+
+    quantmodReturn <- new("quantmodReturn")
+    quantmodReturn@returns <- model.cumret
+    return(quantmodReturn)
+
+  }
+
+  model.returns <- modelReturn(quantmodResults,
+                               trade.dates = trade.dates,
+                               leverage = leverage)
+
+  quantmodResults$return <- model.returns
+  return(structure(quantmodResults, class = "quantmodResults"))
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Calculates performance across resamples
+#'
+#' Given two numeric vectors, obs and pred, of data, the performance is calculated.
+#'
+#' @param data Data.frame. Required. A data frame with columns, obs and pred, for the observed and predicted outcomes. For metrics that rely on class probabilities, such as twoClassSummary, columns should also include predicted probabilities for each class. See the classProbs argument to R CRAN package caret function trainControl.
+#' @param lev  Character vector of factors levels for the response. In regression cases, this would be NULL.  . Default is NULL.
+#' @param model String. Default is NULL.  Required. A character string for the model name (as taken from the method argument of train).
+#' @returns profit
+#' @examples
+#' \dontrun{
+#' options(tradeModelSummaryDots = list(signal.threshold = c(0,0)))
+#'
+#' model <- caret::train(dat[,-1], dat[,1], metric="profit", maximize=TRUE,
+#'   trControl = caret::trainControl(summaryFunction = tradeModelSummary)
+#' )
+#' }
+#' @references
+#' \cite{Zachary Mayer, Time series cross-validation 5, January 24, 2013
+#' \url{https://www.r-bloggers.com/2013/01/time-series-cross-validation-5/}
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo as.Date
+#' @importFrom xts as.xts
+#' @export
+tradeModelSummary <- function(data, lev = NULL, model = NULL) {
+tryCatchLog::tryCatchLog({
+
+  cash.returns <- xts::xts(matrix(seq_len(0,NROW(dat)), ncol = 1, dimnames = list(character(), "cash")), order.by = zoo::as.Date(seq_len(NROW(dat))))
+
+                                              # arbitrary index
+  pred <- xts::as.xts(dat[,  "obs", drop = F], index = zoo::as.Date(seq_len(NROW(dat))))
+  pred <- xts::as.xts(dat[, "pred", drop = F], index = zoo::as.Date(seq_len(NROW(dat))))
+
+  tradeModelSummaryDots <- getOption("tradeModelSummaryDots")
+
+  signal.threshold <- tradeModelSummaryDots[["signal.threshold"]]
+
+  signal.results <- ifelse(pred < signal.threshold[1] |
+                           pred > signal.threshold[2],
+                                       ifelse(pred > 0,  1,  # ideal to go long (invest)
+                                                        -1), # ideal to short (invest)
+                                                         0)  # do not invest
+
+  asset.weights.invest.long  <- ifelse(signal.results ==  1, 1.00, 0.00)
+  asset.weights.invest.no    <- ifelse(signal.results ==  0, 1.00, 0.00)
+  asset.weights.invest.short <- ifelse(signal.results == -1, 1.00, 0.00)
+
+  asset.weights <- xts(cbind(asset.weights.invest.long, asset.weights.invest.no, asset.weight.invest.short), order.by = zoo::as.Date(seq_len(NROW(dat))))
+
+  returns <- PerformanceAnalytics::Return.portfolio(
+          # long (invest)   # no invest      # short (invest)
+    merge(obs,              cash.returns,    -1 * obs),
+    weights =  asset.weights,
+    value = 10000.00
+  )
+
+  model.results <- returns
+  model.results[which(is.na(model.results))] <- 0
+  model.cumret <- cumprod(1 + model.results)
+  dollar.return <- model.cumret * 100000.00
+
+  profit <- dollar.return - 10000.00
+
+  return(data.frame(cbind(profit)))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}

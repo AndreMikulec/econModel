@@ -389,6 +389,7 @@ tryCatchLog::tryCatchLog({
 #' @param fillInteriorBy String. Default is NULL.  If fillInterior is TRUE, then this value must be provided. See seq.POSIXt: "secs", "mins", "hours", "days", "weeks", "months", "quarters" or "years".  Note, this is applied JUST BEFORE the function FunAll is called.
 #' @param Calendar Default is "UnitedStates/GovernmentBond". Calendar to use.  See the Details section of ?? RQuantLib::Calendars.
 #' @param BusDayConv Integer.  Default is 0L.  See \url{https://www.quantlib.org/reference/group__datetime.html} See ? RQuantLib::Enum, ? RQuantLib::adjust, and the parameter bcd(Business Day Convention). 0L means if the Day falls on a Holiday (Holiday includes weekends), then Following: the first business day after the given holiday becomes the (new) adjusted date.
+#' @param alignTime Logical.  Default is TRUE. The EOP is slightly early. Put the time on the exact time data point.
 #' @return modified xts object
 #' @examples
 #' \dontrun{
@@ -424,7 +425,7 @@ toPeriod <- function(x, Period="months", k = 1L,
                      KeepOrigValues = F,
                      fillInterior = F, fillInteriorBy = NULL,
                      Calendar = "UnitedStates/GovernmentBond",
-                     BusDayConv = 0L
+                     BusDayConv = 0L, alignTime = T
                      ) {
 tryCatchLog::tryCatchLog({
 
@@ -591,6 +592,10 @@ tryCatchLog::tryCatchLog({
   # then keep the later duplicates (if any)
   x <- x[!duplicated(zoo::index(x), fromLast = T),]
 
+  # round up
+  if(alignTime) {
+    x <- align.time(x, n = 1)
+  }
   colnames(x)[1] <- "V1"
 
   Sys.setenv(TZ=oldtz)
