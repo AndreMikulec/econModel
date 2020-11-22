@@ -58,7 +58,7 @@ tryCatchLog::tryCatchLog({
 
     if (is.character(Symbols)) {
       current.symbols <- unlist(strsplit(Symbols, ";"))
-    } else if(is.list(Symobls)) {
+    } else if(is.list(Symbols)) {
       current.symbols <- names(Symbols)
     }
 
@@ -85,7 +85,7 @@ tryCatchLog::tryCatchLog({
     # In a list with named elements,
     # the actual realized Symbols returned from the environment
     # symbols.returned.from.envir
-    #
+
     # In a vector, the "remaining Symbols" not found in the environment
     # current.symbols
     #
