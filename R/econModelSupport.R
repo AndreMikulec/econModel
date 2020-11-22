@@ -166,7 +166,7 @@ tryCatchLog::tryCatchLog({
 #' @export
 lsNamespaceInfo <- function(ns, ...) {
   ns <- asNamespace(ns, base.OK = FALSE)
-  ls(..., envir = get(".__NAMESPACE__.", envir = ns, inherits = FALSE))
+  ls(..., envir = get(".__NAMESPACE__.", envir = ns, inherits = FALSE), all.names = T)
 }
 
 
