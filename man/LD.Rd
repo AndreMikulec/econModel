@@ -25,7 +25,6 @@ beforehand.
 }
 \examples{
 \dontrun{
-
 # LD(lead 1) example
 
 xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2))
@@ -38,6 +37,14 @@ LD(xts(matrix(c(1,-2,-4,8,16,32), ncol = 2), zoo::as.Date(0:2)))
            V1ld.1 V2ld.1
 1970-01-01     -2     16
 1970-01-02     -4     32
+1970-01-03     NA     NA
+
+# LD(lead 1 and 2) example
+
+LD(xts(matrix(c(1,-2,-4), ncol = 1), zoo::as.Date(0:2)), k = 1:2)
+           V1ld.1 V2ld.2
+1970-01-01     -2     -4
+1970-01-02     -4     NA
 1970-01-03     NA     NA
 }
 }

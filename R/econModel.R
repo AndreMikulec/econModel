@@ -9,10 +9,13 @@
 #'
 #' timeEvent
 #' lagXts
-#' absChg
-#' relChg
 #' diffXts
 #' runRanks
+#'
+#' These avoid the R CRAN package TTR problem
+#' Error in runSum(x, n) : Series contains non-leading NAs
+#' absChg
+#' relChg
 #' }
 #' @section Acquire (and Manipulate) St. Louis ALFRED (and FRED) Data:
 #' \preformatted{
@@ -52,7 +55,12 @@
 #' \preformatted{
 #' cSort
 #' }
-#'
+#' @section Modeling:
+#' \preformatted{
+#' specifyModel
+#' buildModel
+#' predictModel
+#' }
 #' @docType package
 #' @name econModel
 "_PACKAGE"

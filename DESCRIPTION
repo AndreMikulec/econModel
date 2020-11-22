@@ -37,7 +37,8 @@ Imports:
     RQuantLib,
     xts,
     quantmod,
-    TTR
+    TTR,
+    caret
 RoxygenNote: 7.1.1
 Suggests: 
     testthat,

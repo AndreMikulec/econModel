@@ -18,10 +18,13 @@ is.na.xts
 
 timeEvent
 lagXts
-absChg
-relChg
 diffXts
 runRanks
+
+These avoid the R CRAN package TTR problem
+Error in runSum(x, n) : Series contains non-leading NAs
+absChg
+relChg
 }
 }
 
@@ -78,6 +81,15 @@ meltXts2Df
 
 \preformatted{
 cSort
+}
+}
+
+\section{Modeling}{
+
+\preformatted{
+specifyModel
+buildModel
+predictModel
 }
 }
 
