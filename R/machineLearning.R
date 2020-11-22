@@ -96,6 +96,19 @@ tryCatchLog::tryCatchLog({
     }
   }
 
+  if(auto.assign && !is.null(env)) {
+    if(length(symbols.returned.from.envir)) {
+      current.symbols_i.total.collection <- character()
+      for(current.symbols_i in names(symbols.returned.from.envir)) {
+        # assign to "env"
+        assign(current.symbols_i, symbols.returned.from.envir[[current.symbols_i]], envir = env)
+        current.symbols_i.total.collection <- c(current.symbols_i.total.collection, current.symbols_i)
+      }
+      # print the others that were returned from the environment
+      print(current.symbols_i.total.collection)
+    }
+  }
+
   # if any
   returned <- quantmod::getSymbols(Symbols = Symbols, env = env, reload.Symbols = reload.Symbols,
                 verbose = verbose, warnings = warnings, src = src, symbol.lookup = symbol.lookup,
