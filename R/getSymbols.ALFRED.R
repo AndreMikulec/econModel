@@ -787,8 +787,8 @@ getSymbols.ALFRED <- function(Symbols,
   if(oldtz!="UTC") {
     Sys.setenv(TZ="UTC")
   }
-  #
-  assign("oldtz", oldtz, envir = environment())
+  # NO
+  # assign("oldtz", oldtz, envir = environment())
 
   quantmod::importDefaults("getSymbols.ALFRED")
   this.env <- environment()

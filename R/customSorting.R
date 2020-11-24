@@ -22,8 +22,9 @@
 #' }
 #' @rdname cSort
 #' @export
-cSort <- function(x, ...) UseMethod("cSort")
-
+cSort <- function(x, ...) {
+  UseMethod("cSort")
+}
 
 
 #' custom sorting a vector
@@ -32,8 +33,11 @@ cSort <- function(x, ...) UseMethod("cSort")
 #' \preformatted{
 #' }
 #' @rdname cSort
-#' @export
-cSort.default <- function(x, ...) stop("No cSort S3 method found")
+#' @importFrom tryCatchLog tryCatchLog
+cSort.default <- function(x, ...) {
+tryCatchLog::tryCatchLog({
+  stop("No cSort S3 method found")
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -50,7 +54,6 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #' Excess Vector elements(in InitOrder)
 #' that do not exist in 'x' are simply ignored.
 #' }
-#'
 #' @param x vector to be sorted
 #' @param InitOrder starting custom sorting ( without the excess )
 #' @param sortVectExc sort vector excess. T(default) whether or not Vector excess words
@@ -70,11 +73,8 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #' \cite{David Schruth, (2013). caroline: A Collection of Database, Data Structure, Visualization, and Utility Functions for R. R package version 0.7.6.
 #' \url{https://CRAN.R-project.org/package=caroline}
 #'}
-
-#' @rdname cSort
 #' @examples
 #' \dontrun{
-#'
 #' # word examples
 #'
 #' # Know exact words: "date", "o", "h", "l", "c", "v", "a"
@@ -103,11 +103,12 @@ cSort.default <- function(x, ...) stop("No cSort S3 method found")
 #' cSort(c("B","b","A","a"), c("a","A"))
 #' [1] [1] "a" "A" "b" "B"
 #' }
-#' @export
+#' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 cSort.character <- function(x, InitOrder,
                             sortVectExc = T, sortVectExcCI = F,
                             chopVectExc = F, ...) {
-
+tryCatchLog::tryCatchLog({
   Vector <- x
   # will reduce to vector
   # as.vector that strips the incoming vector down to an R base type
@@ -144,9 +145,7 @@ cSort.character <- function(x, InitOrder,
   if(chopVectExc)
     Vector <- Vector[!Vector %in% VectorExcessCaseDetermined]
   Vector
-
-}
-
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -155,10 +154,8 @@ cSort.character <- function(x, InitOrder,
 #' @description
 #' \preformatted{
 #' }
-#' @rdname cSort
 #' @examples
 #' \dontrun{
-#'
 #' # numeric examples
 #'
 #' cSort(c(5, 2, 3, 4 ,1 ), c(4, 2, 3))
@@ -176,14 +173,15 @@ cSort.character <- function(x, InitOrder,
 #' class(.Last.value)
 #' [1] "integer"
 #' }
-#' @export
+#' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 cSort.numeric <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.character(x)
   InitOrder <- as.character(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   as.numeric(x, ...)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -192,24 +190,23 @@ cSort.numeric <- function(x, InitOrder, ...) {
 #' @description
 #' \preformatted{
 #' }
-#' @rdname cSort
 #' @examples
 #' \dontrun{
-#'
 #' # logical example
 #'
 #' cSort(c(F ,T, F, T, T, F, T, F), F)
 #' [1] FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE
 #' }
+#' @rdname cSort
 #' @importFrom chron as.times
-#' @export
+#' @importFrom tryCatchLog tryCatchLog
 cSort.logical <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.integer(x)
   InitOrder <- as.integer(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   as.logical(x)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' custom sorting a vector
@@ -218,15 +215,14 @@ cSort.logical <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
-#' @export
+#' @importFrom tryCatchLog tryCatchLog
 cSort.POSIXct <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
   InitOrder <- as.numeric(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   as.POSIXct(x, origin = "1970-01-01", ...)
-
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' custom sorting a vector
@@ -235,15 +231,14 @@ cSort.POSIXct <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
-#' @export
+#' @importFrom tryCatchLog tryCatchLog
 cSort.POSIXlt <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
   InitOrder <- as.numeric(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   as.POSIXlt(x, origin = "1970-01-01", ...)
-
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -253,10 +248,8 @@ cSort.POSIXlt <- function(x, InitOrder, ...) {
 #' @description
 #' \preformatted{
 #' }
-#' @rdname cSort
 #' @examples
 #' \dontrun{
-#'
 #' # Date examples
 #'
 #' cSort(zoo::as.Date(6:3), zoo::as.Date(1:4))
@@ -268,15 +261,16 @@ cSort.POSIXlt <- function(x, InitOrder, ...) {
 #' cSort(zoo::as.Date(6:3), zoo::as.Date(1:4), sortVectExc = F, chopVectExc = T)
 #' [1] "1970-01-04" "1970-01-05"
 #' }
+#' @rdname cSort
 #' @importFrom zoo as.Date
-#' @export
+#' @importFrom tryCatchLog tryCatchLog
 cSort.Date <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
   InitOrder <- as.numeric(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   zoo::as.Date(x, ...)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -286,15 +280,15 @@ cSort.Date <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo yearmon
-#' @export
 cSort.yearmon <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
   InitOrder <- as.numeric(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   zoo::as.yearmon(x, ...)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -304,19 +298,15 @@ cSort.yearmon <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo yearqtr
-#' @export
 cSort.yearqtr <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
   InitOrder <- as.numeric(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   zoo::as.yearqtr(x, ...)
-}
-
-
-
-
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -326,15 +316,15 @@ cSort.yearqtr <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom chron as.chron
-#' @export
 cSort.chron <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.POSIXct(x)
   InitOrder <- as.POSIXct(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   chron::as.chron(x)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' custom sorting a vector
@@ -343,15 +333,15 @@ cSort.chron <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom chron as.times
-#' @export
 cSort.times <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   x <- as.character(x)
   InitOrder <- as.character(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
   chron::as.times(x)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -361,10 +351,10 @@ cSort.times <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom chron as.chron as.dates
-#' @export
 cSort.dates <- function(x, InitOrder, ...) {
-
+tryCatchLog::tryCatchLog({
   # help from namespace xts
   # xts:::as.POSIXct.dates
   # need to implement our own method to correctly handle TZ
@@ -372,7 +362,7 @@ cSort.dates <- function(x, InitOrder, ...) {
   InitOrder <- structure(as.POSIXct(as.POSIXlt(InitOrder, tz="GMT"), tz="GMT"),class=c("POSIXct","POSIXt"))
   x <- cSort(x, InitOrder = InitOrder, ...)
   chron::as.dates(as.chron(x))
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -382,15 +372,26 @@ cSort.dates <- function(x, InitOrder, ...) {
 #' \preformatted{
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom timeDate as.timeDate
-#' @export
 cSort.timeDate <- function(x, InitOrder, ...) {
+tryCatchLog::tryCatchLog({
+
+  # if not done elsewhere
+  #correct for TZ
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="GMT") {
+    Sys.setenv(TZ="UTC")
+  }
 
   x <- as.POSIXct(x)
   xA <- attributes(x)
   InitOrder <- as.POSIXct(InitOrder)
   x <- cSort(x, InitOrder = InitOrder, ...)
-  as.timeDate(x, zone = xA$tzone, FinCenter = xA$control[names(xA$control) %in% "FinCenter"])
-}
+  x <- as.timeDate(x, zone = xA$tzone, FinCenter = xA$control[names(xA$control) %in% "FinCenter"])
+
+  Sys.setenv(TZ=oldtz)
+  x
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 

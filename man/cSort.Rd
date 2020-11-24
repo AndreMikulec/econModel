@@ -133,7 +133,6 @@ that do not exist in 'x' are simply ignored.
 }
 \examples{
 \dontrun{
-
 # word examples
 
 # Know exact words: "date", "o", "h", "l", "c", "v", "a"
@@ -158,7 +157,6 @@ cSort(c("B","b","A","a"), c("a","A"))
 [1] [1] "a" "A" "b" "B"
 }
 \dontrun{
-
 # numeric examples
 
 cSort(c(5, 2, 3, 4 ,1 ), c(4, 2, 3))
@@ -177,14 +175,12 @@ class(.Last.value)
 [1] "integer"
 }
 \dontrun{
-
 # logical example
 
 cSort(c(F ,T, F, T, T, F, T, F), F)
 [1] FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE
 }
 \dontrun{
-
 # Date examples
 
 cSort(zoo::as.Date(6:3), zoo::as.Date(1:4))
