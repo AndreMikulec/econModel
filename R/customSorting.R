@@ -1,6 +1,6 @@
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -27,7 +27,7 @@ cSort <- function(x, ...) {
 }
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -41,7 +41,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -149,7 +149,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -185,7 +185,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -209,7 +209,7 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -225,7 +225,7 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -243,7 +243,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -274,7 +274,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -292,7 +292,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -310,7 +310,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -327,7 +327,7 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -345,7 +345,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{
@@ -366,7 +366,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' custom sorting a vector
+#' Custom Sorting a Vector
 #'
 #' @description
 #' \preformatted{

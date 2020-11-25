@@ -765,7 +765,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom xts xts as.xts last periodicity
 #' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-`  xtsAttributes `xtsAttributes<-`
 #' @importFrom xts as.xts last
-#' @importFrom quantmod importDefaults getSymbols
+#' @importFrom quantmod importDefaults getSymbols getSymbolLookup
 getSymbols.ALFRED <- function(Symbols,
                               env,
                               return.class = "xts",
@@ -872,6 +872,19 @@ getSymbols.ALFRED <- function(Symbols,
   }
   if(length(MaxParallel)) MaxParallel <- floor(MaxParallel)
 
+  default.env <- env
+  default.return.class <- return.class
+  default.returnIndex <- returnIndex
+  default.VintageId <- VintageId
+  default.nameVintagedId <- nameVintagedId
+  default.EarliestLastUpdDate <- EarliestLastUpdDate
+  default.LookBack <- LookBack
+  default.VintagesPerQuery <- VintagesPerQuery
+  default.FullOldestVintageData <- FullOldestVintageData
+  default.DataSheet <- DataSheet
+  default.allowParallel <- allowParallel
+  default.MaxParallel <- MaxParallel
+
   ANYFRED.URL <- "https://alfred.stlouisfed.org/graph/alfredgraph.csv"
   returnSym <- Symbols
   noDataSym <- NULL
@@ -882,6 +895,79 @@ getSymbols.ALFRED <- function(Symbols,
     # # update (1 of 2 places)
     # returnSym <- returnSym[returnSym %in% Symbols] <- paste0(Symbols[[i]], ".vin")
     # MOVED TO BELOW
+
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$env
+    if(!is.null(te)) {
+      env <- te
+    } else {
+      env <- default.env
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$return.class
+    if(!is.null(te)) {
+      return.class <- te
+    } else {
+      return.class <- default.return.class
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$returnIndex
+    if(!is.null(te)) {
+      returnIndex <- te
+    } else {
+      returnIndex <- default.returnIndex
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$VintageId
+    if(!is.null(te)) {
+      VintageId <- te
+    } else {
+      VintageId <- default.VintageId
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$nameVintagedId
+    if(!is.null(te)) {
+      nameVintagedId <- te
+    } else {
+      nameVintagedId <- default.nameVintagedId
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$EarliestLastUpdDate
+    if(!is.null(te)) {
+      EarliestLastUpdDate <- te
+    } else {
+      EarliestLastUpdDate <- default.EarliestLastUpdDate
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$LookBack
+    if(!is.null(te)) {
+      LookBack <- te
+    } else {
+      LookBack <- default.LookBack
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$VintagesPerQuery
+    if(!is.null(te)) {
+      VintagesPerQuery <- te
+    } else {
+      VintagesPerQuery <- default.VintagesPerQuery
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$FullOldestVintageData
+    if(!is.null(te)) {
+      FullOldestVintageData <- te
+    } else {
+      FullOldestVintageData <- default.FullOldestVintageData
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$DataSheet
+    if(!is.null(te)) {
+      DataSheet <- te
+    } else {
+      DataSheet <- default.DataSheet
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$allowParallel
+    if(!is.null(te)) {
+      allowParallel <- te
+    } else {
+      allowParallel <- default.allowParallel
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$MaxParallel
+    if(!is.null(te)) {
+      MaxParallel <- te
+    } else {
+      MaxParallel <- default.MaxParallel
+    }
 
     test <- tryCatchLog::tryCatchLog({
     # test <- try({

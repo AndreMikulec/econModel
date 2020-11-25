@@ -15,7 +15,7 @@
 \alias{cSort.times}
 \alias{cSort.dates}
 \alias{cSort.timeDate}
-\title{custom sorting a vector}
+\title{Custom Sorting a Vector}
 \usage{
 cSort(x, ...)
 
