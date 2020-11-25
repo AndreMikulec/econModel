@@ -1,27 +1,68 @@
 
 
 
-#' Interleave two objects of arbitrary length
+#' Interleave Two Objects of Arbitrary Length
 #'
 #' @description
 #' \preformatted{
-#'
 #' from R CRAN package rmngb
 #' }
-#' @param x index-able objet by `[` and the same index length as y.  Compatible type with y and combinable(c)
+#' @param x index-able object by `[` and the same index length as y.  Compatible type with y and combinable(c)
 #' @param y index-able object by `[` and the same index length as x. Compatible type with x and combinable(c)
 #' @return new combined object
 #' @examples
 #' \dontrun{
 #' interleave(letters[1:2], LETTERS[1:2])
 #' }
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
-interleave <- function (x, y)
-{
+interleave <- function (x, y) {
+tryCatchLog::tryCatchLog({
+
+  if(sum(length(x), length(y)) %% 2L != 0L) {
+    stop("length(x) + length(y) must be divisible by 2")
+  }
+
   iX <- 2 * seq_along(x) - 1
   iY <- 2 * seq_along(y)
   c(x, y)[order(c(iX, iY))]
-}
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+#' Interleave Multiple Objects of Arbitrary Length
+#'
+#' @description
+#' \preformatted{
+#' Inspired by R CRAN package rmngb
+#' }
+#' @param ... Dots passed. Index-able objects by `[` and all objects have the same index length as each other.  All objects must have a compatible type with each other and combinable(c) with each other.
+#' @return new combined object
+#' @author Andre Mikulec
+#' @examples
+#' \dontrun{
+#' multiInterleave(letters[1:2], LETTERS[1:2], 10:11)
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+multiInterleave <- function (...) {
+tryCatchLog::tryCatchLog({
+
+  List <- list(...)
+  ListLen <- length(List)
+
+  if(sum(unlist(lapply(List, length))) %% ListLen != 0L) {
+    stop("The sum of all objects' elements must be divisible by the number of objects")
+  }
+
+  Order <-
+    mapply(function(x, y) {
+       ListLen * seq_along(x) - y
+    }, List, as.list(rev(seq_len(ListLen) - 1L)))
+
+  DescTools::DoCall(c, c(list(),List))[order(Order)]
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 

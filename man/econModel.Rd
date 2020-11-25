@@ -90,6 +90,7 @@ cSort
 specifyModel
 buildModel
 predictModel
+tradeModel
 }
 }
 

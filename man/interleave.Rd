@@ -2,12 +2,12 @@
 % Please edit documentation in R/explode.R
 \name{interleave}
 \alias{interleave}
-\title{Interleave two objects of arbitrary length}
+\title{Interleave Two Objects of Arbitrary Length}
 \usage{
 interleave(x, y)
 }
 \arguments{
-\item{x}{index-able objet by `[` and the same index length as y.  Compatible type with y and combinable(c)}
+\item{x}{index-able object by `[` and the same index length as y.  Compatible type with y and combinable(c)}
 
 \item{y}{index-able object by `[` and the same index length as x. Compatible type with x and combinable(c)}
 }
@@ -16,7 +16,6 @@ new combined object
 }
 \description{
 \preformatted{
-
 from R CRAN package rmngb
 }
 }

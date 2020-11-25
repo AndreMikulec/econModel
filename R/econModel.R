@@ -60,6 +60,7 @@
 #' specifyModel
 #' buildModel
 #' predictModel
+#' tradeModel
 #' }
 #' @docType package
 #' @name econModel
