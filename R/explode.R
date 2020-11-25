@@ -70,10 +70,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
-#'
 #' If one or the other has one index element while the other
 #' has N index elements, then the one will be recycled to N index elements.
-#'
 #' }
 #' @param x two dimension index-able object
 #' @param y two dimension index-able object
@@ -213,6 +211,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
 pairWise <- function(x, y) {
+tryCatchLog::tryCatchLog({
 
   # recycling 1 to N recycling
   #
@@ -256,7 +255,7 @@ pairWise <- function(x, y) {
 
   return(res)
 
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -480,8 +479,6 @@ tryCatchLog::tryCatchLog({
     FlagsCombinations <- list(list())
   }
 
-
-
   # x: placeholder to return data into something
   x <- eval(parse(text = paste0(class(x1)[1], "()")))
   # these functions will not work (assign) to a zero width object
@@ -502,7 +499,6 @@ tryCatchLog::tryCatchLog({
 
       if(NVAR(x21)) { x21List <- list(x21) } else { x21List <- NULL }
       Temp <- DescTools::DoCall(Fun, args = c(list(), list(x11), x21List, FlagsCombo, list(...)), quote = quote, envir = envir)
-
 
       Temp <- newColName( Temp, Fun = Fun, isCharFun = isCharFun, x1 = x11, x2 = x21, FlagsCombo = FlagsCombo,
                                 AltName = AltName, asIsAltName = asIsAltName,

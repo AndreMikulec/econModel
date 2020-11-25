@@ -16,10 +16,8 @@ list of length two of two interleaved two dimensional index-able  objects
 }
 \description{
 \preformatted{
-
 If one or the other has one index element while the other
 has N index elements, then the one will be recycled to N index elements.
-
 }
 }
 \examples{
