@@ -2,7 +2,7 @@
 % Please edit documentation in R/explode.R
 \name{pairWise}
 \alias{pairWise}
-\title{pairwise interleave of two two dimensional index-able objects}
+\title{Pairwise Interleave of Two "Two Dimensional" Index-able Objects}
 \usage{
 pairWise(x, y)
 }
@@ -18,6 +18,7 @@ list of length two of two interleaved two dimensional index-able  objects
 \preformatted{
 If one or the other has one index element while the other
 has N index elements, then the one will be recycled to N index elements.
+Consider, instead, using multiWise.
 }
 }
 \examples{

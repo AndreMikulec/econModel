@@ -16,7 +16,8 @@ new combined object
 }
 \description{
 \preformatted{
-from R CRAN package rmngb
+interleave is from the (former) R CRAN package rmngb function interleave.
+Instead, use multiInterleave.
 }
 }
 \examples{

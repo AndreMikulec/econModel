@@ -5,7 +5,8 @@
 #'
 #' @description
 #' \preformatted{
-#' from R CRAN package rmngb
+#' interleave is from the (former) R CRAN package rmngb function interleave.
+#' Instead, use multiInterleave.
 #' }
 #' @param x index-able object by `[` and the same index length as y.  Compatible type with y and combinable(c)
 #' @param y index-able object by `[` and the same index length as x. Compatible type with x and combinable(c)
@@ -34,7 +35,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @description
 #' \preformatted{
-#' Inspired by R CRAN package rmngb
+#' Inspired by the (former) R CRAN package rmngb function interleave.
 #' }
 #' @param ... Dots passed. Index-able objects by `[` and all objects have the same index length as each other.  All objects must have a compatible type with each other and combinable(c) with each other.
 #' @return new combined object
@@ -66,12 +67,13 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' pairwise interleave of two two dimensional index-able objects
+#' Pairwise Interleave of Two "Two Dimensional" Index-able Objects
 #'
 #' @description
 #' \preformatted{
 #' If one or the other has one index element while the other
 #' has N index elements, then the one will be recycled to N index elements.
+#' Consider, instead, using multiWise.
 #' }
 #' @param x two dimension index-able object
 #' @param y two dimension index-able object
@@ -257,6 +259,52 @@ tryCatchLog::tryCatchLog({
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
+
+
+#' Setwise Interleave of Many "Two Dimensional" Index-able Objects
+#'
+#' @description
+#' \preformatted{
+#' If any has less index elements than the others
+#' then recycle the index elements.
+#' }
+#' @param ... Dots passed. Two dimension index-able objects Two or more collections of Index-able objects
+#' @return
+#' @examples
+#' \dontrun{
+#' multiWise(airquality[1:2,], iris[1:2,1:2], mtcars[1:2, 1:3])
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
+#' @export
+multiWise <- function(...) {
+  tryCatchLog::tryCatchLog({
+
+    Dots <- list(...)
+
+    # help from assertive.strings:::recycle
+
+    # survey: longest set of elements
+    LongestSet <- max(unlist(lapply(Dots, NVAR)))
+
+    # recycle as necessary
+    List <- lapply(Dots, function(x, length.out){
+      L <- rep_len(as.list(x), LongestSet)
+      if(!is.null(colnames(x))){
+        names(L) <- rep_len(colnames(x), LongestSet)
+      }
+      L
+    }, length.out = LongestSet)
+
+    # unWeave
+    Index <- seq_along(unlist(List, recursive = F)) %% length(Dots)
+    UniqIndex <- unique(Index)
+    List <- lapply(as.list(UniqIndex), function(x) {
+      unlist(List, recursive = F)[Index == x]
+    })
+    List
+
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 

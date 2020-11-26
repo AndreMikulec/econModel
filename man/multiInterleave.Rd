@@ -14,7 +14,7 @@ new combined object
 }
 \description{
 \preformatted{
-Inspired by R CRAN package rmngb
+Inspired by the (former) R CRAN package rmngb function interleave.
 }
 }
 \examples{
