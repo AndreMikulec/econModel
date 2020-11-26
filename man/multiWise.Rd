@@ -7,7 +7,7 @@
 multiWise(...)
 }
 \arguments{
-\item{...}{Dots passed. Two dimension index-able objects Two or more collections of Index-able objects}
+\item{...}{Dots passed. Two dimension index-able objects Two or more collections of Index-able objects.  Tested with data.frames and xts objects.}
 }
 \value{
 

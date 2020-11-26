@@ -261,6 +261,34 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Setwise unWeave of Many "Two Dimensional" Index-able Objects
+#'
+#' @description
+#' \preformatted{
+#' The number of Argument (sub)elements must be the same
+#' }
+#' @param ... Dots passed. Tested with Arguments of data.frames and xts objects.
+#' @return List. Same length as the number of function call input arguments.
+#' @examples
+#' \dontrun{
+#' colnames(iris)[1:4]
+#' [1] "Sepal.Length" "Sepal.Width"  "Petal.Length" "Petal.Width"
+#' unWeave(iris[1:2, c(1,3)], iris[1:2, c(2,4)])
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+unWeave <- function(...) {
+tryCatchLog::tryCatchLog({
+  Dots <- list(...)
+  Index <- seq_along(unlist(Dots, recursive = F)) %% length(Dots)
+  UniqIndex <- unique(Index)
+  List <- lapply(as.list(UniqIndex), function(x) {
+    unlist(Dots, recursive = F)[Index == x]
+  })
+  List
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 #' Setwise Interleave of Many "Two Dimensional" Index-able Objects
 #'
 #' @description
@@ -268,17 +296,16 @@ tryCatchLog::tryCatchLog({
 #' If any has less index elements than the others
 #' then recycle the index elements.
 #' }
-#' @param ... Dots passed. Two dimension index-able objects Two or more collections of Index-able objects
+#' @param ... Dots passed. Two dimension index-able objects Two or more collections of Index-able objects.  Tested with data.frames and xts objects.
 #' @return
 #' @examples
 #' \dontrun{
 #' multiWise(airquality[1:2,], iris[1:2,1:2], mtcars[1:2, 1:3])
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DescTools DoCall
 #' @export
 multiWise <- function(...) {
-  tryCatchLog::tryCatchLog({
+tryCatchLog::tryCatchLog({
 
     Dots <- list(...)
 
@@ -296,12 +323,8 @@ multiWise <- function(...) {
       L
     }, length.out = LongestSet)
 
-    # unWeave
-    Index <- seq_along(unlist(List, recursive = F)) %% length(Dots)
-    UniqIndex <- unique(Index)
-    List <- lapply(as.list(UniqIndex), function(x) {
-      unlist(List, recursive = F)[Index == x]
-    })
+    # un-weave
+    List <- DescTools::DoCall(unWeave, List)
     List
 
   }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
