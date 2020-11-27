@@ -1690,3 +1690,67 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
+#' Create a R CRAN package TTR function without the Leading NA error
+#'
+#' Non-Leading NAs (NLN).
+#' Work-around of R CRAN package TTR functions:
+#' Error in runSum(x, n) : Series contains non-leading NAs.
+#' @param f Default none. Required. TTR function.
+#' @param x Default none. Required. Single column xts data.
+#' @param ... Dots passed to f.
+#' @return modified x
+#' @examples
+#' \dontrun{
+#' x <- xts::xts(c(NA,1,2,4,NA), zoo::as.Date(0:4))
+#' SMA <- createNLN(x, f = TTR::SMA)
+#' SMA(x, n = 2)
+#' V1nln.SMA.n.2
+#' 1970-01-01            NA
+#' 1970-01-02            NA
+#' 1970-01-03           1.5
+#' 1970-01-04           3.0
+#' 1970-01-05           0.0
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom zoo coredata na.trim
+#' @importFrom xts xts last
+#' @export
+createNLN <- function(x, f, ...) {
+tryCatchLog::tryCatchLog({
+
+  # from inside and below, moved to here
+  FunString <- xts::last(as.character(as.list(match.call())$f))
+
+  # remove the parameter "f"
+  Fun <- function(x, ...) {
+  tryCatchLog::tryCatchLog({
+    xTs <- x
+    f <- match.fun(f)
+    # move to out and above
+    # FunString <- xts::last(as.character(as.list(match.call())$f))
+    TrimmedX <- zoo::na.trim(as.vector(zoo::coredata(xTs)), sides = "right")
+    TrimmedResult <- as.vector(zoo::coredata(f(TrimmedX, ...)))
+    if(NROW(TrimmedResult) <  NROW(xTs)) {
+      # detect the Class
+      OneElement <- vector(mode = class(as.vector(zoo::coredata(xTs)))[1], length = 1L)
+      Result <- c(TrimmedResult, rep(OneElement, NROW(x) - NROW(TrimmedResult)))
+      xTs <- xts::xts(Result, zoo::index(xTs))
+    } else {
+      xTs <- xts::xts(TrimmedResult, zoo::index(xTs))
+    }
+    Dots <- list(...)
+    Args <- unlist(Dots)
+    if(!is.null(Args)) {
+      Args <- paste0(multiInterleave(rep(".", length(Args)), Names(Args), rep(".", length(Args)),Args), collapse = "")
+    }
+    if(NVAR(xTs)) {
+      Names(xTs) <- paste0(paste0(paste0(rep("V",NVAR(xTs)),seq(1,NVAR(xTs))),"nln"), ".", FunString, Args)
+    }
+    xTs
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+  Fun
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
