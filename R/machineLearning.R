@@ -1,9 +1,430 @@
 
+
+#' Create/Remove More or Less Observations
+#'
+#' @description
+#' From an xts object, produce more or less jittered or duplicate nearby observations.
+#' The workhorse package here is the R CRAN package UBL (Utility Based Learning) and its *Regress functions.
+#' This is a smart(er) wrapper.
+#' \preformatted{
+# # R CRAN package UBL *Regress functions as of November 2020
+#'
+#' GaussNoiseRegress : function (form, dat, rel = "auto", thr.rel = 0.5,
+#'                               C.perc = "balance", pert = 0.1, repl = FALSE)
+#'
+#' # default
+#' # from current data, makes "exact replicated" copies
+#' ImpSampRegress : function (form, dat, rel = "auto", thr.rel = NA,
+#'                            C.perc = "balance", O = 0.5, U = 0.5)
+#'
+#' RandOverRegress : function (form, dat, rel = "auto", thr.rel = 0.5,
+#'                             C.perc = "balance", repl = TRUE)
+#'
+#' # from current data, makes "jittered" copies
+#' RandUnderRegress : function (form, dat, rel = "auto", thr.rel = 0.5,
+#'                              C.perc = "balance", repl = FALSE)
+#'
+#' SmoteRegress : function (form, dat, rel = "auto", thr.rel = 0.5,
+#'                          C.perc = "balance", k = 5, repl = FALSE,
+#'                          dist = "Euclidean", p = 2)
+#'
+#' UtilOptimRegress : function (form, train, test, type = "util",
+#'                              strat = "interpol",
+#'                              strat.parms = list(method = "bilinear"),
+#'                              control.parms, m.pts, minds, maxds, eps = 0.1)
+#'
+#' # Help with UtilOptimRegress(just above) parameter control.parms
+#'
+#'     phi.control : function (y, method = "extremes", extr.type = "both",
+#'                             coef = 1.5, control.pts = NULL)
+#' }
+#' @param x xts object of training data.  Default is none. Required.
+#' @param x2 xts object of testing data.  Default is NULL. Required in UtilOptimRegress. Only used in UtilOptimRegress. Otherwise an error.
+#' @param Fmla Default is NULL.  Required. Formula that is sent to the UBL function.
+#' @param TrainDates Default is NULL. Not Required. Absolute training start dates(times) and end dates(times) as a vector of a pair. Alternately, this can be a list of vectors of pairs.
+#' @param TestDates Default is NULL. Not Required. This parameter can only be used with UtilOptimRegress. Absolute testing start dates(times) and end dates(times) as a vector of a pair. Alternately, this can be a list of vectors of pairs.
+#' @param UBLFunction Default is NULL. Default is the ImpSampRegress function. Not Required. An R Package UBL *Regress function.
+#' Enter the functoin name enclosed in a "string" or bare function name.
+#' @param ... Dots passed to the UBL function.  Defaults follow.
+#' thr.rel = 0.5.  C.perc = list(1, 2) : means make the important data to be from single in size to double in size.
+#' Relevance function (rel): xts coredata values greater than zero are important. In opposite, xts coredata values less than zero are not important.
+#' @return Modified xts that ahs removed data and/or has duplicate(multiplicate) index items at the same time points in time with the "jittered" coredata values or "exact replicated" coredata values.
+#' @references
+#' \cite{SmoteRegress challenges #2
+#' \url{https://github.com/paobranco/UBL/issues/2}
+#' }
+#' @references
+#' \cite{question about new/replicated UBL data and range of creation area #3
+#' \url{https://github.com/paobranco/UBL/issues/3}
+#' }
+#' @references
+#' \cite{(BROKEN LINK) Luis Torgo: Learning with Imbalanced Domains, a tutorial, 2nd International Workshop on Learning with Imbalanced Domains: Theory and Applications Co-located with ECML/PKDD 2018
+#' \url{http://lidta.dcc.fc.up.pt/Slides/TutorialLIDTA.pdf}
+#' }
+#' @references
+#' \cite{Paula Branco, Rita P. Ribeiro, Luis Torgo: UBL: an R package for Utility-based Learning, (Submitted on 27 Apr 2016 (v1), last revised 12 Jul 2016 (this version, v2))
+#' \url{https://arxiv.org/abs/1604.0807}
+#' }
+#' @references
+#' \cite{Ribeiro, R.P.: Utility-based Regression. PhD thesis, Dep. Computer Science, Faculty of Sciences - University of Porto (2011), Chapter 3 Utility-based Regression
+#' \url{https://www.dcc.fc.up.pt/~rpribeiro/publ/rpribeiroPhD11.pdf}
+#' }
+#' @examples
+#' \dontrun{
+#' set.seed(1L)
+#' DataValues <- data.frame(x = as.numeric(seq_len(1000)), y = rnorm(1000, 0, 1))
+#' row.names(DataValues) <- seq_len(1000)
+#'
+#' table(DataValues$y > 0.00)
+#' FALSE  TRUE
+#' 518   482
+#'
+#' # Relevance function
+#' Rlvce <- matrix(c(-0.01, 0, 0, 0.00, 0.5, 0.5, 0.01, 1, 0), ncol = 3, byrow = T,
+#'                 dimnames = list(
+#'                   yvalues = character(),
+#'                   col = c("yvalues", "relevance", "slope_of_y_values")
+#'                 )
+#' )
+#'
+#' # Relevant observations: import to me.
+#' # I want MORE of these "relevant" observations
+#' # (compared to "not very relevant" observations.)
+#' #
+#' # yvalues: negative(-) values are not VERY relevant
+#' # yvalues: positive(+) values are VERY relevant
+#' # relevance column:  0 - not very relevant, 1 - very relevant
+#' #
+#' # Relevance function defines a graphic with a smooth non-strait line
+#' # It uses exactly only: yvalues and slope_of_yvalues
+#' # see the references.
+#' # This Relevance function is a curved line of half of a hill.
+#' #
+#' Rlvce
+#' # +/-
+#' col
+#' yvalues yvalues relevance slope_of_y_values
+#' [1,]   -0.01       0.0               0.0 # yvalues less than thr.rel (bottom of hill)
+#' [2,]    0.00       0.5               0.5 # relevance col: thr.rel = 0.5
+#' [3,]    0.01       1.0               0.0 # yvalues greater than thr.rel (top of hill)
+#'
+#' # default "threashold of relevance" (thr.rel) between "not very relevant" and "relavent"
+#' # ranges
+#' # "thr.rel = 0.5"                                                # [1,]->[2,] [2,]->[3,]
+#' Results <- UBL::SmoteRegress(y ~ ., DataValues, rel = Rlvce, C.perc = list(0.5, 2.5))
+#'
+#' # no change
+#' Results <- UBL::SmoteRegress(y ~ ., DataValues, rel = Rlvce, C.perc = list(1, 1))
+#' > identical(sort(DataValues[,"x"]), sort(Results[,"x"]))
+#' [1] TRUE
+#' > identical(sort(DataValues[,"y"]), sort(Results[,"y"]))
+#' [1] TRUE
+#'
+#' # new jitters of the current data
+#' #
+#' # double the number of (important) revelant observations
+#' # default "thr.rel = 0.5"
+#' #                                           # 100% percent, # 200% percent
+#' Results <- UBL::SmoteRegress(y ~ ., DataValues, rel = Rlvce, C.perc = list(1, 2))
+#'
+#' table(Results$y > 0.00)
+#' FALSE  TRUE
+#' 518   964
+#'
+#' # new replicas of the current data
+#' #
+#' # default "thr.rel = NA" # to create/destroy obs like smote (thr.rel = 0.5)
+#' Results <- UBL::ImpSampRegress(y ~ ., DataValues, rel = Rlvce, thr.rel = 0.5, C.perc = list(1, 2))
+#' table(Results$y > 0.00)
+#' FALSE  TRUE
+#' 518   964
+#'
+#' # see the replicated data points
+#' tail(Results[order(Results$x),],30)
+#' # Results[order(as.integer(row.names(Results))),]
+#'
+#' # half the number of (un-important) not very relevant observations
+#' #
+#' Results <- UBL::SmoteRegress(y ~ ., DataValues, rel = Rlvce, C.perc = list(0.5, 1))
+#' table(Results$y > 0.00)
+#' FALSE  TRUE
+#' 259   482
+#'
+#' Results <- UBL::ImpSampRegress(y ~ ., DataValues, rel = Rlvce, thr.rel = 0.5, C.perc = list(0.5, 1))
+#' table(Results$y > 0.00)
+#' FALSE  TRUE
+#' 259   482
+#'
+#' # xts object
+#'
+#' DataIndex  <- zoo::as.Date(0L:999L)
+#' DataXts <- xts::as.xts(DataValues, DataIndex, dateFormat= "Date")
+#' table(DataXts[,"y"] > 0.00)
+#'
+#' # double the "important" data (jitters)
+#' ResultsXts <- rebalanceData(y ~ ., DataXts, UBLFunction = "UBL::SmoteRegress")
+#' table(ResultsXts[,"y"] > 0.00)
+#'
+#' # double the "important" data (exact data)
+#' ResultsXts <- rebalanceData(y ~ ., DataXts)
+#' table(ResultsXts[,"y"] > 0.00)
+#'
+#' # half the "not important" data
+#' ResultsXts <- rebalanceData(y ~ ., DataXts, C.perc = list(0.5, 1))
+#' table(ResultsXts[,"y"] > 0.00)
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom UBL GaussNoiseRegress ImpSampRegress RandOverRegress RandUnderRegress SmoteRegress UtilOptimRegress
+#' @importFrom DescTools DoCall
+#' @importFrom zoo index
+#' @importFrom xts xts as.xts  first last
+#' @importFrom xts tclass `tclass<-` tformat `tformat<-` tzone `tzone<-`  xtsAttributes `xtsAttributes<-`
+#' @export
+rebalanceData <- function(
+  x,
+  x2 = NULL,
+  Fmla = NULL,
+  TrainDates = NULL,
+  TestDates = NULL,
+  UBLFunction = NULL,
+  ...
+) {
+tryCatchLog::tryCatchLog({
+
+  if(!is.null(x)) {
+    Data <- xTs <- x
+    if(is.null(TrainDates)) {
+      TrainDates <- c(xts::first(index(Data)), xts::last(inde(Data)))
+    }
+    # data may contain incomplete cases
+    if (!is.null(TrainDates)) {
+      if(is.vector(TrainDates)) {
+        if (length(TrainDates) > 2) {
+          OrigData <- Data[index(Data) %in% TrainDates]
+        }
+        else {
+          start.date.index <- index(Data[which(index(Data) >=  TrainDates[1])])
+          end.date.index   <- index(Data[which(index(Data) <=  TrainDates[2])])
+          date.range       <- intersect(start.date.index, end.date.index)
+          OrigData <- Data[date.range]
+        }
+      }
+      # "new" additional flexibility
+      if(is.list(TrainDates)) {
+        OrigData <- lapply(TrainDates, function(x) {
+          if (length(TrainDates) > 2) {
+            OrigData <- Data[index(Data) %in% TrainDates]
+          }
+          else {
+            start.date.index <- index(Data[which(index(Data) >= TrainDates[1])])
+            end.date.index   <- index(Data[which(index(Data) <= TrainDates[2])])
+            date.range       <- intersect(start.date.index, end.date.index)
+            OrigData <- Data[date.range]
+          }
+          OrigData
+        })
+        # Dates with lapply and sapply
+        # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
+        OrigData <- DescTools::DoCall(c, OrigData)
+      }
+    }
+  }
+
+  if(!is.null(x2)) {
+    Data2 <- xTs2 <- x2
+    if(is.null(TestDates)) {
+      TestDates <- c(xts::first(index(Data2)), xts::last(inde(Data2)))
+    }
+    # data may contain incomplete cases
+    if (!is.null(TestDates)) {
+      if(is.vector(TestDates)) {
+        if (length(TestDates) > 2) {
+          OrigData2 <- Data2[index(Data2) %in% TestDates]
+        }
+        else {
+          start.date.index <- index(Data2[which(index(Data2) >=  TestDates[1])])
+          end.date.index   <- index(Data2[which(index(Data2) <=  TestDates[2])])
+          date.range       <- intersect(start.date.index, end.date.index)
+          OrigData2 <- Data2[date.range]
+        }
+      }
+      # "new" additional flexibility
+      if(is.list(TestDates)) {
+        OrigData2 <- lapply(TestDates, function(x) {
+          if (length(TestDates) > 2) {
+            OrigData2 <- Data2[index(Data2) %in% TestDates]
+          }
+          else {
+            start.date.index <- index(Data2[which(index(Data2) >= TestDates[1])])
+            end.date.index   <- index(Data2[which(index(Data2) <= TestDates[2])])
+            date.range       <- intersect(start.date.index, end.date.index)
+            OrigData2 <- Data2[date.range]
+          }
+          OrigData2
+        })
+        # Dates with lapply and sapply
+        # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
+        OrigData2 <- DescTools::DoCall(c, OrigData2)
+      }
+    }
+  }
+
+  if(!is.null(UBLFunction)) {
+    if(mode(UBLFunction) == "function") {
+      UBLFunction = match.fun(UBLFunction)
+    } else {
+      UBLFunction <- UBLFunction
+    }
+  } else {
+    # default
+    # UBL::ImpSampRegress: The relevance function is used to introduce
+    # replicas of the most important examples and to remove the least important examples.
+    # ? UBL::ImpSampRegress
+    # WERCS: WEighted Relevance-based Combination Strategy
+    UBLFunction <- UBL::ImpSampRegress
+  }
+
+  Dots <- c(list(),list(...))
+
+  UBLData <- cbind(as.data.frame(OrigData), index = as.POSIXct(zoo::index(OrigData)))
+  row.names(UBLData) <- NULL
+  UBLData <- UBLData[complete.cases(UBLData),,drop = FALSE]
+  # common case
+  if(! identical(UBLFunction, UBL::UtilOptimRegress ) || identical(UBLFunction, "UtilOptimRegress")) {
+    if(!is.null(x2)) stop("Using any *Regress function other than \"UtilOptimRegress\" does not use  \"test\" data(x2).")
+    # add
+    Dots <- append(Dots, list(dat = UBLData))
+  }
+  # UtilOptimRegress (unique case)
+  if( identical(UBLFunction, UBL::UtilOptimRegress ) || identical(UBLFunction, "UtilOptimRegress")) {
+    if(is.null(x2)) stop("Using \"UtilOptimRegress\" \"test\" data(x2) is required.")
+    # add
+    Dots <- append(Dots, list(train =  UBLData))
+    # add
+    UBLData2 <- cbind(as.data.frame(OrigData2), index = as.POSIXct(zoo::index(OrigData2)))
+    row.names(UBLData2) <- NULL
+    UBLData2 <- UBLData2[complete.cases(UBLData2),,drop = FALSE]
+    Dots <- append(Dots, list(test = UBLData2))
+    # remove
+    Dots <- Dots[!Names(Dots) %in% "dat"]
+  }
+
+  if(is.null(Fmla)) stop("Formula \"Fmla\" is required.")
+  # formula.tools:::as.character.formula
+  UBLDataFormula <- as.formula(paste0(as.character(Fmla), " + index"))
+
+  # values lhs of formula
+  # with values LESS than zero are MORE relevant (e.g. [financial] losses)
+  #
+  # UBL relevance function
+  #
+  #   # to plot the relevance function, then use ONLY these two columns
+  #   actual y-val                                     slope at height(y-axis)
+  #   # columns of the relevance function
+  #   actual y-val,  relevance(0 to 1) height(y-axis), slope at height(y-axis)
+
+  if(!"rel" %in% Names(Dots)){
+    rel <- matrix(c(
+      -0.01, 1.0, 0.0, # negative y-values ( I care *much* about -> 1)
+       0.00, 0.5, 0.5,
+       0.01, 0.0, 0.0  # positive y-values ( I do not care *much* about -> 0 )
+    ),
+      ncol = 3,
+      byrow = TRUE,
+      dimnames = list(
+        yvalues = character(),
+        col = c("yvalues", "relevance", "slope_of_y_values")
+      )
+    )
+    Dots[["rel"]] <- rel
+  }
+
+  # threshold
+  if(!"thr.rel" %in% Names(Dots)) {
+    thr.rel <- 0.5
+    Dots[["thr.rel"]] <- thr.rel
+  }
+
+  if(!"C.perc" %in% Names(Dots)) {
+    # Current data is 100% is 1.
+    # Adjusted data is 200% percent is 2. (100% is 1 is the same old data)
+    # C.perc = list(1, 2))
+    C.perc = list(1, 2)
+  } else {
+    Dots[["C.perc"]] <- C.perc
+  }
+
+  if( identical(UBLFunction, UBL::UtilOptimRegress ) || identical(UBLFunction, "UtilOptimRegress")) {
+    Dots <- Dots[!Names(Dots) %in% c("rel", "thr.rel", "C.perc")]
+  }
+
+  UBLResults <- DescTools::DoCall(UBLFunction, c(list(), list(form = UBLDataFormula), Dots))
+
+  UBLResultsIndex <- UBLResults[["index"]]
+  UBLResults      <- UBLResults[, !colnames(UBLResults) %in% "index" , drop = FALSE]
+
+  # redefine
+  AdjustedData <- xts::as.xts(as.matrix(UBLResults), order.by = as.POSIXct(UBLResultsIndex))
+  xts::tclass(AdjustedData)  <- xts::tclass(xTs)
+  xts::tformat(AdjustedData) <- xts::tformat(xTs)
+  xts::tzone(AdjustedData) <- xts::tzone(xTs)
+  # (+) non-core attributes (user) [if any]
+  xts::xtsAttributes(AdjustedData) <- xts::xtsAttributes(xTs)
+
+  # UBL functions will not leak data
+  #   EXCEPT *GaussNoiseRegression* that can/will leak data.
+  # SEE . . .
+  # question about new/replicated UBL data and range of creation area #3
+  # https://github.com/paobranco/UBL/issues/3
+  #
+  # GaussNoiseRegression: prevent any leaking of
+  # any "new" [if any] UBL data into another/other zone
+  # This is particularly harsh to GaussNoiseRegression
+  if (!is.null(TrainDates)) {
+    if(is.vector(TrainDates)) {
+      if (length(TrainDates) > 2) {
+        AdjustedData <- AdjustedData[index(AdjustedData) %in% TrainDates]
+      }
+      else {
+        start.date.index <- index(AdjustedData[which(index(AdjustedData) >=  TrainDates[1])])
+        end.date.index   <- index(AdjustedData[which(index(AdjustedData) <=  TrainDates[2])])
+        date.range       <- intersect(start.date.index, end.date.index)
+        AdjustedData <- AdjustedData[date.range]
+      }
+    }
+    # "new" additional flexibility
+    if(is.list(TrainDates)) {
+      AdjustedData <- lapply(TrainDates, function(x) {
+        if (length(TrainDates) > 2) {
+          AdjustedData <- AdjustedData[index(AdjustedData) %in% TrainDates]
+        }
+        else {
+          start.date.index <- index(AdjustedData[which(index(AdjustedData) >= TrainDates[1])])
+          end.date.index   <- index(AdjustedData[which(index(AdjustedData) <= TrainDates[2])])
+          date.range       <- intersect(start.date.index, end.date.index)
+          AdjustedData <- AdjustedData[date.range]
+        }
+        AdjustedData
+      })
+      # Dates with lapply and sapply
+      # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
+      AdjustedData <- DescTools::DoCall(c, AdjustedData)
+    }
+  }
+  # NOTE: replicate index values (may) exist (ImpSampRegress)
+
+  # Results are expected to be put into machine learning function quickly
+  AdjustedData
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
 #' Load and Manage Data from Multiple Sources
 #'
 #' @description
 #' \preformatted{
-#'
 #' This is a wrapper over the R CRAN package quantmod function getSymbols
 #' with the additional paramter source.envir.
 #'
@@ -16,7 +437,6 @@
 #' when auto.assign = TRUE(default).
 #' GetSymbolsEnv places Symbols into "env = e"
 #' }
-#'
 #' @param Symbols	Character vector.  Required. Specifies the names of each symbol to be loaded.
 #' @param env Environment.  Default is parent.frame(). Where to create objects. Setting env=NULL is equal to auto.assign=FALSE.
 #' @param reload.Symbols Logical. Default is FALSE. To reload current symbols in specified environment.
@@ -175,7 +595,7 @@ tryCatchLog::tryCatchLog({
       }
     }
     # "new" additional flexibility
-    if(list(data.window) &&  1L <= length(list(data.window))) {
+    if(is.list(data.window)) {
       model.data <- lapply(data.window, function(x) {
         if (length(data.window) > 2) {
           model.data <- model.data[index(model.data) %in% data.window]
@@ -191,10 +611,10 @@ tryCatchLog::tryCatchLog({
         }
         model.data
       })
+      # Dates with lapply and sapply
+      # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
+      model.data <- DescTools::DoCall(c, model.data)
     }
-    # Dates with lapply and sapply
-    # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
-    model.data <- DescTools::DoCall(c, model.data)
   }
 
   if (exclude.training == TRUE) {
@@ -557,7 +977,7 @@ tryCatchLog::tryCatchLog({
                                                as.character( end.date.index)))
   }
   # "new" additional flexibility
-  if(is.list(training.per)  &&  1L <= length(list(training.per))) {
+  if(is.list(training.per)) {
     training.dates <- lapply(training.per, function(training.per) {
       if (length(training.per) != 2) {
         stop("training.per vector must be of length 2")
@@ -571,13 +991,13 @@ tryCatchLog::tryCatchLog({
                                                  as.character( end.date.index)))
       training.dates
     })
+    # Dates with lapply and sapply
+    # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
+    training.dates <- DescTools::DoCall(c, training.dates)
   } else {
     stop("training.per list (if exists) must be of length 1 or greater")
   }
 
-  # Dates with lapply and sapply
-  # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
-  training.dates <- DescTools::DoCall(c, training.dates)
 
   method <- as.character(paste("buildModel.", method, sep = ""))
   training.data <- model.data[training.dates]
@@ -639,7 +1059,7 @@ tryCatchLog::tryCatchLog({
 #'   , method_train = "xgbTree", tuneGrid = tg, trControl = tc)
 #' }
 #' @rdname buildModel
-#' @param method_train Default is none. Defaults to "xgboost". A character string naming the R CRAN package caret function train fitting method.
+#' @param method_train Default is none. Defaults to "xgbTree". A character string naming the R CRAN package caret function train fitting method.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom caret trainControl train
 buildModel.train <- function(quantmod, training.data, ...) {

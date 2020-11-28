@@ -45,7 +45,6 @@ If env=NULL or auto.assign=FALSE an object of type return.class will be returned
 }
 \description{
 \preformatted{
-
 This is a wrapper over the R CRAN package quantmod function getSymbols
 with the additional paramter source.envir.
 

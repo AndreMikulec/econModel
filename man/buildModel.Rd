@@ -16,7 +16,7 @@ buildModel.train(quantmod, training.data, ...)
 
 \item{...}{Dots.  Additional arguments to method call.}
 
-\item{method_train}{Default is none. Defaults to "xgboost". A character string naming the R CRAN package caret function train fitting method.}
+\item{method_train}{Default is none. Defaults to "xgbTree". A character string naming the R CRAN package caret function train fitting method.}
 }
 \value{
 An object of class quantmod with fitted model attached.
