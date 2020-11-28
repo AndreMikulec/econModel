@@ -16,6 +16,10 @@
 #' Error in runSum(x, n) : Series contains non-leading NAs
 #' absChg
 #' relChg
+#'
+#' non-leanding NAs
+#' NLN
+#' createNLN
 #' }
 #' @section Acquire (and Manipulate) St. Louis ALFRED (and FRED) Data:
 #' \preformatted{

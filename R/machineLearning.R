@@ -678,9 +678,15 @@ tryCatchLog::tryCatchLog({
 #' @author Andre Mikulec (re-implementation)
 #' @author Jeffrey Ryan
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
 #' @importFrom xts xts as.xts
 getModelData <- function (x, na.rm = TRUE, source.envir = NULL, ...) {
 tryCatchLog::tryCatchLog({
+
+  Dots <- c(list(), list(...))
+  Dots <- append(Dots, list(source.envir = source.envir))
+  # still used below and "out-of-Dots"
+  # source.envir
 
   model <- x
   if (!is.quantmod(model))
@@ -697,14 +703,14 @@ tryCatchLog::tryCatchLog({
   lapply(vars, function(V) {
     if(is.null(source.envir)) {
       if(!exists(V)) {
-        getSymbolsEnv(V, env = env, ...)
+        DescTools::DoCall(getSymbolsEnv, c(list(), list(V), list(env = env), Dots))
       }
       else {
         assign(V, get(V), env)
       }
     } else {
       if (!exists(V, envir = source.envir)) {
-        getSymbolsEnv(V, env = env, ...)
+        DescTools::DoCall(getSymbolsEnv, c(list(), list(V), list(env = env), Dots))
       } else {
         assign(V, get(V, envir = source.envir), env)
       }
