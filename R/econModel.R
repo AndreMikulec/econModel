@@ -59,6 +59,7 @@
 #' \preformatted{
 #' specifyModel
 #' buildModel
+#' rebalanceData
 #' predictModel
 #' tradeModel
 #' }
