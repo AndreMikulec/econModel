@@ -25,6 +25,10 @@ These avoid the R CRAN package TTR problem
 Error in runSum(x, n) : Series contains non-leading NAs
 absChg
 relChg
+
+non-leanding NAs
+NLN
+createNLN
 }
 }
 
@@ -89,6 +93,7 @@ cSort
 \preformatted{
 specifyModel
 buildModel
+rebalanceData
 predictModel
 tradeModel
 }

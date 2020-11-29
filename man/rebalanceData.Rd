@@ -185,6 +185,15 @@ table(ResultsXts[,"y"] > 0.00)
 \url{https://github.com/paobranco/UBL/issues/3}
 }
 
+\cite{P. Branco, L. Torgo and R.P. Ribeiro, Pre-processing approaches for imbalanced distributions in regression, Neurocomputing,
+  \url{https://doi.org/10.1016/j.neucom.2018.11.100}
+  \url{https://web.cs.dal.ca/~branco/PDFfiles/j14.pdf}
+}
+
+\cite{Volume 74 by the Proceedings of Machine Learning Research on 11 October 2017
+  \url{https://github.com/mlresearch/v74}
+}
+
 \cite{(BROKEN LINK) Luis Torgo: Learning with Imbalanced Domains, a tutorial, 2nd International Workshop on Learning with Imbalanced Domains: Theory and Applications Co-located with ECML/PKDD 2018
 \url{http://lidta.dcc.fc.up.pt/Slides/TutorialLIDTA.pdf}
 }

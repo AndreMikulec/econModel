@@ -1243,7 +1243,7 @@ getSymbols.ALFRED <- function(Symbols,
       #
       # # need to pull data the new vintage data to the left (into to the oldest vintage column NA entries),
       # # This ruins OTHER columns (non-oldest-vintage)
-      # # note "na.locf" is from package xts
+      # # note "na.locf" is from package zoo
       # NewCoreData <- rotate(na.locf(rotate(rotate(rotate((fr))))))
 
       # debugged by using "GDP" and EarliestLastUpdDate "Sys.Date() - 300" during OCT 17 2020
@@ -1281,9 +1281,6 @@ getSymbols.ALFRED <- function(Symbols,
       # # format the data into an acceptable form that can input into coredata (t)
       # NewCoreData <- t(matrix(last(na.locf(FrMatrixTransposedUpsideDown)), nrow = 1, dimnames = list(NULL, colnames(FrMatrixTransposedUpsideDown))))
       #
-      # of the 'first available datum per specific date' of all vintages,
-      #   pull its datum down into a single vector
-      #   and format that data as input into package xts function as.xts
 
       # remove columns that only have NAs seen in EFFR on Holidays
       # if the all-NA columns are not removed then NewCoreData will have problems: "Numeric,0" elements
@@ -1291,8 +1288,17 @@ getSymbols.ALFRED <- function(Symbols,
       # CLEAN
       NewIndexControl <- apply(FrMatrixTransposedUpsideDown, MARGIN = 2,  function(x) !all(is.na(x)))
       FrMatrixTransposedUpsideDown <- FrMatrixTransposedUpsideDown[, NewIndexControl, drop = F]
-      #
-      NewCoreData <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) xts::last(stats::na.omit(x))), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
+      # View(FrMatrixTransposedUpsideDown)
+      # of the 'first available datum per specific date' of all vintages,
+      #   pull its datum down into a single vector
+      #   and format that data as input into package xts function as.xts
+      NewCoreData <-
+        matrix(
+          apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x)
+            xts::last(stats::na.omit(x))),
+          dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
+        )
+      # View(NewCoreData)
       # note list colnames is sometimes just for display here (just below).
       #      Colnames MAY SOMETIMES later discarded by "index(fr) <-"
       #
@@ -1313,7 +1319,13 @@ getSymbols.ALFRED <- function(Symbols,
       }
       if(returnIndex == "LastUpdatedDate") {
         # NewIndexMatrix: not used in default parameter returnCoreData = "ObservationDate"
-        NewIndexMatrix <- matrix(apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) { rownames(FrMatrixTransposedUpsideDown)[length(zoo::na.trim(x, sides = "right"))] }  ), dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL))
+        NewIndexMatrix <-
+          matrix(
+            apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) {
+              rownames(FrMatrixTransposedUpsideDown)[length(zoo::na.trim(x, sides = "right"))]
+            }),
+            dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
+          )
         NewIndex       <- zoo::as.Date(sapply(strsplit(as.vector(zoo::coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
       }
 
