@@ -1,5 +1,47 @@
 
 
+
+#' Create a New Zoo/Xts Index of a Lesser Count of Values
+#'
+#' @description
+#' In Restriction enter a vector of begin/end pairs (or a list of such pairs).
+#'
+#' @param x	zoo or xts object. Required.
+#' @param Restriction	R list of time range vectors.  Each vector has two elements of either zoo or xts index elements or index numbers. The left element is the earlier time.  The right vector is the later time.
+#' @return index elements
+#' @exportFrom tryCatchLog tryCatchLog
+#' @exportFrom DescTools DoCall
+#' @export
+subsetIndex <- function(x, Restriction){
+  tryCatchLog::tryCatchLog({
+    # not NULL and not "length of zero"
+    if(missing(Restriction) || !length(Restriction)) {
+      return(index(x))
+    } else {
+      if(!is.list(Restriction)) {
+        Restriction <- list(Restriction)
+      }
+      Restriction <- lapply(Restriction, function(Restriction) {
+        if(length(Restriction) == 2L) {
+          stop("Restrictin of the index must be a start/stop pair")
+      }
+      if(Restriction[2] < Restriction[1]) {
+        stop("Restriction vector lvalue must be less than Restriction rvalue")
+      }
+      LesserIndex   <- zoo::index(x[which(Restriction[1] <= zoo::index(x))]      )
+      GreaterIndex  <- zoo::index(x[which(      zoo::index(x) <= Restriction[2])])
+      Index         <- intersect(LesserIndex, GreaterIndex)
+      Index
+    })
+    # Dates with lapply and sapply
+    # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
+    Restriction <- DescTools::DoCall(c, Restriction)
+    return(Restriction)
+  }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
 #' Create/Remove More or Less Observations
 #'
 #' @description
@@ -77,6 +119,10 @@
 #' @references
 #' \cite{Ribeiro, R.P.: Utility-based Regression. PhD thesis, Dep. Computer Science, Faculty of Sciences - University of Porto (2011), Chapter 3 Utility-based Regression
 #' \url{https://www.dcc.fc.up.pt/~rpribeiro/publ/rpribeiroPhD11.pdf}
+#' }
+#' @references
+#' \cite{Paula Branco and Luis Torgo and Rita Ribeiro: A Survey of Predictive Modeling on Imbalanced Domains, ACM Comput. Surv., 2016 volume 49 number 2-31
+#' \URL{https://web.cs.dal.ca/~ltorgo/publication/2016_btr16/2016_BTR16.pdf}
 #' }
 #' @examples
 #' \dontrun{
@@ -202,80 +248,11 @@ tryCatchLog::tryCatchLog({
 
   if(!is.null(x)) {
     Data <- xTs <- x
-    if(is.null(TrainDates)) {
-      TrainDates <- c(xts::first(index(Data)), xts::last(inde(Data)))
-    }
-    # data may contain incomplete cases
-    if (!is.null(TrainDates)) {
-      if(is.vector(TrainDates)) {
-        if (length(TrainDates) > 2) {
-          OrigData <- Data[index(Data) %in% TrainDates]
-        }
-        else {
-          start.date.index <- index(Data[which(index(Data) >=  TrainDates[1])])
-          end.date.index   <- index(Data[which(index(Data) <=  TrainDates[2])])
-          date.range       <- intersect(start.date.index, end.date.index)
-          OrigData <- Data[date.range]
-        }
-      }
-      # "new" additional flexibility
-      if(is.list(TrainDates)) {
-        OrigData <- lapply(TrainDates, function(x) {
-          if (length(TrainDates) > 2) {
-            OrigData <- Data[index(Data) %in% TrainDates]
-          }
-          else {
-            start.date.index <- index(Data[which(index(Data) >= TrainDates[1])])
-            end.date.index   <- index(Data[which(index(Data) <= TrainDates[2])])
-            date.range       <- intersect(start.date.index, end.date.index)
-            OrigData <- Data[date.range]
-          }
-          OrigData
-        })
-        # Dates with lapply and sapply
-        # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
-        OrigData <- DescTools::DoCall(c, OrigData)
-      }
-    }
+    OrigData <- subsetIndex(Data, TrainDates)
   }
-
   if(!is.null(x2)) {
     Data2 <- xTs2 <- x2
-    if(is.null(TestDates)) {
-      TestDates <- c(xts::first(index(Data2)), xts::last(inde(Data2)))
-    }
-    # data may contain incomplete cases
-    if (!is.null(TestDates)) {
-      if(is.vector(TestDates)) {
-        if (length(TestDates) > 2) {
-          OrigData2 <- Data2[index(Data2) %in% TestDates]
-        }
-        else {
-          start.date.index <- index(Data2[which(index(Data2) >=  TestDates[1])])
-          end.date.index   <- index(Data2[which(index(Data2) <=  TestDates[2])])
-          date.range       <- intersect(start.date.index, end.date.index)
-          OrigData2 <- Data2[date.range]
-        }
-      }
-      # "new" additional flexibility
-      if(is.list(TestDates)) {
-        OrigData2 <- lapply(TestDates, function(x) {
-          if (length(TestDates) > 2) {
-            OrigData2 <- Data2[index(Data2) %in% TestDates]
-          }
-          else {
-            start.date.index <- index(Data2[which(index(Data2) >= TestDates[1])])
-            end.date.index   <- index(Data2[which(index(Data2) <= TestDates[2])])
-            date.range       <- intersect(start.date.index, end.date.index)
-            OrigData2 <- Data2[date.range]
-          }
-          OrigData2
-        })
-        # Dates with lapply and sapply
-        # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
-        OrigData2 <- DescTools::DoCall(c, OrigData2)
-      }
-    }
+    OrigData2 <- subsetIndex(Data2, TestDates)
   }
 
   if(!is.null(UBLFunction)) {
@@ -578,55 +555,20 @@ tryCatchLog::tryCatchLog({
 #' One of the slots of this S4 class is model.data.
 #' }
 #' @param x	A quantmod object. Required.
-#' @param data.window	Default is NULL.  A character vector of subset start and end dates to return. Alternately, this can be a list of character vectors.
+#' @param data.window	Default is NULL.  A vector of subset start and end dates to return. Alternately, this can be a list of such vectors.
 #' @param exclude.training Logical. Default is FALSE. Remove the training period.
 #' @return An object of class zoo containing all transformations to data specified in specifyModel.
 #' @author Andre Mikulec (re-implementation)
 #' @author Jeffrey A. Ryan
+#' @exportFrom tryCatchLog tryCatchLog
 #' @export
 modelData <- function (x, data.window = NULL, exclude.training = FALSE) {
 tryCatchLog::tryCatchLog({
+
   model.data <- x@model.data
 
-  if (!is.null(data.window)) {
-    if(is.vector(data.window)) {
-      if (length(data.window) > 2) {
-        model.data <- model.data[index(model.data) %in% data.window]
-      }
-      else {
-        start.date.index <- index(model.data[which(index(model.data) >=
-                                                  as.Date(data.window[1], origin = "1970-01-01"))])
-        end.date.index <- index(model.data[which(index(model.data) <=
-                                                  as.Date(data.window[2], origin = "1970-01-01"))])
-        date.range <- as.Date(intersect(start.date.index,
-                                        end.date.index), origin = "1970-01-01")
-        model.data <- model.data[date.range]
-      }
-    }
-    # "new" additional flexibility
-    if(is.list(data.window)) {
-      model.data <- lapply(data.window, function(x) {
-        if (length(data.window) > 2) {
-          model.data <- model.data[index(model.data) %in% data.window]
-        }
-        else {
-          start.date.index <- index(model.data[which(index(model.data) >=
-                                                       as.Date(data.window[1], origin = "1970-01-01"))])
-          end.date.index <- index(model.data[which(index(model.data) <=
-                                                     as.Date(data.window[2], origin = "1970-01-01"))])
-          date.range <- as.Date(intersect(start.date.index,
-                                          end.date.index), origin = "1970-01-01")
-          model.data <- model.data[date.range]
-        }
-        model.data
-      })
-      # Dates with lapply and sapply
-      # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
-      model.data <- DescTools::DoCall(c, model.data)
-    }
-  }
-
   if (exclude.training == TRUE) {
+    model.data <- subsetIndex(x, data.window)
     model.data <- model.data[!index(model.data) %in% x@training.data]
   }
   return(model.data)
@@ -960,59 +902,10 @@ tryCatchLog::tryCatchLog({
 buildModel <- function (x, method, training.per, ...) {
 tryCatchLog::tryCatchLog({
 
-  as.POSIXorDate <- function(x) {
-    class.of.index <- class(index(model.data))
-    if ("POSIXt" %in% class.of.index) {
-      if ("POSIXlt" %in% class.of.index) {
-        x <- as.POSIXlt(x)
-      }
-      else {
-        x <- as.POSIXct(x)
-      }
-    }
-    else {
-      x <- as.Date(x)
-    }
-    x
-  }
   model.id = deparse(substitute(x))
   model.data <- x@model.data
 
-  # traditional method
-  if(is.vector(training.per)) {
-    if (length(training.per) != 2) {
-      stop("training.per must be of length 2")
-    }
-    start.date.index <- index(model.data[which(zoo::index(model.data) >=
-                                                 as.POSIXorDate(training.per[1]))])
-    end.date.index <- index(model.data[which(zoo::index(model.data) <=
-                                               as.POSIXorDate(training.per[2]))])
-
-    training.dates <- as.POSIXorDate(intersect(as.character(start.date.index),
-                                               as.character( end.date.index)))
-  }
-  # "new" additional flexibility
-  if(is.list(training.per)) {
-    training.dates <- lapply(training.per, function(training.per) {
-      if (length(training.per) != 2) {
-        stop("training.per vector must be of length 2")
-      }
-      start.date.index <- index(model.data[which(index(model.data) >=
-                                                 as.POSIXorDate(training.per[1]))])
-      end.date.index <- index(model.data[which(index(model.data) <=
-                                                 as.POSIXorDate(training.per[2]))])
-
-      training.dates <- as.POSIXorDate(intersect(as.character(start.date.index),
-                                                 as.character( end.date.index)))
-      training.dates
-    })
-    # Dates with lapply and sapply
-    # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
-    training.dates <- DescTools::DoCall(c, training.dates)
-  } else {
-    stop("training.per list (if exists) must be of length 1 or greater")
-  }
-
+  training.dates <- subsetIndex(model.data, training.per)
 
   method <- as.character(paste("buildModel.", method, sep = ""))
   training.data <- model.data[training.dates]

@@ -205,4 +205,8 @@ table(ResultsXts[,"y"] > 0.00)
 \cite{Ribeiro, R.P.: Utility-based Regression. PhD thesis, Dep. Computer Science, Faculty of Sciences - University of Porto (2011), Chapter 3 Utility-based Regression
 \url{https://www.dcc.fc.up.pt/~rpribeiro/publ/rpribeiroPhD11.pdf}
 }
+
+\cite{Paula Branco and Luis Torgo and Rita Ribeiro: A Survey of Predictive Modeling on Imbalanced Domains, ACM Comput. Surv., 2016 volume 49 number 2-31
+\URL{https://web.cs.dal.ca/~ltorgo/publication/2016_btr16/2016_BTR16.pdf}
+}
 }
