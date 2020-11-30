@@ -653,6 +653,7 @@ tryCatchLog::tryCatchLog({
 #' @param return.class class of returned object (from R CRAN package quantmod function getSymbols)
 #' @param VintageId download one specific vintage. User input is expected to be a vector of one. The vintage can be the form of a character or Date.  Default is NULL meaning try to download all vintages that have not been restricted elsewhere.  To otherwise restrict by range, see the parameter EarliestLastUpdDate.  To see the available vintage dates, use the function vinDates.  The parameter value can also be "Latest".
 #' @param nameVintagedId add the VintageId (or the most recent "Last Updated" date VintageId) to the name of what is returned
+#' @param version Integer. Default is 1L.  Version of data ever to be assigned to that point in time: version = 1L means "original (first(1st)) version"; version = 2L means "first(1st) revision"; version = 3L "second(2nd) revision", and so on.
 #' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (vintage date). Default is ObservationDate".  Note, in FRED and ALFRED an 'observation date'(row element date) is  not the 'date of measurement'. The 'observation date' (typically) is (observes) the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the vintage date of publication, is after the the period has completed, that is after  ObservationDate + Frequency.  See DATE(observation date a.k.a row element date), Frequency, Date Range, and 'Last Updated' in  in \url{https://fred.stlouisfed.org/data/RECPROUSM156N.txt}
 #' @param EarliestLastUpdDate character or Date.  Earliest date that is before or 'at' the vintage 'Last Updated' date in the past that a user may wish to query upon. Default is NULL (no restriction).  This is useful in the situation when the user already owns prior data, and just wants just some recent data.  Internally, this just subtracts off some 'Last Updated' dates from the results of calling the function vinDates (xor vintages that have been entered by the user throught the paramter VintageId).  Note, if this paramter EarliestLastUpdDate, is used, the tail the returned data (older data) is not expected to be correct.  The reason is that, not all vintages can bee seen, so the clause is no longer true: "the first available datam per specific date of all vintages".
 #' @param LookBack how deep in periods to look back for the latest observation in all of the non-oldest vintages.  Meant to use with datasets with a wide range of time between the Measurement interval and the Validity interval.  From the 'Last Updated' date try to peek back in time to the 1st vintage with a published tail 'Date Range' date that is within variable 'LookBack' periods. If the periodicy is "day" and, just after a three(3) day holiday weekend, to reach back from a Tuesday to a Friday, parameter LookBack is increased to a minimum value of 4.  Default is 3. Increase this value if much time exists between the tail date of 'Date Range' and the 'Last Updated' date: meaning zero(0) observations exist in the LookBack period.  The R CRAN package xts function periodicity determines the period of time.  This function is meant to minimize server-side CPU and disk I/O.  . Value can be "Beginning". "Beginning" means lookback to the start.
@@ -815,6 +816,21 @@ tryCatchLog::tryCatchLog({
 #' # better (just recent data)
 #' getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 #'
+# first(1st) revision (and its last updated date (publication date))
+getSymbols("GDP", src = "ALFRED", LookBack = 5, DataSheet = T, version = 2, returnIndex = "LastUpdatedDate")
+head(GDP.vin,7)
+# This is correct. Four(4) first revisions (version = 2)
+# (but for four different observation dates (not shown))
+# were published on 1991-12-20.
+#' GDP.vin
+#' 1991-12-20  5570.5 # correct
+#' 1991-12-20  5557.5 # correct
+#' 1991-12-20  5589.0 # correct
+#' 1991-12-20  5652.6 # correct
+#' 1991-12-20  5709.2
+#' 1992-02-28  5746.7
+#' 1992-05-29  5817.5
+#'
 #' # get multiple Symbols in one user execution
 #' # using R CRAN package quantmod function getSymbols
 #' getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01",
@@ -858,6 +874,7 @@ getSymbols.ALFRED <- function(Symbols,
                               returnIndex = "ObservationDate",
                               VintageId = NULL,
                               nameVintagedId = F,
+                              version = 1L,
                               EarliestLastUpdDate = NULL,
                               LookBack = 3,
                               VintagesPerQuery = 12,
@@ -905,6 +922,16 @@ getSymbols.ALFRED <- function(Symbols,
     stop("nameVintagedId must be of class \"logical\"")
   } else if(!length(nameVintagedId)) {
     stop("nameVintagedId can not be NULL")
+  }
+
+  if(length(version) && !class(version) %in% c("numeric", "integer")) {
+    stop("version must be of class \"numeric\" or \"integer\"")
+  } else if(!length(version)) {
+    stop("version can not be NULL")
+  } else if(length(version) && class(version) %in% c("numeric")) {
+    if(version < 1) {
+      stop("version must be of value 1 or greather")
+    }
   }
 
   if(length(EarliestLastUpdDate) && !class(EarliestLastUpdDate) %in% c("Date", "character")) {
@@ -963,6 +990,7 @@ getSymbols.ALFRED <- function(Symbols,
   default.returnIndex <- returnIndex
   default.VintageId <- VintageId
   default.nameVintagedId <- nameVintagedId
+  default.version = version
   default.EarliestLastUpdDate <- EarliestLastUpdDate
   default.LookBack <- LookBack
   default.VintagesPerQuery <- VintagesPerQuery
@@ -1011,6 +1039,12 @@ getSymbols.ALFRED <- function(Symbols,
       nameVintagedId <- te
     } else {
       nameVintagedId <- default.nameVintagedId
+    }
+    te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$version
+    if(!is.null(te)) {
+      version <- te
+    } else {
+      version <- default.version
     }
     te <- quantmod::getSymbolLookup()[[Symbols[[i]]]]$EarliestLastUpdDate
     if(!is.null(te)) {
@@ -1074,7 +1108,7 @@ getSymbols.ALFRED <- function(Symbols,
         AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(EarliestLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
       }
       # used when nameVintagedId == T
-      MostRecentLastUpdatedDate <- utils::tail(AllLastUpdatedDates,1)
+      MostRecentLastUpdatedDate <- xts::last(AllLastUpdatedDates, n = 1)
 
       # update (1 of 2 places)
       if(!nameVintagedId) {
@@ -1382,10 +1416,11 @@ getSymbols.ALFRED <- function(Symbols,
         matrix(
           apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) {
             # xts::last(stats::na.omit(x))),
-            xts::last(zoo::na.trim(x, sides = "right"))
+            # xts::last(zoo::na.trim(x, sides = "right"))
+            first(last(zoo::na.trim(x, sides = "right"), n = version), n = 1)
           }),
           dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
-        )
+        ) # actual working default: ncol = 1L
       # View(NewCoreData)
       # note list colnames is sometimes just for display here (just below).
       #      Colnames MAY SOMETIMES later discarded by "index(fr) <-"
@@ -1410,11 +1445,14 @@ getSymbols.ALFRED <- function(Symbols,
         NewIndexMatrix <-
           matrix(
             apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) {
-              rownames(FrMatrixTransposedUpsideDown)[length(zoo::na.trim(x, sides = "right"))]
+              # x is now a horizontal vector: is.null(dim(x)) == TRUE
+              Names(first(last(zoo::na.trim(x, sides = "right"), n = version), n = 1))
             }),
             dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
           )
-        NewIndex       <- zoo::as.Date(sapply(strsplit(as.vector(zoo::coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+        # NewIndex <- zoo::as.Date(sapply(strsplit(as.vector(zoo::coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+        # already is a vector
+        NewIndex <- zoo::as.Date(sapply(strsplit(NewIndexMatrix, "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
       }
 
       # not the same size ( so can not do "coredata(fr) <- NewCoreData")

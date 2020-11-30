@@ -47,6 +47,7 @@ getSymbols.ALFRED(
   returnIndex = "ObservationDate",
   VintageId = NULL,
   nameVintagedId = F,
+  version = 1L,
   EarliestLastUpdDate = NULL,
   LookBack = 3,
   VintagesPerQuery = 12,
@@ -85,6 +86,8 @@ getSymbols.ALFRED(
 \item{MaxParallel}{if allowParallel is TRUE, then set the maximum number of parallel processes. Default is NULL (no limit).  If this parameter is NULL, then the approximate maximum number of parallel processes is 'unique(ceiling(seq_along(vinDates(SYMBOL)/VintagesPerQuery)))' where the vector from vinDates(SYMBOL) may be reduced by limiting data using EarliestLastUpdDate. Good choices of this parameter may depend on, the amount of the client host hardware CPU and memory.}
 
 \item{...}{additional parameters}
+
+\item{version}{Integer. Default is 1L.  Version of data ever to be assigned to that point in time: version = 1L means "original (first(1st)) version"; version = 2L means "first(1st) revision"; version = 3L "second(2nd) revision", and so on.}
 }
 \value{
 as R CRAN package quantmod function getSymbols. See the parameter returnIndex for a user-choice the xts objects returned index
