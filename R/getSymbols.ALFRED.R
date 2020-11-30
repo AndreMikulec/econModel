@@ -19,10 +19,13 @@ tryCatchLog::tryCatchLog({
   # function (x, n = 1, keep = FALSE, ...)
   Dots <- list(...)
   if(
-    # call first(x, 1) # dangerous assumption # first(x, n = 1)
+    # default (probaly ok/safe to call!?!)
+    # relativeRows(x, n = 1)
+    #
+    # call first(x, 1) # dangerous assumption # first(x, n = 2) (not default)
     (length(Dots) && (!"n" %in% Names(Dots)) && NROW(x) < Dots[[1]])
     ||
-    # call first(x, n = 1L) # correct way to call
+    # call first(x, n = 2L) # correct way to call (not the default)
     ("n" %in% Names(Dots)) && (NROW(x) < Dots[["n"]])
   ){
     return(x[0])
@@ -1108,7 +1111,7 @@ getSymbols.ALFRED <- function(Symbols,
         AllLastUpdatedDates <- zoo::as.Date(AllLastUpdatedDates)[zoo::as.Date(EarliestLastUpdDate) <= zoo::as.Date(AllLastUpdatedDates)]
       }
       # used when nameVintagedId == T
-      MostRecentLastUpdatedDate <- xts::last(AllLastUpdatedDates, n = 1)
+      MostRecentLastUpdatedDate <- xts::last(AllLastUpdatedDates)
 
       # update (1 of 2 places)
       if(!nameVintagedId) {
