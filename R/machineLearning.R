@@ -9,8 +9,8 @@
 #' @param x	zoo or xts object. Required.
 #' @param Restriction	R list of time range vectors.  Each vector has two elements of either zoo or xts index elements or index numbers. The left element is the earlier time.  The right vector is the later time.
 #' @return index elements
-#' @exportFrom tryCatchLog tryCatchLog
-#' @exportFrom DescTools DoCall
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
 #' @export
 subsetIndex <- function(x, Restriction){
   tryCatchLog::tryCatchLog({
@@ -560,7 +560,7 @@ tryCatchLog::tryCatchLog({
 #' @return An object of class zoo containing all transformations to data specified in specifyModel.
 #' @author Andre Mikulec (re-implementation)
 #' @author Jeffrey A. Ryan
-#' @exportFrom tryCatchLog tryCatchLog
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
 modelData <- function (x, data.window = NULL, exclude.training = FALSE) {
 tryCatchLog::tryCatchLog({

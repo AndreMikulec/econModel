@@ -9,7 +9,7 @@ modelData(x, data.window = NULL, exclude.training = FALSE)
 \arguments{
 \item{x}{A quantmod object. Required.}
 
-\item{data.window}{Default is NULL.  A character vector of subset start and end dates to return. Alternately, this can be a list of character vectors.}
+\item{data.window}{Default is NULL.  A vector of subset start and end dates to return. Alternately, this can be a list of such vectors.}
 
 \item{exclude.training}{Logical. Default is FALSE. Remove the training period.}
 }

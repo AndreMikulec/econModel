@@ -1,5 +1,91 @@
 
 
+#' Return the Correct Elements of A Data Object
+#'
+#' @description
+#' A function to return the rows of a vector or two-dimensional data object.
+#' This is a wrapper over the R CRAN package econModel first and last.
+#' Different here is that if n elements can not be returned, then instead, zero elements are returned.
+#'
+#' @param x 1 or 2 dimensional data object.
+#' @param ... Dots passed.
+#' @return first elements or zero length element
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+relativeRows <- function(x, ...) {
+tryCatchLog::tryCatchLog({
+
+  # dangerous assumption
+  # function (x, n = 1, keep = FALSE, ...)
+  Dots <- list(...)
+  if(
+    # call first(x, 1) # dangerous assumption # first(x, n = 1)
+    (length(Dots) && (!"n" %in% Names(Dots)) && NROW(x) < Dots[[1]])
+    ||
+    # call first(x, n = 1L) # correct way to call
+    ("n" %in% Names(Dots)) && (NROW(x) < Dots[["n"]])
+  ){
+    return(x[0])
+  } else {
+    return(x)
+  }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Return First n Elements of A Data Object
+#'
+#' @description
+#' A generic function to return the first or first elements or rows of a vector or two-dimensional data object.
+#' This is a wrapper over the R CRAN package xts S3 function first.
+#' Different here is that if n elements can not be returned, then instead, zero elements are returned.
+#'
+#' @param x 1 or 2 dimensional data object.
+#' @param ... Dots passed.
+#' @return first elements or zero length element
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom xts first
+#' @export
+first <- function(x, ...) {
+tryCatchLog::tryCatchLog({
+
+  # dangerous assumption
+  # function (x, n = 1, keep = FALSE, ...)
+  x <- xts::first(x, ...)
+
+  relativeRows(x, ...)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Return Last n Elements of A Data Object
+#'
+#' @description
+#' A generic function to return the last or last elements or rows of a vector or two-dimensional data object.
+#' This is a wrapper over the R CRAN package xts S3 function last.
+#' Different here is that if n elements can not be returned, then instead, zero elements are returned.
+#'
+#' @param x 1 or 2 dimensional data object.
+#' @param ... Dots passed.
+#' @return last elements or zero length element
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom xts last
+#' @export
+last <- function(x, ...) {
+tryCatchLog::tryCatchLog({
+
+  # dangerous assumption
+  # function (x, n = 1, keep = FALSE, ...)
+  x <- xts::last(x, ...)
+
+  relativeRows(x, ...)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
 #' Scrape the Internet
 #'
 #' Returned data is either a page or a collection of vector lines
@@ -1294,8 +1380,10 @@ getSymbols.ALFRED <- function(Symbols,
       #   and format that data as input into package xts function as.xts
       NewCoreData <-
         matrix(
-          apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x)
-            xts::last(stats::na.omit(x))),
+          apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) {
+            # xts::last(stats::na.omit(x))),
+            xts::last(zoo::na.trim(x, sides = "right"))
+          }),
           dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
         )
       # View(NewCoreData)
