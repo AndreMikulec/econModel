@@ -29,33 +29,20 @@
 #' getOption("econModel.name")
 #' @importFrom futile.logger flog.appender appender.file flog.threshold TRACE
 .onLoad <- function(libname, pkgname) {
+
   # NOV 2020
+  # .onLoad
   # https://statacumen.com/teach/ShortCourses/R_Packages/R_Package_Development_20180817.html
-  op <- options()
-  op.econModel <- list(
-    # NOTE: In R Studio, need to "restart R" to see changes
-    #   sometimes useful with post-mortem debugging .rda file creation . . .
-    #   options(tryCatchLog.write.error.dump.file = TRUE)
-    econModel.tryCatchLog.write.error.dump.folder = paste0(normalizePath(tempdir(), winslash = "/"), "/", "econModel.tryCatchLog.write.error.dump"),
-    # in Windows, see this folder
-    # writeLines(normalizePath(getOption("econModel.tryCatchLog.write.error.dump.folder"), winslash = "\\"))
-    #
-    # currently NOT USED
-    econModel.tryCatchLog.write.error.dump.file = TRUE
-    # to use SPECIFICALLY
-    # tryCatchLog::tryCatchLog({ CODE }, write.error.dump.file = getOption("econModel.tryCatchLog.write.error.dump.file"))}
-    #
-    # to use EVERYWHERE (including outside of this package)
-    #   package tryCatchLog functions are used . . .
-    # options(tryCatchLog.write.error.dump.file = TRUE)
-    #
-    # NOTE a function argument default
-    # tryCatchLog::tryCatchLog( . . . , write.error.dump.file = getOption("tryCatchLog.write.error.dump.file", FALSE))
-  )
-  toset <- !(names(op.econModel) %in% names(op))
 
-  if (any(toset)) options(op.econModel[toset])
-
+  # NOTE: In R Studio, need to "restart R" to see changes
+  #
+  ops <- options()
+  if(!"econModel.tryCatchLog.write.error.dump.folder" %in% Names(ops)) {
+    options(append(ops, list(econModel.tryCatchLog.write.error.dump.folder = paste0(normalizePath(tempdir(), winslash = "/"), "/", "econModel.tryCatchLog.write.error.dump"))))
+  }
+  # # Sometimes useful with post-mortem debugging .rda file creation.
+  # # .rda file creation requires:
+  # options(tryCatchLog.write.error.dump.file = TRUE)
   if(!dir.exists(getOption("econModel.tryCatchLog.write.error.dump.folder"))) {
     dir.create(getOption("econModel.tryCatchLog.write.error.dump.folder"))
   }

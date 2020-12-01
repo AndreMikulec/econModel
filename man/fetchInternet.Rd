@@ -2,7 +2,7 @@
 % Please edit documentation in R/getSymbols.ALFRED.R
 \name{fetchInternet}
 \alias{fetchInternet}
-\title{Scrape the Internet}
+\title{Scrape or Download a File from the Internet}
 \usage{
 fetchInternet(
   x,
@@ -11,13 +11,16 @@ fetchInternet(
   encode = T,
   Message = paste0("function ", "fetchInternet"),
   conOut = F,
+  DestFile,
+  Quiet = T,
+  Mode = "wb",
   ...
 )
 }
 \arguments{
 \item{x}{URL}
 
-\item{Structure}{String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.}
+\item{Structure}{String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.  Another is "BinFile" to download a file; parameter "DestFile" is required.}
 
 \item{Collapse}{String. Default is the newline escape character. If Structure == "Page" then separate the lines by the newline escape character. Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.}
 
@@ -27,13 +30,19 @@ fetchInternet(
 
 \item{conOut}{Logical.  Default is FALSE. If TRUE, instead return immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.}
 
+\item{DestFile}{String. Default none. Required only when using "Structure = "BinFile".  Ignored otherwise. Path and File destination.}
+
+\item{Quiet}{Logical.  Default is TRUE.  Only used when using "Structure = "BinFile".}
+
+\item{Mode}{String. Default is "wb". Only used when using "Structure = "BinFile".}
+
 \item{...}{Dots. Passed to URLencode}
 }
 \value{
 just the connecion object(conOut = T) or the one element page(Page) or many vectors of lines(Lines)
 }
 \description{
-Returned data is either a page or a collection of vector lines
+Returned data is either a page, collection of vector lines, a connection, or a file.
 }
 \examples{
 \dontrun{
@@ -51,5 +60,11 @@ Last Updated:        2020-11-02 7:01 AM CST
 
 fetchInternet("https://fred.stlouisfed.org/data/RECPROUSM156N.txt", Structure = "Lines")
 
+# tilde expansion (writes NOT HERE but to the users HOME directory)
+DirFilePath <- fetchInternet("http://www.econ.yale.edu/~shiller/data/ie_data.xls",
+  Structure = "BinFile", DestFile = "~/HERE.xls")
+
+str(DirFilePath)
+chr "C:\\\\APPLICATIONS\\\\R-4.0._\\\\R_USER_4.0\\\\HERE.xls"
 }
 }

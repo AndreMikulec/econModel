@@ -1,5 +1,204 @@
 
 
+
+
+
+#' S&P 500 Stock Market Data from Yale University
+#'
+#' @description
+#' Robert Shillers S&P 500 Stock Market Data from his Excel spreadsheet as a R CRAN package quantmod function getSymbols source (src).
+#'
+#' @param Symbols  A character vector specifying the names of each symbol to be loaded.
+#' Possible Symbols are the following:
+#' "YaleUStockMarketData" (means get all of the columns) xor
+#' one specific column name. e.g. "CAPE"
+#' @param env where to create objects. (.GlobalEnv)
+#' @param return.class desired class of returned object.
+#' Can be xts, zoo, data.frame, or xts (default)
+#' @param returnIndex one of "ObservationDate" (row element date) or "LastUpdatedDate" (dates of estimations of in cases such that estimations are done?). Default is ObservationDate".  Note, an 'observation date'(row element date) is  not the 'date of estimation'. The 'observation date' (typically) observes the beginning of the 'date range' (its period: ObservationDate + Frequency).  The LastUpdatedDate date, that is, the date of estimation, is after the the period has completed, that is after  ObservationDate + Frequency.
+#' @param ... Dots passed.
+#' @return A call to getSymbols.YaleU will load into the specified
+#' environment one object for each \code{Symbol} specified,
+#' with class defined by \code{return.class}.
+#' @author Andre Mikulec (adapted original code to work with Yale University stock market data)
+#' @references
+#' \cite{Online Data of Robert Shiller
+#' \url{http://www.econ.yale.edu/~shiller/data.htm}}
+#' @references
+#' \cite{Home Page of Robert J. Shiller - Yale University
+#' \url{http://www.econ.yale.edu/~shiller/}}
+#' @examples
+#' \dontrun{
+#' # common usage
+#' getSymbols(c("CAPE", "Dividends", "Earnings"), src = "YaleU")
+#'
+#' # all columns in one xts object
+#' getSymbols("YaleUstockMarketData", src = "YaleU")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom quantmod importDefaults
+#' @importFrom readxl read_xls
+#' @importFrom DescTools AddMonths
+#' @importFrom Hmisc yearDays
+#' @importFrom zoo as.Date na.trim
+#' @importFrom xts xts xtsAttributes `xtsAttributes<-`
+#' @export
+getSymbols.YaleU <- function(Symbols, env, return.class = "xts",
+                             returnIndex = "ObservationDate",
+                             ...) {
+tryCatchLog::tryCatchLog({
+
+  # if not done elsewhere
+  #correct for TZ
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="UTC") {
+    Sys.setenv(TZ="UTC")
+  }
+
+  # determine temp folder
+  ops <- options()
+  if(!"econModel.getSymbols.YaleU.folder" %in% Names(ops)) {
+    options(append(ops, list(econModel.getSymbols.YaleU.folder = paste0(normalizePath(tempdir(), winslash = "/"), "/", "econModel.getSymbols.YaleU.folder"))))
+  }
+
+  # verify/create temp folder
+  if(!dir.exists(getOption("econModel.getSymbols.YaleU.folder"))) {
+    dir.create(getOption("econModel.getSymbols.YaleU.folder"))
+  }
+
+  quantmod::importDefaults("getSymbols.YaleU")
+
+  this.env <- environment()
+  for (var in names(list(...))) {
+    assign(var, list(...)[[var]], this.env)
+  }
+  if (!hasArg("verbose"))
+    verbose <- FALSE
+  if (!hasArg("auto.assign"))
+    auto.assign <- TRUE
+
+  # begin xls area
+  YALEU.URL <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
+  DestFile  <- paste0(normalizePath(getOption("econModel.getSymbols.YaleU.folder"), winslash = "/"), "/", "ie_data.xls")
+  if(!file.exists(DestFile)) {
+    DirFilePath <- fetchInternet(YALEU.URL, Structure = "BinFile", DestFile = DestFile)
+  }
+
+  if (verbose) {
+    cat("Reading disk file ", DestFile, ".....\n\n")
+  }
+
+  # Last verified: NOV 2020
+  # He sometimes changes his columns (and this breaks)
+  ColNames <- read.table(text="
+  Date
+  SP500Price
+  Dividends
+  Earnings
+  ConsPriceInd
+  DateFract
+  LongIntRate
+  RealPrice
+  RealDividend
+  RealTotRetPrice
+  RealEarning
+  RealTRScaledEarning
+  CAPE
+  Empty1
+  TRCAPE
+  Empty2
+  ExcessCAPEYld
+  MoGrossBndRets
+  RealTotBndRets
+  AnnNext10YrStockRealRet
+  AnnNext10YrBondsRealRet
+  AnnRealNext10YrExcessRets
+  ", stringsAsFactors = FALSE)
+  ColNames <- unlist(ColNames)
+
+  # Reports somewhere in the time range of the middle (15th,16th, or 17th)
+  # of the current month (SEE below)
+  MonBeginDates <- seq.Date(from = zoo::as.Date("1871-01-01"), to = Sys.Date(), by = "1 month")
+  # Overshot by one(1): Includes next months first day (that has not happened yet)
+
+  # data.frame
+  fr <- suppressWarnings(readxl::read_xls(path = DestFile, sheet = "Data",
+                                          col_names = ColNames,
+                                          col_types = rep("numeric", length(ColNames)), skip = 8L,
+                                          n_max = length(MonBeginDates)))
+
+  fr <- fr[, !colnames(fr) %in% c("Empty1", "Empty2")]
+
+  # optimistic: but the last record
+  # (current month 'not yet reported') may be all NAs
+  fr <- zoo::na.trim( fr, sides = "right", is.na = "all")
+
+  # FRED historical ... dates are the "first of the month"
+  # that datum means "about that ENTIRE PREVIOUS MONTH"
+  # KEEP
+  Dates <- zoo::as.Date(paste0(as.character(as.integer(round(fr[["Date"]], 2) * 100)), "01"), format = "%Y%m%d")
+  Dates <- DescTools::AddMonths(Dates, - 1L)
+
+  # Date Fraction of Yale (DateFY)
+  DatesFYYear          <- trunc(fr[["DateFract"]],0)
+  DatesFYYearFraction  <- fr[["DateFract"]] - DatesFYYear
+  #
+  DatesFYYearFirstDate <- zoo::as.Date(paste0(DatesFYYear, "-01-01"))
+  IntegerDateFYYearFirstDate <- as.integer(DatesFYYearFirstDate)
+  #
+  DatesFYNumbDaysInYear <- Hmisc::yearDays(DatesFYYearFirstDate)
+  #
+  # Stored as the number of days since the UNIX Epoch(UTC time)
+  DatesFY <- IntegerDateFYYearFirstDate + DatesFYNumbDaysInYear * DatesFYYearFraction
+  # Keep
+  DatesFY <- zoo::as.Date(DatesFY)
+
+  if(returnIndex == "ObservationDate") {
+    Index <- Dates
+    OtherDateIndexAttr <- list(LastUpdatedDate = DatesFY)
+  }
+  if(returnIndex == "LastUpdatedDate") {
+    Index <- DatesFY
+    OtherDateIndexAttr <- list(ObservationDate = Dates)
+  }
+
+  fr <- fr[, !colnames(fr) %in% c("Date", "DateFract")]
+
+  if (verbose)
+    cat("Done.\n\n")
+
+  fr <- xts::xts(as.matrix(fr), Index,
+                 src = "YaleU", updated = Sys.time())
+
+  xts::xtsAttributes(fr) <- c(list(), xts::xtsAttributes(fr), OtherDateIndexAttr)
+
+  fri <- fr # pass-throught on "YaleUstockMarketData"
+
+  # decompose [if any] into [many] Symbol(s), then return
+  for (i in seq_along(Symbols)) {
+
+    if (verbose) {
+      cat("Selecting ", Symbols[[i]], ".....\n\n")
+    }
+    # User only wants an individual column
+    if(Symbols[[i]] != "YaleUstockMarketData") {
+      fri <- fr[, Symbols[[i]]]
+    }
+    fri <- quantmod___convert.time.series(fr = fri, return.class = return.class)
+    if (auto.assign)
+      assign(Symbols[[i]], fri, env)
+  }
+
+  Sys.setenv(TZ=oldtz)
+
+  if (auto.assign)
+    return(Symbols)
+  return(fri)
+
+})}
+
+
+
 #' Return the Correct Elements of A Data Object
 #'
 #' @description
@@ -89,16 +288,19 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Scrape the Internet
+#' Scrape or Download a File from the Internet
 #'
-#' Returned data is either a page or a collection of vector lines
+#' Returned data is either a page, collection of vector lines, a connection, or a file.
 #'
 #' @param x URL
-#' @param Structure String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.
+#' @param Structure String. Default is "Page". Return the data as a page.  Other is "Lines" to return the result as a group of lines.  Another is "BinFile" to download a file; parameter "DestFile" is required.
 #' @param Collapse String. Default is the newline escape character. If Structure == "Page" then separate the lines by the newline escape character. Alternately, separate the lines by a single character Collapse.  Another choice may be " ". If Structure != "Page", then this parameter is ignored.
 #' @param encode Logical. Default is TRUE. Perform URLencoding upon URL.
 #' @param Message String. Default is paste0("function ", "fetchInternet").  Message is appended to the user agent.
 #' @param conOut Logical.  Default is FALSE. If TRUE, instead return immediately the connection object.  This ignores (and does not do) all Structure and Collapse processing.
+#' @param DestFile String. Default none. Required only when using "Structure = "BinFile".  Ignored otherwise. Path and File destination.
+#' @param Quiet Logical.  Default is TRUE.  Only used when using "Structure = "BinFile".
+#' @param Mode String. Default is "wb". Only used when using "Structure = "BinFile".
 #' @param ... Dots. Passed to URLencode
 #' @return just the connecion object(conOut = T) or the one element page(Page) or many vectors of lines(Lines)
 #' @examples
@@ -117,15 +319,27 @@ tryCatchLog::tryCatchLog({
 #'
 #' fetchInternet("https://fred.stlouisfed.org/data/RECPROUSM156N.txt", Structure = "Lines")
 #'
+#' # tilde expansion (writes NOT HERE but to the users HOME directory)
+#' DirFilePath <- fetchInternet("http://www.econ.yale.edu/~shiller/data/ie_data.xls",
+#'   Structure = "BinFile", DestFile = "~/HERE.xls")
+#'
+#' str(DirFilePath)
+#' chr "C:\\APPLICATIONS\\R-4.0._\\R_USER_4.0\\HERE.xls"
 #' }
 #' @export
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom utils URLencode
-#' @importFrom curl curl_version new_handle handle_setopt curl handle_reset
+#' @importFrom curl curl_version new_handle handle_setopt curl handle_reset curl_download
 fetchInternet <- function(x, Structure = "Page", Collapse = "\n",
                           encode = T, Message = paste0("function ", "fetchInternet"),
-                          conOut = F, ...) {
+                          conOut = F, DestFile, Quiet = T, Mode = "wb", ...) {
 tryCatchLog::tryCatchLog({
+
+ if(Structure == "BinFile") {
+   if(missing(DestFile)) {
+     stop("Requesting Structure \"BinFile\" but needs missing \"DestFile\".")
+   }
+ }
 
   if(encode) {
     URL <- utils::URLencode(x, ...)
@@ -140,20 +354,42 @@ tryCatchLog::tryCatchLog({
   # https://github.com/jeroen/curl/issues/146
   # curl::handle_setopt(h, .list = list(proxy = "127.0.0.1", proxyport = 8888, useragent = useragent))
   curl::handle_setopt(h, .list = list(useragent = useragent))
-  con <- curl::curl(URL, handle = h)
+  if(Structure %in% c("Lines", "Page")) {
+    con <- curl::curl(URL, handle = h)
+  }
+
+  # download
+  if(Structure == "BinFile") {
+    # Value: Path of downloaded file (invisibly).
+    # Always (and when an error occure) returns: DirFilePath DestFile
+    # If fails to write to "desfile" (e.g. the destination path is "not possible")
+    #    then will error HERE.
+    DirFilePath <- curl::curl_download(URL, destfile = DestFile, quiet = Quiet, mode = Mode, handle = h)
+  }
   # docs say that it does not do much
   curl::handle_reset(h)
-  if(conOut) {
+
+  if(conOut && exists("con")) {
+    # calling program is now reponsible to do "close(con)"
     return(con)
   }
-  Lines <- readLines(con)
-  close(con)
+
+  # format output
+  if(Structure %in% c("Lines", "Page")) {
+    Lines <- readLines(con)
+  }
+  if(exists("con")) {
+    close(con)
+  }
 
   if(Structure == "Lines"){
     Result <- Lines
   }
   if(Structure == "Page") {
     Result <- paste0(Lines, collapse = Collapse)
+  }
+  if(Structure == "BinFile") {
+    Result <- DirFilePath
   }
   Result
 
@@ -819,12 +1055,12 @@ tryCatchLog::tryCatchLog({
 #' # better (just recent data)
 #' getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 #'
-# first(1st) revision (and its last updated date (publication date))
-getSymbols("GDP", src = "ALFRED", LookBack = 5, DataSheet = T, version = 2, returnIndex = "LastUpdatedDate")
-head(GDP.vin,7)
-# This is correct. Four(4) first revisions (version = 2)
-# (but for four different observation dates (not shown))
-# were published on 1991-12-20.
+#' # first(1st) revision (and its last updated date (publication date))
+#' getSymbols("GDP", src = "ALFRED", LookBack = 5, DataSheet = T, version = 2, returnIndex = "LastUpdatedDate")
+#' head(GDP.vin,7)
+#' This is correct. Four(4) first revisions (version = 2)
+#' (but for four different observation dates (not shown))
+#' were published on 1991-12-20.
 #' GDP.vin
 #' 1991-12-20  5570.5 # correct
 #' 1991-12-20  5557.5 # correct
@@ -897,6 +1133,7 @@ getSymbols.ALFRED <- function(Symbols,
   # assign("oldtz", oldtz, envir = environment())
 
   quantmod::importDefaults("getSymbols.ALFRED")
+
   this.env <- environment()
   for (var in names(list(...))) {
     assign(var, list(...)[[var]], this.env)
@@ -1436,33 +1673,42 @@ getSymbols.ALFRED <- function(Symbols,
       # 2020-01-01 21537.94
       # 2020-04-01 19408.76
 
-      # redefine (seems must be the same size)
-      # coredata(fr) <- NewCoreData
-      #
+
+      # default
+      ObservationDateNewIndex <- zoo::index(fr)[NewIndexControl]
+
+      # NewIndexMatrix: not used in default parameter returnCoreData = "ObservationDate"
+      NewIndexMatrix <-
+        matrix(
+          apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) {
+            # x is now a horizontal vector: is.null(dim(x)) == TRUE
+            Names(first(last(zoo::na.trim(x, sides = "right"), n = version), n = 1))
+          }),
+          dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
+        )
+      # NewIndex <- zoo::as.Date(sapply(strsplit(as.vector(zoo::coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+      # already is a vector
+      LastUpdatedDateNewIndex <- zoo::as.Date(sapply(strsplit(NewIndexMatrix, "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+
+      # default
       if(returnIndex == "ObservationDate") {
         # (almost) no change
-        NewIndex <- zoo::index(fr)[NewIndexControl]
+        NewIndex   <-  ObservationDateNewIndex
+        OtherIndex <-  list(LastUpdatedDate = LastUpdatedDateNewIndex)
       }
+
       if(returnIndex == "LastUpdatedDate") {
-        # NewIndexMatrix: not used in default parameter returnCoreData = "ObservationDate"
-        NewIndexMatrix <-
-          matrix(
-            apply(FrMatrixTransposedUpsideDown, MARGIN = 2, function(x) {
-              # x is now a horizontal vector: is.null(dim(x)) == TRUE
-              Names(first(last(zoo::na.trim(x, sides = "right"), n = version), n = 1))
-            }),
-            dimnames = list(colnames(FrMatrixTransposedUpsideDown), NULL)
-          )
-        # NewIndex <- zoo::as.Date(sapply(strsplit(as.vector(zoo::coredata(NewIndexMatrix)), "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
-        # already is a vector
-        NewIndex <- zoo::as.Date(sapply(strsplit(NewIndexMatrix, "_"), function(x) { x[2] } ), tryFormats = "%Y%m%d")
+        NewIndex  <- LastUpdatedDateNewIndex
+        OtherIndex <-  list(ObservationDate = ObservationDateNewIndex)
       }
 
       # not the same size ( so can not do "coredata(fr) <- NewCoreData")
       frNew <- xts::as.xts(NewCoreData)
       # index(frNew) <- index(fr)
       zoo::index(frNew) <- NewIndex
-      xts::xtsAttributes(frNew) <- xts::xtsAttributes(fr)
+      # xts::xtsAttributes(frNew) <- xts::xtsAttributes(fr)
+      xts::xtsAttributes(frNew) <- c(list(), xts::xtsAttributes(fr), OtherIndex)
+
       fr <- frNew
 
       # need to just keep the oldest vintage column (useless op if ran 'not the same size')

@@ -39,7 +39,6 @@ Imports:
     quantmod,
     TTR,
     formula.tools,
-    UBL,
     caret
 RoxygenNote: 7.1.1
 Suggests: 

@@ -122,7 +122,7 @@ subsetIndex <- function(x, Restriction){
 #' }
 #' @references
 #' \cite{Paula Branco and Luis Torgo and Rita Ribeiro: A Survey of Predictive Modeling on Imbalanced Domains, ACM Comput. Surv., 2016 volume 49 number 2-31
-#' \URL{https://web.cs.dal.ca/~ltorgo/publication/2016_btr16/2016_BTR16.pdf}
+#' \url{https://web.cs.dal.ca/~ltorgo/publication/2016_btr16/2016_BTR16.pdf}
 #' }
 #' @examples
 #' \dontrun{
@@ -229,7 +229,7 @@ subsetIndex <- function(x, Restriction){
 #' table(ResultsXts[,"y"] > 0.00)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom UBL GaussNoiseRegress ImpSampRegress RandOverRegress RandUnderRegress SmoteRegress UtilOptimRegress
+### #' @importFrom UBL GaussNoiseRegress ImpSampRegress RandOverRegress RandUnderRegress SmoteRegress UtilOptimRegress
 #' @importFrom DescTools DoCall
 #' @importFrom zoo index
 #' @importFrom xts xts as.xts  first last

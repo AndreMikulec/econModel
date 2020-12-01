@@ -265,6 +265,21 @@ getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = "2020-01-01")
 # better (just recent data)
 getSymbols("EFFR", src = "ALFRED", EarliestLastUpdDate = Sys.Date() - 35)
 
+# first(1st) revision (and its last updated date (publication date))
+getSymbols("GDP", src = "ALFRED", LookBack = 5, DataSheet = T, version = 2, returnIndex = "LastUpdatedDate")
+head(GDP.vin,7)
+This is correct. Four(4) first revisions (version = 2)
+(but for four different observation dates (not shown))
+were published on 1991-12-20.
+GDP.vin
+1991-12-20  5570.5 # correct
+1991-12-20  5557.5 # correct
+1991-12-20  5589.0 # correct
+1991-12-20  5652.6 # correct
+1991-12-20  5709.2
+1992-02-28  5746.7
+1992-05-29  5817.5
+
 # get multiple Symbols in one user execution
 # using R CRAN package quantmod function getSymbols
 getSymbols("RECPROUSM156N;GDP", src = "ALFRED", EarliestLastUpdDate = "2020-01-01",
