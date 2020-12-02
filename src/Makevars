@@ -1,0 +1,3 @@
+PKG_CFLAGS = $(SHLIB_OPENMP_CFLAGS) -march=corei7 -mavx -mavx2 -funroll-loops -ffast-math
+PKG_FFLAGS = $(SHLIB_OPENMP_FFLAGS) -march=corei7 -mavx -mavx2 -funroll-loops -ffast-math
+PKG_LIBS   = $(SHLIB_OPENMP_CFLAGS) -march=corei7 -mavx -mavx2 -funroll-loops -ffast-math

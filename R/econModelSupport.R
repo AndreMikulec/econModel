@@ -214,6 +214,35 @@ lsNamespaceInfo <- function(ns, ...) {
 #' [1] "GoThere"
 #'
 #' #
+#' # another something not-on-the-search() path
+#' #
+#' requireNamespace("RPostgreSQL")
+#'
+#' getNamespace("RPostgreSQL")
+#' <environment: namespace:RPostgreSQL>
+#'
+#' environmentIsLocked(getNamespace("RPostgreSQL"))
+#' [1] TRUE
+#'
+#' unlockEnvironment(getNamespace("RPostgreSQL"))
+#' Error in unlockEnvironment(getNamespace("RPostgreSQL")) :
+#'   could not find function "unlockEnvironment"
+#'
+#' unlockEnvironment(getNamespace("RPostgreSQL"))
+#' [1] TRUE
+#'
+#' forceAssignInNamespace("prnt", function(x) {print(x)}, namespace = "RPostgreSQL")
+#' RPostgreSQL::prnt("HelloEveryWhere")
+#' Error: 'prnt' is not an exported object from 'namespace:RPostgreSQL'
+#'
+#' RPostgreSQL:::prnt("HelloEveryWhere")
+#' [1] "HelloEveryWhere"
+#'
+#' assign("prnt","prnt", envir = AllInfoNS("RPostgreSQL")$exports)
+#' PostgreSQL::prnt("HelloEveryWhere")
+#' [1] "HelloEveryWhere"
+#'
+#' #
 #' # something on the search() path
 #' #
 #'
@@ -270,6 +299,8 @@ AllInfoNS <- function(ns) {
 #' }
 #' @examples
 #' \dontrun{
+#' # On search() path example
+#'
 #' library(RSQLite)
 #'
 #' unlockEnvironment(asNamespace("RSQLite"))
