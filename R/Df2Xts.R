@@ -1,37 +1,37 @@
 
 #' Convert a Dataframe to an xts object or Vice Versa
 #'
-#' Of castDf2Xts, it is a wrapper over the R CRAN package zoocat function cast2zoocat
+#' Of xcast, it is a wrapper over the R CRAN package zoocat function cast2zoocat
 #' Convert a Dataframe to an xts object.
 #'
-#' @param  x Of castDf2Xts, a dataframe. Of meltXts2Df, an xts object. Of indname and `IndName<-` an xts object. Default is NULL. Required.
+#' @param  x Of xcast, a dataframe. Of meltXts2Df, an xts object. Of indname and `IndName<-` an xts object. Default is NULL. Required.
 #' @param IndexVar String. Default is NULL. Required. The name of the column to be treated as the index of the xts object. Different from zoocat::cast2zoocat, this can be composed of two or three columns of the column names: c("year", "month") or c("year", "month", "day").
 #' @param ValueVar String. Default is NULL. Required. The name of the column which stored the values.
 #' @param AttrVar String.  Default is NULL. The name of the column which will be used as column attributes of the xts object. If NULL, all columns except ValueVar and IndexVar will be used.
 #' @param FunAggr Function. Default is NULL. Aggregation function needed if variables do not identify a single observation for each output cell. Defaults to length (with a message) if needed but not specified. See ? reshape2::dcast.
 #' @param DelUniqCAttr Logical. Default is TRUE. If TRUE, the column attributes with unique value will be deleted.
 #' @param RetIndexClass String. Default is "POSIXct".  Attempt to return the xts with the index of this class.
-#' @return Of castDf2Xts, an xts object.
+#' @return Of xcast, an xts object.
 #' @examples
 #' \dontrun{
 #' df <- data.frame(year = rep(1991 : 1995, each = 24), month = rep(1 : 12, 10),
 #'                  varname = rep(c('a', 'b'), each = 12), city = rep(1 : 3, each = 40),
 #'                  value = 1 : 120)
 #'
-#' castDf2Xts(df, IndexVar = "year", ValueVar = "value")
+#' xcast(df, IndexVar = "year", ValueVar = "value")
 #'
 #' # FunAggr = length
-#' castDf2Xts(df, IndexVar = "year", ValueVar = "value",
+#' xcast(df, IndexVar = "year", ValueVar = "value",
 #'   AttrVar = "varname")
 #'
-#' castDf2Xts(df, IndexVar = "year", ValueVar = "value",
+#' xcast(df, IndexVar = "year", ValueVar = "value",
 #'   AttrVar = "varname", FunAggr = sum)
 #'
-#' castDf2Xts(df, IndexVar = c("year","month"), ValueVar = "value")
+#' xcast(df, IndexVar = c("year","month"), ValueVar = "value")
 #'
-#' castDf2Xts(df, IndexVar = "year", ValueVar = "value", RetIndexClass = "Date")
+#' xcast(df, IndexVar = "year", ValueVar = "value", RetIndexClass = "Date")
 #'
-#' casted <- castDf2Xts(df, IndexVar = c("year", "month"), ValueVar = "value",
+#' casted <- xcast(df, IndexVar = c("year", "month"), ValueVar = "value",
 #'   RetIndexClass = "Date")
 #'
 #' meltXts2Df(casted)
@@ -43,7 +43,7 @@
 #' @importFrom xts xts `xtsAttributes<-`
 #' @importFrom zoocat zoocat
 #' @export
-castDf2Xts <- function(x, IndexVar = NULL, ValueVar = NULL, AttrVar = NULL, FunAggr = NULL, DelUniqCAttr = F, RetIndexClass = "POSIXct") {
+xcast <- function(x, IndexVar = NULL, ValueVar = NULL, AttrVar = NULL, FunAggr = NULL, DelUniqCAttr = F, RetIndexClass = "POSIXct") {
 tryCatchLog::tryCatchLog({
 
   oldtz <- Sys.getenv("TZ")
@@ -220,7 +220,7 @@ tryCatchLog::tryCatchLog({
 #' Of `indName<-`, is a wrapper over the R CRAN package zoocat function `indname<-`.
 #' Set the name of the index variable.
 #'
-#' @param  x Of castDf2Xts, a dataframe. Of meltXts2Df, an xts object. Of indname and `IndName<-` an xts object. Default is NULL. Required.
+#' @param  x Of xcast, a dataframe. Of melt.xts, an xts object. Of indname and `IndName<-` an xts object. Default is NULL. Required.
 #' @param value String. Default is NULL. Required. The new value.
 #' @return Of `indName<-`, silently set index variable name.
 #' @rdname Df2Xts
