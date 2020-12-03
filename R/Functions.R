@@ -1710,6 +1710,17 @@ tryCatchLog::tryCatchLog({
 #' 1970-01-03           1.5
 #' 1970-01-04           3.0
 #' 1970-01-05           0.0
+#'
+#' x <- xts::xts(c(NA,10,20,40,NA), zoo::as.Date(0:4))
+#'
+#' SMA(x, n = 2)
+#' V1nln.SMA.n.2
+#' 1970-01-01            NA
+#' 1970-01-02            NA
+#' 1970-01-03            15
+#' 1970-01-04            30
+#' 1970-01-05             0
+#'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo coredata na.trim
