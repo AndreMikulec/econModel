@@ -199,6 +199,256 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' American Association of Individual Investors (AAII) Weekly Sentiment Survey
+#'
+#' @description
+#' Data represents what direction members feel the
+#' stock market will be in next 6 months.
+#'
+#' The sentiment survey measures the percentage of individual investors who are
+#' bullish, bearish, and neutral on the stock market short term;
+#' individuals are polled from the AAII Web site on a weekly basis.
+#' Only one vote per member is accepted in each weekly voting period.
+#'
+#' The latest published data seems to be delivered every Friday.
+#'
+#' Internally, this reads a (downloaded) Microsoft Excel spreadsheet
+#' and collects just the one latest published item by scraping the
+#' one new (the latest) observation from the AAII web site.
+#'
+#' @param Symbols  A character vector specifying the names of each symbol to be loaded.
+#' Possible Symbols are the following:
+#' "AAIISentimentSurveyData" (means get all of the columns) xor
+#' one specific column name. e.g. "Bullish", "Neutral", or "Bearish", (or Others).
+#' @param env where to create objects. (.GlobalEnv)
+#' @param return.class desired class of returned object.
+#' Can be xts, zoo, data.frame, or xts (default)
+#' @param ... Dots passed.
+#' @return A call to getSymbols.AAIISentiment will load into the specified
+#' environment one object for each \code{Symbol} specified,
+#' with class defined by \code{return.class}.
+#' @author Andre Mikulec (adapted original code to work with AAII sentiment data)
+#' @author Jeffrey A. Ryan
+#' @references
+#' \cite{AAII Investor Sentiment Survey
+#' \url{https://www.aaii.com/sentimentsurvey}}
+#' @references
+#' \cite{Sentiment Survey Past Results
+#' \url{https://www.aaii.com/sentimentsurvey/sent_results}}
+#' @examples
+#' \dontrun{
+#' # common usage
+#'getSymbols("BullBearSpread", src = "AAIISentiment")
+#'
+#' # The dates are as of Thursday each week.
+#' getSymbols(c("Bullish", "Neutral", "Bearish"), src = "AAIISentiment")
+#'
+#' # all columns in one xts object
+#' getSymbols("AAIISentimentSurveyData", src = "AAIISentiment")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom quantmod importDefaults
+#' @importFrom readxl read_xls
+#' @importFrom htmltab htmltab
+#' @importFrom DescTools Weekday
+#' @importFrom zoo index as.Date na.trim
+#' @importFrom xts xts xtsAttributes `xtsAttributes<-`
+#' @export
+getSymbols.AAIISentiment <- function(Symbols, env, return.class = "xts",
+                                     ...) {
+tryCatchLog::tryCatchLog({
+
+  # if not done elsewhere
+  #correct for TZ
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="UTC") {
+    Sys.setenv(TZ="UTC")
+  }
+
+  # determine temp folder
+  ops <- options()
+  if(!"econModel.getSymbols.AAIISentiment.folder" %in% Names(ops)) {
+    options(append(ops, list(econModel.getSymbols.AAIISentiment.folder = paste0(normalizePath(tempdir(), winslash = "/"), "/", "econModel.getSymbols.AAIISentiment.folder"))))
+  }
+
+  # verify/create temp folder
+  if(!dir.exists(getOption("econModel.getSymbols.AAIISentiment.folder"))) {
+    dir.create(getOption("econModel.getSymbols.AAIISentiment.folder"))
+  }
+
+  quantmod::importDefaults("getSymbols.AAIISentiment")
+
+  this.env <- environment()
+  for (var in names(list(...))) {
+    assign(var, list(...)[[var]], this.env)
+  }
+  if (!hasArg("verbose"))
+    verbose <- FALSE
+  if (!hasArg("auto.assign"))
+    auto.assign <- TRUE
+
+  # begin xls area
+  AAIISENTIMENT.URL <- "https://www.aaii.com/files/surveys/sentiment.xls"
+  DestFile  <- paste0(normalizePath(getOption("econModel.getSymbols.AAIISentiment.folder"), winslash = "/"), "/", "sentiment.xls")
+  if(!file.exists(DestFile)) {
+    DirFilePath <- fetchInternet(AAIISENTIMENT.URL, Structure = "BinFile", DestFile = DestFile)
+  }
+
+  if (verbose) {
+    cat("Reading disk file ", DestFile, ".....\n\n")
+  }
+
+  #Changes of names of  columns (and this breaks)
+  ColNames <- read.table(text="
+Date
+Bullish
+Neutral
+Bearish
+Total
+Bullish8WeekMovAve
+BullBearSpread
+BullishAve
+BullishAvePlusStd
+BullishAveMinusStd
+SP500WeeklyHigh
+SP500WeeklyLow
+SP500WeeklyClose
+", stringsAsFactors = FALSE)
+  ColNames <- unlist(ColNames)
+
+  # Reports somewhere in the time range of the middle (15th,16th, or 17th)
+  # of the current month (SEE below)
+  # THIS VARIABLE (IS CURRENLTY) *ONLY* USED TO DO SIZING
+  BeginPeriodDates <- seq.Date(from = zoo::as.Date("1987-06-26"), to = Sys.Date(), by = "7 day")
+  BeginPeriodDates <- BeginPeriodDates - 6L
+  # Early survey weeks were missed
+  BeginPeriodDates <- BeginPeriodDates[c(-2,-3)]
+  # Begins Previous Saturday # Through Thursday(Observation: NOT USING)
+  # Delivered to users (And Ending) during Friday(Published)
+
+  # data.frame
+  fr <- suppressWarnings(readxl::read_xls(path = DestFile, sheet = "SENTIMENT",
+                                          col_names = ColNames,
+                                          col_types = c("date", rep("numeric", length(ColNames) - 1L)), skip = 5L,
+                                          n_max = length(BeginPeriodDates)))
+
+  # optimistic: but the last record
+  # (current month 'not yet reported') may be all NAs
+  fr <- zoo::na.trim( fr, sides = "right", is.na = "all")
+
+  # KEEP
+  Dates <- zoo::as.Date(fr[["Date"]])
+
+  Index <- Dates
+  OtherDateIndexAttr <- list()
+
+  fr <- fr[, !colnames(fr) %in% c("Date")]
+
+  if (verbose)
+    cat("Done.\n\n")
+
+  fr <- xts::xts(as.matrix(fr), Index,
+                 src = "AAIISentiment", updated = Sys.time())
+
+  xts::xtsAttributes(fr) <- c(list(), xts::xtsAttributes(fr), OtherDateIndexAttr)
+
+  fri <- fr
+  rs <- fri
+
+  # begin HTML scrape area
+  AAIISENTIMENT.URL2 <- "https://www.aaii.com/sentimentsurvey/sent_results"
+  DestFile  <- paste0(normalizePath(getOption("econModel.getSymbols.AAIISentiment.folder"), winslash = "/"), "/", "sent_results.html")
+  if(!file.exists(DestFile)) {
+    PageOut <- fetchInternet(AAIISENTIMENT.URL2, Structure = "Page", DestFile = DestFile)
+    cat(PageOut, file = DestFile)
+  }
+
+  rt <- suppressMessages(htmltab::htmltab(
+    doc = DestFile,
+    which = '//*[@id="page_content"]/table[1]',
+    rm_nodata_cols = F
+  ))
+
+  if (verbose) {
+    cat("Reading disk file ", DestFile, ".....\n\n")
+  }
+
+  # I JUST NEED THE TOP ROW ( THE REST I GET FROM EXCEL )
+  rt <- rt[1,,drop = FALSE]
+  rt[["Reported Date"]] <- gsub(":", "", rt[["Reported Date"]])
+  IndexRecent <- zoo::as.Date(rt[["Reported Date"]], format = "%B %d")
+  rt <- rt[,!colnames(rt) %in% "Reported Date", drop = FALSE]
+  DataColnames <- colnames(rt)
+  DataRecent <- as.numeric(gsub("%", "", unlist(rt)))/100.0
+  rt <- xts(matrix(DataRecent, ncol = length(DataColnames)), IndexRecent); colnames(rt) <- DataColnames
+
+  # end html scrape area
+
+  # prepare to splice
+
+  # rs coredata(c)
+  rsc <- colnames(rs)[!colnames(rs) %in% colnames(rt)]
+  rsc <- as.list(rsc)
+  Names(rsc) <- unlist(rsc)
+  NamesRSC <- Names(rsc)
+
+  te  <- unlist(lapply(rsc, function(x) NA_real_))
+  rsc <- matrix(te, ncol = length(NamesRSC), dimnames = list(list(),NamesRSC))
+
+  rtc <- cbind(zoo::coredata(rt), rsc)
+  rtc <- rtc[,cSort(colnames(rtc), InitOrder = colnames(rs)), drop = FALSE]
+
+  # Brute Force Method
+  # round forward to the next available Friday
+  # if Mon-Thu
+  if(DescTools::Weekday(zoo::index(rt)) != 5L && DescTools::Weekday(zoo::index(rt)) < 5L) {
+    zoo::index(rt) <- zoo::index(rt) + ( 5 - DescTools::Weekday(zoo::index(rt)) )
+  } else if (DescTools::Weekday(zoo::index(rt)) != 5L && DescTools::Weekday(zoo::index(rt)) == 6L) {
+    # if Sat
+    zoo::index(rt) <- zoo::index(rt) + 6L
+  } else  if (DescTools::Weekday(zoo::index(rt)) != 5L && DescTools::Weekday(zoo::index(rt)) == 7L){
+    # if Sun
+    zoo::index(rt) <- zoo::index(rt) + 5L
+  }
+
+  rt  <- xts::xts(rtc, zoo::index(rt))
+
+  # splice
+
+  rst <- rbind(rs,rt)
+  # remove the first(earliest) [if any] duplicate index
+  rst <- rst[!duplicated(zoo::index(rst), fromLast = TRUE),]
+  fr <- rst
+
+  fri <- fr # pass-through on "all columns in one xts object"
+
+  # decompose [if any] into [many] Symbol(s), then return
+  for (i in seq_along(Symbols)) {
+
+    if (verbose) {
+      cat("Selecting ", Symbols[[i]], ".....\n\n")
+    }
+    # User only wants an individual column
+    if(Symbols[[i]] != "AAIISentimentSurveyData") {
+      fri <- fr[, Symbols[[i]]]
+    }
+    fri <- quantmod___convert.time.series(fr = fri, return.class = return.class)
+    if (auto.assign)
+      assign(Symbols[[i]], fri, env)
+  }
+
+  Sys.setenv(TZ=oldtz)
+
+  if (auto.assign)
+    return(Symbols)
+  return(fri)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
+
 #' Return the Correct Elements of A Data Object
 #'
 #' @description
