@@ -21,10 +21,12 @@
 #' Contributions are welcome.
 #' }
 #' @rdname cSort
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
 cSort <- function(x, ...) {
   UseMethod("cSort")
 }
+
 
 
 #' Custom Sorting a Vector
@@ -34,10 +36,11 @@ cSort <- function(x, ...) {
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.default <- function(x, ...) {
-tryCatchLog::tryCatchLog({
+  tryCatchLog::tryCatchLog({
   stop("No cSort S3 method found")
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -105,6 +108,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.character <- function(x, InitOrder,
                             sortVectExc = T, sortVectExcCI = F,
                             chopVectExc = F, ...) {
@@ -145,7 +149,7 @@ tryCatchLog::tryCatchLog({
   if(chopVectExc)
     Vector <- Vector[!Vector %in% VectorExcessCaseDetermined]
   Vector
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+} , write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -175,6 +179,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.numeric <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.character(x)
@@ -200,6 +205,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname cSort
 #' @importFrom chron as.times
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.logical <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.integer(x)
@@ -216,6 +222,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.POSIXct <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
@@ -232,6 +239,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.POSIXlt <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
@@ -264,6 +272,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname cSort
 #' @importFrom zoo as.Date
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 cSort.Date <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
@@ -282,6 +291,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo yearmon
+#' @export
 cSort.yearmon <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
@@ -299,7 +309,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom zoo yearqtr
+#' @export
 cSort.yearqtr <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.numeric(x)
@@ -318,6 +328,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom chron as.chron
+#' @export
 cSort.chron <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.POSIXct(x)
@@ -335,6 +346,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom chron as.times
+#' @export
 cSort.times <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   x <- as.character(x)
@@ -352,7 +364,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom chron as.chron as.dates
+#' @export
 cSort.dates <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
   # help from namespace xts
@@ -374,6 +386,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname cSort
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom timeDate as.timeDate
+#' @export
 cSort.timeDate <- function(x, InitOrder, ...) {
 tryCatchLog::tryCatchLog({
 

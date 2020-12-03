@@ -94,6 +94,7 @@ tryCatchLog::tryCatchLog({
   # This private function silently drop argument 'copy.mode' and 'copy.date'
   # if passed older versions of R.
   .file.copy <- function(...) {
+    tryCatchLog::tryCatchLog({
     args <- list(...)
     names <- names(args)
     if (!is.null(names)) {
@@ -102,7 +103,8 @@ tryCatchLog::tryCatchLog({
       args <- args[keep]
     }
     do.call(file.copy, args=args, envir=parent.frame())
-  } # .file.copy()
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+  # .file.copy()
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -163,11 +165,13 @@ tryCatchLog::tryCatchLog({
 #' @return Of lsNamespaceInfo, return a character vector of objects in a namespace
 #' @author Andre Mikulec is the author of lsNamespaceInfo
 #' @rdname unlockEnvironment
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
 lsNamespaceInfo <- function(ns, ...) {
+tryCatchLog::tryCatchLog({
   ns <- asNamespace(ns, base.OK = FALSE)
   ls(..., envir = get(".__NAMESPACE__.", envir = ns, inherits = FALSE), all.names = T)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' x
@@ -277,10 +281,14 @@ lsNamespaceInfo <- function(ns, ...) {
 #' stats::prnt("GoHere")
 #' [1] "GoHere"
 #' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
 #' @export
 AllInfoNS <- function(ns) {
-  sapply(lsNamespaceInfo(ns), getNamespaceInfo, ns=ns)
-}
+tryCatchLog::tryCatchLog({
+  x <- lapply(lsNamespaceInfo(ns), getNamespaceInfo, ns=ns)
+  DescTools::DoCall(c, x)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 #' x
@@ -318,13 +326,12 @@ AllInfoNS <- function(ns) {
 #' }
 #' @useDynLib econModel
 #' @rdname unlockEnvironment
+#' @importFrom tryCatchLog tryCatchLog
 #' @export
 forceAssignInNamespace <- function(x, value, namespace){
 tryCatchLog::tryCatchLog({
   if(x %in% ls(.getNamespace(namespace))){
-    warning(paste0("Table name clashes with internal functions, ",
-                   "please use generateClasses to generate the R code and either ",
-                   "source that code, or include that in your package."))
+    warning(paste0("Name clashes with an internal function name. Please use some other name."))
   }else{
     unlocker <- get("unlockBinding", baseenv())
     if(exists(x, envir = .getNamespace(namespace), inherits = FALSE) &&

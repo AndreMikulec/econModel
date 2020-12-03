@@ -132,21 +132,6 @@ tryCatchLog::tryCatchLog({
 
 
 
-
-#' #' @param x an object
-#' #' @rdname Df2Xts
-#' #' @export
-#' melt <- function (data, ..., na.rm = FALSE, value.name = "value") {
-#'   UseMethod("melt")
-#' }
-#'
-#' #' @param x an object
-#' #' @rdname Df2Xts
-#' melt.default <- function(data, ..., na.rm = FALSE, value.name = "value") {
-#'   stop("no implementation") # not exported
-#' }
-
-
 #' x
 #'
 #' Of melt, convert an xts object to a data.frame. Expects an imported S3 "melt" function of the form of reshape2::melt.

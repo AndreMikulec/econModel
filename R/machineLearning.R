@@ -699,7 +699,7 @@ tryCatchLog::tryCatchLog({
   model@model.formula = as.formula(paste(colnames(mf)[1], "~",
                                          paste(colnames(mf)[-1], collapse = "+"), sep = ""))
   return(model)
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1026,7 +1026,7 @@ tryCatchLog::tryCatchLog({
     stop("method \"train\" is not available")
     return(NULL)
   }
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1043,9 +1043,7 @@ tryCatchLog::tryCatchLog({
 #' @rdname predictModel
 #' @export
 predictModel <- function (object, data, ...) {
-
   useMethod("predictModel")
-
 }
 
 
@@ -1061,11 +1059,11 @@ predictModel <- function (object, data, ...) {
 #' @param ... Dots Passed.
 #' @return Prediction.
 #' @rdname predictModel
+#' @importFrom tryCatchLog tryCatchLog
 predictModel.default <- function (object, data, ...) {
-
+tryCatchLog::tryCatchLog({
   predict(object, data, ...)
-
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 

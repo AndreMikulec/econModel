@@ -140,8 +140,8 @@ NVAR <- function(x) {
 #' NVAR(character())
 #' [1] 0
 #' }
-#' @export
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 NVAR.default <- function(x) {
 tryCatchLog::tryCatchLog({
 
@@ -162,8 +162,8 @@ tryCatchLog::tryCatchLog({
 #' NVAR(xts(, as.Date("1970-01-01")))
 #' [1] 0
 #' }
-#' @export
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 NVAR.xts <- function(x) {
 tryCatchLog::tryCatchLog({
 

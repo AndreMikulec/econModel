@@ -195,7 +195,7 @@ tryCatchLog::tryCatchLog({
     return(Symbols)
   return(fri)
 
-})}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1122,7 +1122,7 @@ getSymbols.ALFRED <- function(Symbols,
                               allowParallel = F,
                               MaxParallel = NULL,
                               ...) {
-
+tryCatchLog::tryCatchLog({
   # if not done elsewhere
   #correct for TZ
   oldtz <- Sys.getenv("TZ")
@@ -1753,7 +1753,7 @@ getSymbols.ALFRED <- function(Symbols,
   if (auto.assign)
     return(setdiff(returnSym, noDataSym))
   return(fr)
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 

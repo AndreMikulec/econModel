@@ -4,9 +4,10 @@
 #'
 #' @param libname defunct
 #' @param pkgname defunct
-#'
 #' @return invisible()
+#' @importFrom tryCatchLog tryCatchLog
 .onAttach <- function(libname, pkgname) {
+tryCatchLog::tryCatchLog({
   # NOV 2020
   # https://statacumen.com/teach/ShortCourses/R_Packages/R_Package_Development_20180817.html
   start_message <- c(   "\nProviding accesses to social and economic Data from ALFRED and elsewhere"
@@ -14,7 +15,7 @@
   )
   packageStartupMessage(start_message)
   invisible()
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -27,8 +28,10 @@
 #'
 #' @examples
 #' getOption("econModel.name")
+#' @importFrom tryCatchLog tryCatchLog
 #' @importFrom futile.logger flog.appender appender.file flog.threshold TRACE
 .onLoad <- function(libname, pkgname) {
+tryCatchLog::tryCatchLog({
 
   # NOV 2020
   # .onLoad
@@ -50,4 +53,4 @@
   futile.logger::flog.threshold(futile.logger::TRACE)   # TRACE, DEBUG, INFO, WARN, ERROR, FATAL
 
   invisible()
-}
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
