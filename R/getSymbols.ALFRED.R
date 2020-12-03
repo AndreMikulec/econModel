@@ -235,6 +235,9 @@ tryCatchLog::tryCatchLog({
 #' @references
 #' \cite{Sentiment Survey Past Results
 #' \url{https://www.aaii.com/sentimentsurvey/sent_results}}
+#' @references
+#' \cite{Charles Rotblut, Analyzing the AAII Sentiment Survey Without Hindsight, AAII Journal / June 2014
+#' \url{https://www.aaii.com/journal/article/analyzing-the-aaii-sentiment-survey-without-hindsight}}
 #' @examples
 #' \dontrun{
 #' # common usage

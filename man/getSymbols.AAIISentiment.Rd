@@ -57,6 +57,9 @@ getSymbols("AAIISentimentSurveyData", src = "AAIISentiment")
 
 \cite{Sentiment Survey Past Results
 \url{https://www.aaii.com/sentimentsurvey/sent_results}}
+
+\cite{Charles Rotblut, Analyzing the AAII Sentiment Survey Without Hindsight, AAII Journal / June 2014
+\url{https://www.aaii.com/journal/article/analyzing-the-aaii-sentiment-survey-without-hindsight}}
 }
 \author{
 Andre Mikulec (adapted original code to work with AAII sentiment data)
