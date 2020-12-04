@@ -65,11 +65,18 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-FSI2 <- function(ValData, ValDates,
-                 TrainData, TrainDates,
+FSI2 <- function(ValData = ValData, ValDates = ValDates,
+                 TrainData = TrainData, TrainDates = TrainDates,
                  ...
 ) {
 tryCatchLog::tryCatchLog({
+
+  # STLFSI TrainDates
+  # We construct the STLFSI using 18 weekly data series . . .
+  #
+  # STLFSI TrainData
+  # . . . over the
+  # sample period December 31, 1993, to December 11, 2009
 
   stressIndex(ValData, ValDates, proc = "pca",
               TrainData, TrainDates,
