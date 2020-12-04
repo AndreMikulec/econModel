@@ -455,6 +455,9 @@ SP500WeeklyClose
 
 
 
+
+
+
 #' Return the Correct Elements of A Data Object
 #'
 #' @description

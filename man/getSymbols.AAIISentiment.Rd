@@ -33,7 +33,7 @@ bullish, bearish, and neutral on the stock market short term;
 individuals are polled from the AAII Web site on a weekly basis.
 Only one vote per member is accepted in each weekly voting period.
 
-The latest published data seems to be delivered every Friday.
+The AAII Sentiment Survey is conducted each week from Thursday 12:01 a.m. until Wednesday at 11:59 p.m. The latest published data seems to be delivered every Friday.
 
 Internally, this reads a (downloaded) Microsoft Excel spreadsheet
 and collects just the one latest published item by scraping the
@@ -60,6 +60,9 @@ getSymbols("AAIISentimentSurveyData", src = "AAIISentiment")
 
 \cite{Charles Rotblut, Analyzing the AAII Sentiment Survey Without Hindsight, AAII Journal / June 2014
 \url{https://www.aaii.com/journal/article/analyzing-the-aaii-sentiment-survey-without-hindsight}}
+
+\cite{Charles Rotblut, Is the AAII Sentiment Survey a Contrarian Indicator?, AAII Journal / June 2013
+\url{https://www.aaii.com/journal/article/is-the-aaii-sentiment-survey-a-contrarian-indicator}}
 }
 \author{
 Andre Mikulec (adapted original code to work with AAII sentiment data)
