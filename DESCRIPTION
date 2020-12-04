@@ -16,6 +16,7 @@ Imports:
     TSrepr,
     reshape2,
     data.table,
+    fst,
     R.oo,
     R.utils,
     rlist,
