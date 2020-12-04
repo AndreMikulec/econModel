@@ -13,7 +13,7 @@
 #' @importFrom DescTools DoCall
 #' @export
 subsetIndex <- function(x, Restriction){
-  tryCatchLog::tryCatchLog({
+tryCatchLog::tryCatchLog({
     # not NULL and not "length of zero"
     if(missing(Restriction) || !length(Restriction)) {
       return(index(x))
@@ -21,9 +21,9 @@ subsetIndex <- function(x, Restriction){
       if(!is.list(Restriction)) {
         Restriction <- list(Restriction)
       }
-      Restriction <- lapply(Restriction, function(Restriction) {
-        if(length(Restriction) == 2L) {
-          stop("Restrictin of the index must be a start/stop pair")
+    Restriction <- lapply(Restriction, function(Restriction) {
+      if(length(Restriction) == 2L) {
+        stop("Restrictin of the index must be a start/stop pair")
       }
       if(Restriction[2] < Restriction[1]) {
         stop("Restriction vector lvalue must be less than Restriction rvalue")
@@ -37,7 +37,7 @@ subsetIndex <- function(x, Restriction){
     # https://stackoverflow.com/questions/14449166/dates-with-lapply-and-sapply
     Restriction <- DescTools::DoCall(c, Restriction)
     return(Restriction)
-  }
+    }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
