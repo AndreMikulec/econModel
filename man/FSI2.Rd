@@ -4,25 +4,15 @@
 \alias{FSI2}
 \title{Re-Createion of the St. Louis Federal Board of Governors Financial Stress Index Version 2}
 \usage{
-FSI2(
-  ValData = ValData,
-  ValDates = ValDates,
-  TrainData = TrainData,
-  TrainDates = TrainDates,
-  ...
-)
+FSI2(TrainData = TrainData, TrainDates = TrainDates, ...)
 }
 \arguments{
-\item{ValData}{xts object. Required. This is the input used for prediction.}
-
-\item{ValDates}{List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).}
-
 \item{TrainData}{xts object. Required.}
 
 \item{TrainDates}{List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).}
 }
 \value{
-Prediction.
+Index.
 }
 \description{
 Uses a precedure (e.g. Principal Components) to create the "stress index" Financial Stress Index Version 2
@@ -36,7 +26,9 @@ Uses a precedure (e.g. Principal Components) to create the "stress index" Financ
 \url{https://fred.stlouisfed.org/series/STLFSI2}
 }
 
-
+\cite{author(s)?, Table 1: Data Used to Construct STLFSI
+\url{https://fredblog.stlouisfed.org/wp-content/uploads/2020/03/FSI2.pdf}
+}
 
 \cite{Kevin Kliesen and Michael McCracken, The St. Louis Fed’s Financial Stress Index, Version 2.0, March 26, 2020
 \url{https://fredblog.stlouisfed.org/2020/03/the-st-louis-feds-financial-stress-index-version-2-0/}
@@ -56,6 +48,10 @@ Uses a precedure (e.g. Principal Components) to create the "stress index" Financ
 
 \cite{author(s)?, National Economic Trends, Appendix, January 2010
 \url{https://files.stlouisfed.org/files/htdocs/publications/net/NETJan2010Appendix.pdf}
+}
+
+\cite{author(s)?, The LIBOR-OIS Spread as a Summary Indicator, MonetaryTrends, November 2008
+\url{https://files.stlouisfed.org/files/htdocs/publications/mt/20081101/cover.pdf}
 }
 
 \cite{Kevin L. Kliesen and Douglas C. Smith, Measuring Financial Market Stress, Economic SYNOPSES, 2010 Number 2, Posted on January 15, 2010

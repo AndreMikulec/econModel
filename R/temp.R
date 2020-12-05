@@ -36,7 +36,7 @@ tryCatchLog::tryCatchLog({
 #' \url{https://fred.stlouisfed.org/series/STLFSI2}
 #' }
 #' @references
-#' cite\{author(s)?, Table 1: Data Used to Construct STLFSI
+#' \cite{author(s)?, Table 1: Data Used to Construct STLFSI
 #' \url{https://fredblog.stlouisfed.org/wp-content/uploads/2020/03/FSI2.pdf}
 #' }
 #' @references
@@ -393,7 +393,7 @@ tryCatchLog::tryCatchLog({
   #
 
 
-  stressIndex(ValData, ValDates, proc = "pca",
+  stressIndex(proc = "pca",
               TrainData, TrainDates,
               ...
   )

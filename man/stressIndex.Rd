@@ -31,7 +31,7 @@ stressIndex(
 \item{ValData.}{xts object. Required. This is the input used for prediction.}
 }
 \value{
-Prediction.
+Prediction (or Index)
 }
 \description{
 Uses a precedure (e.g. Principal Components) to create a "stress index".
