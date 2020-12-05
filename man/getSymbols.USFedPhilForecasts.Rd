@@ -124,7 +124,11 @@ getSymbols("UNEMP3", src = "USFedPhilForecasts", Fun = sd, verbose = T)
 getSymbols("UNEMP3", src = "USFedPhilForecasts", Fun = length)
 
 # all columns in one VERY WIDE xts object
-getSymbols("USFedPhilForecastsData", src = "USFedPhilForecasts")
+# wait 5 minutes (creates the .fst files)
+getSymbols("USFedPhilForecastsData", src = "USFedPhilForecasts", verbose = T)
+
+# wait 30 seconds
+getSymbols("USFedPhilForecastsData", src = "USFedPhilForecasts", verbose = T)
 }
 }
 \references{
