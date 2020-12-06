@@ -4,12 +4,12 @@
 \alias{FSI2}
 \title{Re-Createion of the St. Louis Federal Board of Governors Financial Stress Index Version 2}
 \usage{
-FSI2(TrainData = TrainData, TrainDates = TrainDates, ...)
+FSI2(x, TrainDates, ...)
 }
 \arguments{
-\item{TrainData}{xts object. Required.}
-
 \item{TrainDates}{List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).}
+
+\item{TrainData}{xts object. Required.}
 }
 \value{
 Index.

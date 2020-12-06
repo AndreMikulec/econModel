@@ -163,7 +163,7 @@ tryCatchLog::tryCatchLog({
 #' @param ns String. Default none. Required. Name of a namespace
 #' @param ... dots.  Passed to ls
 #' @return Of lsNamespaceInfo, return a character vector of objects in a namespace
-#' @author Andre Mikulec is the author of lsNamespaceInfo
+#' @author Andre Mikulec
 #' @rdname unlockEnvironment
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -188,38 +188,6 @@ tryCatchLog::tryCatchLog({
 #' #
 #' # something not-on-the-search() path
 #' #
-#'
-#' # also loads the environment (if not already loaded)
-#' unlockEnvironment("stringi")
-#' Error in unlockEnvironment("stats") :
-#'   Cannot convert object to an environment: [type=character; target=ENVSXP].
-#'
-#' unlockEnvironment(asNamespace("stringi"))
-#' [1] TRUE
-#'
-#' forceAssignInNamespace("prnt", function(x) {print(x)}, namespace = "stringi")
-#'
-#' stringi::prnt
-#' Error: 'prnt' is not an exported object from 'namespace:stringi'
-#'
-#' stringi::prnt("GoThere")
-#' Error: 'prnt' is not an exported object from 'namespace:stringi'
-#'
-#' # not exported
-#' stringi:::prnt("GoThere")
-#' [1] "GoThere"
-#'
-#' stringi:::prnt
-#' function(x) {print(x)}
-#'
-#' # promote that not-on-search-path package function to be exported
-#' assign("prnt","prnt", envir = AllInfoNS("stringi")$exports)
-#' stringi::prnt("GoThere")
-#' [1] "GoThere"
-#'
-#' #
-#' # another something not-on-the-search() path
-#' #
 #' requireNamespace("RPostgreSQL")
 #'
 #' getNamespace("RPostgreSQL")
@@ -227,10 +195,6 @@ tryCatchLog::tryCatchLog({
 #'
 #' environmentIsLocked(getNamespace("RPostgreSQL"))
 #' [1] TRUE
-#'
-#' unlockEnvironment(getNamespace("RPostgreSQL"))
-#' Error in unlockEnvironment(getNamespace("RPostgreSQL")) :
-#'   could not find function "unlockEnvironment"
 #'
 #' unlockEnvironment(getNamespace("RPostgreSQL"))
 #' [1] TRUE
@@ -243,50 +207,17 @@ tryCatchLog::tryCatchLog({
 #' [1] "HelloEveryWhere"
 #'
 #' assign("prnt","prnt", envir = AllInfoNS("RPostgreSQL")$exports)
-#' PostgreSQL::prnt("HelloEveryWhere")
+#' RPostgreSQL::prnt("HelloEveryWhere")
 #' [1] "HelloEveryWhere"
-#'
-#' #
-#' # something on the search() path
-#' #
-#'
-#' seq_along(search())[search() %in% "package:stats"]
-#' [1] 2
-#'
-#' environmentIsLocked(as.environment(2)) # package:stats
-#' [1] TRUE
-#'
-#' is.environment(as.environment(2))
-#' [1] TRUE
-#'
-#' unlockEnvironment(as.environment(2))
-#' [1] TRUE
-#'
-#' environmentIsLocked(as.environment(2))
-#' [1] FALSE
-#'
-#' assign("prnt", function(x) {print(x)}, pos = 2)
-#' stats::prnt("GoHere")
-#' Error: 'prnt' is not an exported object from 'namespace:stats'
-#'
-#' stats:::prnt("GoHere")
-#' Error in get(name, envir = asNamespace(pkg), inherits = FALSE) :
-#'   object 'prnt' not found
-#'
-#' # promote that search path package function to be exported
-#' assign("prnt","prnt", envir = AllInfoNS("stats")$exports)
-#' stats::prnt
-#' function(x) {print(x)}
-#'
-#' stats::prnt("GoHere")
-#' [1] "GoHere"
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
 #' @export
 AllInfoNS <- function(ns) {
 tryCatchLog::tryCatchLog({
-  x <- lapply(lsNamespaceInfo(ns), getNamespaceInfo, ns=ns)
+  NamesNamespaceInfo <- lsNamespaceInfo(ns)
+  x <- lapply(NamesNamespaceInfo, getNamespaceInfo, ns=ns)
+  Names(x) <- NamesNamespaceInfo
   DescTools::DoCall(c, x)
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -307,9 +238,16 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @examples
 #' \dontrun{
-#' # On search() path example
-#'
+#' #
+#' # something on the search() path
+#' #
 #' library(RSQLite)
+#'
+#' getNamespace("RSQLite")
+#' <environment: namespace:RSQLite>
+#'
+#' environmentIsLocked(getNamespace("RSQLite"))
+#' [1] TRUE
 #'
 #' unlockEnvironment(asNamespace("RSQLite"))
 #' [1] TRUE
@@ -322,6 +260,14 @@ tryCatchLog::tryCatchLog({
 #' Error: 'prnt' is not an exported object from 'namespace:RSQLite'
 #'
 #' RSQLite:::prnt("HelloEveryWhere")
+#' [1] "HelloEveryWhere"
+#'
+#' # promote that function to be exported
+#' assign("prnt","prnt", envir = AllInfoNS("RSQLite")$exports)
+#' RSQLite::prnt
+#' function(x) {print(x)}
+#'
+#' RSQLite::prnt("HelloEveryWhere")
 #' [1] "HelloEveryWhere"
 #' }
 #' @useDynLib econModel

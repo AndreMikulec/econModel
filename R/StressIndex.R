@@ -1,28 +1,210 @@
+#' Convert an xts object Into a St Louis FED Weekly xts Object.
+#'
+#' @description
+#' Given Dailies, return the five(5) day moving average (called a "weekly") with an Observation data on Fridays that are published on the following Thursdays.
+#'
+#' @param x xts object of Dailies.
+#' @param Level String. Default is "Levels" Other choices are "ChangeInLevels" and "ChangeInLogLevels."
+#' @return Modified xts object
+#' @examples
+#' \dontrun{
+#' DGS2 <- quantmod::getSymbols("DGS2", src = "FRED", auto.assign = F)
+#' DGS2 <- stLouisFEDdaily2Weekly(DGS2, Level = "ChangeInLevels")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom stats na.omit
+#' @importFrom zoo index `index<-` coredata as.zoo rollapply
+#' @importFrom xts xts as.xts lag.xts xtsAttributes `xtsAttributes<-`
+#' @importFrom timeDate timeNthNdayInMonth
+#' @export
+stLouisFEDdaily2Weekly <- function(x, Level) {
+  tryCatchLog::tryCatchLog({
+
+    # if not done elsewhere
+    #correct for TZ
+    oldtz <- Sys.getenv("TZ")
+    if(oldtz!="UTC") {
+      Sys.setenv(TZ="UTC")
+    }
+
+    if(missing(Level)) {
+      Level <- "Levels"
+    }
+    if(!Level %in% c("Levels", "ChangeInLevels", "ChangeInLogLevels")) {
+      stop("Level must be one of \"Levels\", \"ChangeInLevels\", or \"ChangeInLogLevels\"")
+    }
+
+    Result <- ORIG <- x
+
+    Result <- stats::na.omit(Result)
+    # changes
+    if(Level == "ChangeInLogLevels") {
+      Result <- log(Result)
+    }
+    if(Level %in%  c("ChangeInLevels","ChangeInLogLevels")) {
+      Result <- (Result - xts::lag.xts(Result))/abs(xts::lag.xts(Result))
+    }
+    # 5 days(week) rolling means of changes
+    Result  <- zoo::rollapply(zoo::as.zoo(Result), width = 5L, mean, fill = NA , partial = F, align = "right")
+
+    # xts (with the original index class, format, and time zone)
+    Result <- cbind(xts::xts(, zoo::index(ORIG)[0]), xts::as.xts(Result))
+    # personal "xts attributes"
+    xts::xtsAttributes(Result) <- c(list(), xts::xtsAttributes(Result), xts::xtsAttributes(ORIG))
+
+    # FRI entries (Observation Dates)
+    Index <- zoo::index(Result)[weekdays(zoo::index(Result)) == "Friday"]
+    #
+    Result <- Result[Index]
+
+    # save seconds
+    TimeDiff <- as.POSIXct(Index) - as.POSIXct(zoo::as.Date(Index))
+    # next THU entries (Publication Dates) - a "better" Index
+    BetterIndex <- zoo::as.Date(timeDate::timeNthNdayInMonth(as.character(zoo::as.Date(Index)), nday = 4, nth = 1))
+    # put back TimeDiff
+    BetterIndex <- as.POSIXct(BetterIndex) + TimeDiff
+    # put back the class
+    BetterIndex <- eval(parse(text = paste0("as.", class(index(ORIG))[1], "(BetterIndex)")))
+    #
+    zoo::index(Result) <- BetterIndex
+
+    Sys.setenv(TZ=oldtz)
+
+    Result
+
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 #' Stress Index
 #'
 #' @description
-#' Uses a precedure (e.g. Principal Components) to create a "stress index".
+#' \preformatted{
+#' Types of Risk
 #'
-#' @param ValData. xts object. Required. This is the input used for prediction.
+#' "default risk":
+#'   interest rate spread designed to measure
+#'   the difference between yields on a “risky” asset
+#'   and a “risk-free” asset
+#'
+#' "liquidity risk""
+#'   inability to secure resources to acquire short term
+#'   liabilities
+#'
+#' Stress Index
+#' Uses a precedure (Principal Components) to create
+#' the "stress index".
+#'
+#' Creating the Stress Index
+#'
+#' 1. First, each of the data series is de-meaned.
+#'    The de-meaned series are then
+#'    divided by their respective sample standard deviations (SDs)
+#'    (Because each variable was standardized,
+#'    the coefficient of a variable (SEE 2.) represents the
+#'    "influence of a 1 SD change in that variable on the Stress Index.")
+#' 2. Use the method of principal components:
+#'    Extracting this factor (the first principal component).
+#'    makes it able to create an index with a useful interpretation
+#' 3. Calculate the  coefficients of the variables.
+#'
+#'    The factor loadings, also called component loadings in PCA,
+#'    are the correlation coefficients
+#'    between the variables (rows) and factors (columns).
+#'
+#'    The elements of the eigenvectors of . . . are the
+#'    "coefficients" or "loadings" of the principal components.
+#'
+#' 4. We then scale these coefficients so that the SD of the index is 1.
+#' 5. Finally, each data series is multiplied
+#'    by its respective adjusted coefficient.
+#' 6. Stress Index for time t is
+#'    the sum of each series multiplied
+#'    by its respective adjusted coefficient.
+#'    (Higher values of the FSI indicate a
+#'    greater degree of financial stress in the economy.)
+#'
+#' Stress Index proc details drawbacks
+#'   A negative coefficient multiplied by a negative data value
+#'   will result in a positive contribution to financial stress.
+#'
+#' Stress Index percent of the total variation
+#'   in the many variables
+#'   1 – SSE/SST
+#' SST is the total sum of squares
+#' SSE is the sum of squared errors
+#' X(N,t) is the value of the Nth standardized variable in month t,
+#' and a(N) is the set of coefficients chosen.
+
+#' Updating the Stress Index
+#'
+#' When the sample changes (i.e., a new item of data is added),
+#' the values of the Stress Index in the original sample can be changed.
+#' This alteration can occur either through a
+#' change in the coefficients of the variables in the index
+#' or by a change in the actual values of the variables in the
+#' original sample. The overall magnitude of the coefficients,
+#' as well as their relative magnitudes, can change.
+#' }
+#' @param x xts object. Required. This is the input used for prediction.
 #' @param ValDates List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).
-#' @param proc String. Required. Default is "pca" (Principal Component Analysis)
-#' @param TrainData xts object. Required.
-#' @param TrainDates List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).
-#' @param TestData xts object. Required (if any Testing (Tuning) is required.
-#' @param TestDates List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).
-#' @return Prediction (or Index)
+#' @return Index that is centered about zero(0) and scaled to the standard deviation of one(1).
+#' @references
+#' \cite{How to compute varimax-rotated principal components in R?, 2014
+#' \url{https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r}
+#' }
+#' @references
+#' \cite{Aaron Schlegel, Principal Component Analysis with R Example, Thu 19 January 2017
+#' \url{https://aaronschlegel.me/principal-component-analysis-r-example.html}
+#' }
+#' @references
+#' \cite{Introduction to Principal Components and FactorAnalysis, North Carolina State University
+#' \url{ftp://statgen.ncsu.edu/pub/thorne/molevoclass/AtchleyOct19.pdf}
+#' }
+#' @references
+#' \cite{Luke Hayden, Principal Component Analysis in R, August 9th, 2018
+#'   \url{https://www.datacamp.com/community/tutorials/pca-analysis-r}
+#' }
+#' @references
+#' \cite{author(s)?, National Economic Trends, Appendix, January 2010
+#' \url{https://files.stlouisfed.org/files/htdocs/publications/net/NETJan2010Appendix.pdf}
+#' }
+#' @references
+#' \cite{Kevin L. Kliesen and Douglas C. Smith, Measuring Financial Market Stress, Economic SYNOPSES, 2010 Number 2, Posted on January 15, 2010
+#' \url{https://files.stlouisfed.org/files/htdocs/publications/es/10/ES1002.pdf}
+#' }
 #' @examples
 #' \dontrun{
+#' # E.g. some (and only some of the) interest rates
+#' # of the St Louis Stress Index 2 (STLFSI2)
+#' for(Symbol in c("DFF","DGS2","DGS10")) {
+#'   quantmod::getSymbols(Symbol, src = "FRED")
+#'   assign(Symbol, stLouisFEDdaily2Weekly(get(Symbol), Level = "ChangeInLevels"))
+#' }
+#'
+#' Data <- stats::na.omit(cbind(DFF,DGS2,DGS10))
+#' # dygraphs::dygraph(stressIndex(Data))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom stats na.omit prcomp
+#' @importFrom zoo index
+#' @importFrom xts xts
 #' @export
-stressIndex <- function(ValData, ValDates, proc = "pca",
-                        TrainData, TrainDates,
-                        TestData,  TestDates,
+stressIndex <- function(x, ValDates,
                         ...
 ) {
 tryCatchLog::tryCatchLog({
-  stop("Nothing here yet.")
+
+  x <- stats::na.omit(x)
+
+  PrCmpObj <- stats::prcomp(x, center = TRUE, scale. = TRUE)
+  Prediction <- predict(PrCmpObj, newdata = Data)[, "PC1"]
+  PredictionScaled <- scale(Prediction, center = T, scale = T)
+
+  colnames(PredictionScaled) <- "StressIndex"
+  StressIndex <- xts::xts(PredictionScaled, zoo::index(Data))
+
+  StressIndex
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -75,7 +257,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-FSI2 <- function(TrainData = TrainData, TrainDates = TrainDates,
+FSI2 <- function(x, TrainDates,
                  ...
 ) {
 tryCatchLog::tryCatchLog({
@@ -313,6 +495,7 @@ tryCatchLog::tryCatchLog({
   # S&P Financial Index                                 - STLFSI2 - Change in Log Levels
   # Vanguard Financials Index Fund ETF Shares (VFH)
   # NYSEArca - NYSEArca Delayed Price. Currency in USD
+  # http://finance.yahoo.com/q?s=vfh&.yficrumb=CgCsdHP9jeG
   # https://finance.yahoo.com/quote/vfh?ltr=1
   # quantmod::getSymbols("VFH", from = "1900-01-01")
   # 2004-01-30 (too young)
@@ -381,7 +564,7 @@ tryCatchLog::tryCatchLog({
   #   5. FSI for time t is
   #      the sum of each series multiplied by its respective adjusted coefficient.
   #      (Higher values of the FSI indicate a
-  #     greater degree of financial stress in the economy.)
+  #      greater degree of financial stress in the economy.)
   #
   #   STLFSI proc details drawbacks
   #     A negative coefficient multiplied by a negative data value
@@ -392,9 +575,7 @@ tryCatchLog::tryCatchLog({
   #     1 – SSE/SST
   #
 
-
-  stressIndex(proc = "pca",
-              TrainData, TrainDates,
+  stressIndex(x , TrainDates,
               ...
   )
 

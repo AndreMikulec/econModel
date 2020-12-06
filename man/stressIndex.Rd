@@ -4,39 +4,119 @@
 \alias{stressIndex}
 \title{Stress Index}
 \usage{
-stressIndex(
-  ValData,
-  ValDates,
-  proc = "pca",
-  TrainData,
-  TrainDates,
-  TestData,
-  TestDates,
-  ...
-)
+stressIndex(x, ValDates, ...)
 }
 \arguments{
+\item{x}{xts object. Required. This is the input used for prediction.}
+
 \item{ValDates}{List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).}
-
-\item{proc}{String. Required. Default is "pca" (Principal Component Analysis)}
-
-\item{TrainData}{xts object. Required.}
-
-\item{TrainDates}{List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).}
-
-\item{TestData}{xts object. Required (if any Testing (Tuning) is required.}
-
-\item{TestDates}{List of (or vector of) pairs of vectors of begin and end date-time ranges.  Required (if not all of the ValidationData is to be used).}
-
-\item{ValData.}{xts object. Required. This is the input used for prediction.}
 }
 \value{
-Prediction (or Index)
+Index that is centered about zero(0) and scaled to the standard deviation of one(1).
 }
 \description{
-Uses a precedure (e.g. Principal Components) to create a "stress index".
+\preformatted{
+Types of Risk
+
+"default risk":
+  interest rate spread designed to measure
+  the difference between yields on a “risky” asset
+  and a “risk-free” asset
+
+"liquidity risk""
+  inability to secure resources to acquire short term
+  liabilities
+
+Stress Index
+Uses a precedure (Principal Components) to create
+the "stress index".
+
+Creating the Stress Index
+
+1. First, each of the data series is de-meaned.
+   The de-meaned series are then
+   divided by their respective sample standard deviations (SDs)
+   (Because each variable was standardized,
+   the coefficient of a variable (SEE 2.) represents the
+   "influence of a 1 SD change in that variable on the Stress Index.")
+2. Use the method of principal components:
+   Extracting this factor (the first principal component).
+   makes it able to create an index with a useful interpretation
+3. Calculate the  coefficients of the variables.
+
+   The factor loadings, also called component loadings in PCA,
+   are the correlation coefficients
+   between the variables (rows) and factors (columns).
+
+   The elements of the eigenvectors of . . . are the
+   "coefficients" or "loadings" of the principal components.
+
+4. We then scale these coefficients so that the SD of the index is 1.
+5. Finally, each data series is multiplied
+   by its respective adjusted coefficient.
+6. Stress Index for time t is
+   the sum of each series multiplied
+   by its respective adjusted coefficient.
+   (Higher values of the FSI indicate a
+   greater degree of financial stress in the economy.)
+
+Stress Index proc details drawbacks
+  A negative coefficient multiplied by a negative data value
+  will result in a positive contribution to financial stress.
+
+Stress Index percent of the total variation
+  in the many variables
+  1 – SSE/SST
+SST is the total sum of squares
+SSE is the sum of squared errors
+X(N,t) is the value of the Nth standardized variable in month t,
+and a(N) is the set of coefficients chosen.
+Updating the Stress Index
+
+When the sample changes (i.e., a new item of data is added),
+the values of the Stress Index in the original sample can be changed.
+This alteration can occur either through a
+change in the coefficients of the variables in the index
+or by a change in the actual values of the variables in the
+original sample. The overall magnitude of the coefficients,
+as well as their relative magnitudes, can change.
+}
 }
 \examples{
 \dontrun{
+# E.g. some (and only some of the) interest rates
+# of the St Louis Stress Index 2 (STLFSI2)
+for(Symbol in c("DFF","DGS2","DGS10")) {
+  quantmod::getSymbols(Symbol, src = "FRED")
+  assign(Symbol, stLouisFEDdaily2Weekly(get(Symbol), Level = "ChangeInLevels"))
+}
+
+Data <- stats::na.omit(cbind(DFF,DGS2,DGS10))
+# dygraphs::dygraph(stressIndex(Data))
+}
+}
+\references{
+\cite{How to compute varimax-rotated principal components in R?, 2014
+\url{https://stats.stackexchange.com/questions/59213/how-to-compute-varimax-rotated-principal-components-in-r}
+}
+
+\cite{Aaron Schlegel, Principal Component Analysis with R Example, Thu 19 January 2017
+\url{https://aaronschlegel.me/principal-component-analysis-r-example.html}
+}
+
+\cite{Introduction to Principal Components and FactorAnalysis, North Carolina State University
+\url{ftp://statgen.ncsu.edu/pub/thorne/molevoclass/AtchleyOct19.pdf}
+}
+
+\cite{Luke Hayden, Principal Component Analysis in R, August 9th, 2018
+  \url{https://www.datacamp.com/community/tutorials/pca-analysis-r}
+}
+
+\cite{author(s)?, National Economic Trends, Appendix, January 2010
+\url{https://files.stlouisfed.org/files/htdocs/publications/net/NETJan2010Appendix.pdf}
+}
+
+\cite{Kevin L. Kliesen and Douglas C. Smith, Measuring Financial Market Stress, Economic SYNOPSES, 2010 Number 2, Posted on January 15, 2010
+\url{https://files.stlouisfed.org/files/htdocs/publications/es/10/ES1002.pdf}
 }
 }
