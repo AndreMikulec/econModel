@@ -485,9 +485,11 @@ tryCatchLog::tryCatchLog({
   # Real yields on Treasury Inflation Protected Securities (TIPS) at "constant maturity" are
   # interpolated by the U.S. Treasury from Treasurys daily real yield curve.
   # SO I WANT
-  # Daily Treasury Yield Curve Rates
+  # Daily Treasury Yield Curve Rates (getYieldCurve example 1)
   # LESS
-  # Daily Treasury Real Yield Curve Rates
+  # Daily Treasury Real Yield Curve Rates (getYieldCurve example 4)
+  #
+  # NOTE example 5 is direct.
   # . . .
   # (since 1990)
   # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield
