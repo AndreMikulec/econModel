@@ -13,18 +13,40 @@ getYieldCurve(
 \arguments{
 \item{base}{String. Required. The base URL for the data service, defaulting to http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData. If the month or year arguments are not NULL, then the function modifies this URL to parameterize the download request.}
 
-\item{month}{The desired month number or NULL for all months (default).}
+\item{year}{The desired year number or NULL for all years (default)}
 
-\item{yearThe}{desired year number or NULL for all years (default)}
+\item{month}{The desired month number or NULL for all months (default).}
 }
 \value{
 xts object
 }
 \description{
 Downloads US Treasury yield curve data from the US Treasury web site.
+This is a fix and partial re-write of R CRAN package ustyc function getYieldCurve.
 }
 \examples{
 \dontrun{
+# https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=longtermrate
 xlist <- getYieldCurve(base = "http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRateData?$filter=month(QUOTE_DATE)\%20eq\%2012\%20and\%20year(QUOTE_DATE)\%20eq\%202020")
+xlist
+           BC_20year Over_10_Years Real_Rate
+2020-12-01      1.46          1.47     -0.39
+2020-12-02      1.50          1.51     -0.39
+2020-12-03      1.46          1.47     -0.42
+2020-12-04      1.53          1.54     -0.38
 }
+}
+\references{
+\cite{GetYieldCurve - XML content does not seem to be XML #1
+\url{https://github.com/mrbcuda/ustyc/issues/1}
+}
+
+\cite{Unknown IO error #2
+\url{https://github.com/mrbcuda/ustyc/issues/2}
+}
+}
+\author{
+Andre Mikulec (partial re-write)
+
+Matt Barry (original)
 }

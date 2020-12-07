@@ -15,7 +15,7 @@ xcast(
   AttrVar = NULL,
   FunAggr = NULL,
   DelUniqCAttr = F,
-  RetIndexClass = "POSIXct"
+  RetIndexClass = NULL
 )
 
 \method{melt}{xts}(
@@ -45,7 +45,7 @@ indName(x) <- value
 
 \item{DelUniqCAttr}{Logical. Default is TRUE. If TRUE, the column attributes with unique value will be deleted.}
 
-\item{RetIndexClass}{String. Default is "POSIXct".  Attempt to return the xts with the index of this class.}
+\item{RetIndexClass}{String. Default is "POSIXct".  Attempt to return the xts with the index of this class. If ValueVar is a single column and not of one of the R base types: integer, numeric, logical or character, then the function will try to return the original ValueVar non-R base type e.g. (Date or POSIXct).}
 
 \item{data}{Xts object. Default is NULL. Required. Xts object to melt.}
 
@@ -114,5 +114,12 @@ casted <- xcast(df, IndexVar = c("year", "month"), ValueVar = "value",
   RetIndexClass = "Date")
 
 meltXts2Df(casted)
+
+dg <- df
+dg[["TimeDate"]] <- zoo::as.Date(paste0(df$year, "-",DescTools::StrPad(df$month, width = 2, pad = "0", adj = "right"), "-", "01"))
+dg$year <- NULL; dg$month <- NULL
+xcast(dg, IndexVar = "TimeDate", ValueVar = "value")
+# in out, expecting an index of class "Date"
+
 }
 }

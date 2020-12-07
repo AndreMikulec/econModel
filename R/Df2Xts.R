@@ -10,7 +10,7 @@
 #' @param AttrVar String.  Default is NULL. The name of the column which will be used as column attributes of the xts object. If NULL, all columns except ValueVar and IndexVar will be used.
 #' @param FunAggr Function. Default is NULL. Aggregation function needed if variables do not identify a single observation for each output cell. Defaults to length (with a message) if needed but not specified. See ? reshape2::dcast.
 #' @param DelUniqCAttr Logical. Default is TRUE. If TRUE, the column attributes with unique value will be deleted.
-#' @param RetIndexClass String. Default is "POSIXct".  Attempt to return the xts with the index of this class.
+#' @param RetIndexClass String. Default is "POSIXct".  Attempt to return the xts with the index of this class. If ValueVar is a single column and not of one of the R base types: integer, numeric, logical or character, then the function will try to return the original ValueVar non-R base type e.g. (Date or POSIXct).
 #' @return Of xcast, an xts object.
 #' @examples
 #' \dontrun{
@@ -35,15 +35,22 @@
 #'   RetIndexClass = "Date")
 #'
 #' meltXts2Df(casted)
+#'
+#' dg <- df
+#' dg[["TimeDate"]] <- zoo::as.Date(paste0(df$year, "-",DescTools::StrPad(df$month, width = 2, pad = "0", adj = "right"), "-", "01"))
+#' dg$year <- NULL; dg$month <- NULL
+#' xcast(dg, IndexVar = "TimeDate", ValueVar = "value")
+#' # in out, expecting an index of class "Date"
+#'
 #' }
 #' @rdname Df2Xts
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools StrPad
-#' @importFrom zoo as.Date coredata
+#' @importFrom zoo index as.Date coredata
 #' @importFrom xts xts `xtsAttributes<-`
 #' @importFrom zoocat zoocat
 #' @export
-xcast <- function(x, IndexVar = NULL, ValueVar = NULL, AttrVar = NULL, FunAggr = NULL, DelUniqCAttr = F, RetIndexClass = "POSIXct") {
+xcast <- function(x, IndexVar = NULL, ValueVar = NULL, AttrVar = NULL, FunAggr = NULL, DelUniqCAttr = F, RetIndexClass = NULL) {
 tryCatchLog::tryCatchLog({
 
   oldtz <- Sys.getenv("TZ")
@@ -55,13 +62,33 @@ tryCatchLog::tryCatchLog({
     FunAggr <- match.fun(FunAggr)
   }
 
+
+
   OrigColNames <- colnames(x)
   OrigIndexVar <- IndexVar
-  OrigIndexClass <- class(IndexVar[1])
+
+  # new code
+  OrigIndexClass <- class(x[[IndexVar[1]]])[1]
+
+  # new code
+  # column types must be basic R "vector types" (no Date and no POSIXct)
+  if(length(OrigIndexVar) == 1L && !OrigIndexClass %in% c("integer","numeric","logical","character")) {
+    x[[IndexVar]] <- as.numeric(x[[IndexVar]])
+    # new code
+    if(is.null(RetIndexClass)) {
+      RetIndexClass <- OrigIndexClass
+    }
+  } else {
+    # new code
+    if(is.null(RetIndexClass)) {
+      RetIndexClass <- "POSIXct"
+    }
+  }
 
   # Composite IndexVar (variant)
   #
   if(1L < length(IndexVar)) {
+
     if(2L == length(IndexVar)) {
       if(tolower(IndexVar[1]) %in% c("year", "years") &&
          tolower(IndexVar[2]) %in% c("month", "months")
@@ -85,6 +112,8 @@ tryCatchLog::tryCatchLog({
       }
     }
   }
+
+
   # column types must be basic R "vector types" (no Date and no POSIXct)
   x <- zoocat::cast2zoocat(x, index.var = IndexVar, value.var = ValueVar, attr.var = AttrVar, fun.aggregate = FunAggr, del.unique.cattr = DelUniqCAttr)
 

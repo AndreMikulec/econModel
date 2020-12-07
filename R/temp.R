@@ -3,25 +3,49 @@
 #'
 #' @description
 #' Downloads US Treasury yield curve data from the US Treasury web site.
+#' This is a fix and partial re-write of R CRAN package ustyc function getYieldCurve.
 #'
 #' @param base String. Required. The base URL for the data service, defaulting to http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData. If the month or year arguments are not NULL, then the function modifies this URL to parameterize the download request.
-#' @param yearThe desired year number or NULL for all years (default)
+#' @param year The desired year number or NULL for all years (default)
 #' @param month	 The desired month number or NULL for all months (default).
 #' @return xts object
+#' @author Andre Mikulec (partial re-write)
+#' @author Matt Barry (original)
+#' @references
+#' \cite{GetYieldCurve - XML content does not seem to be XML #1
+#' \url{https://github.com/mrbcuda/ustyc/issues/1}
+#' }
+#' @references
+#' \cite{Unknown IO error #2
+#' \url{https://github.com/mrbcuda/ustyc/issues/2}
+#' }
 #' @examples
 #' \dontrun{
+#' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=longtermrate
 #' xlist <- getYieldCurve(base = "http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRateData?$filter=month(QUOTE_DATE)%20eq%2012%20and%20year(QUOTE_DATE)%20eq%202020")
+#' xlist
+#'            BC_20year Over_10_Years Real_Rate
+#' 2020-12-01      1.46          1.47     -0.39
+#' 2020-12-02      1.50          1.51     -0.39
+#' 2020-12-03      1.46          1.47     -0.42
+#' 2020-12-04      1.53          1.54     -0.38
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom curl curl_fetch_memory
 #' @importFrom XML xmlParse
 #' @importFrom XML xmlToList
-#' @importFrom DescTools DoCall
+#' @importFrom data.table rbindlist
+#' @importFrom zoo index
 #' @importFrom xts as.xts
 #' @export
 getYieldCurve <- function (base = "http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData",
                            year = NULL, month = NULL){
 tryCatchLog::tryCatchLog({
+
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="UTC") {
+    Sys.setenv(TZ="UTC")
+  }
 
   location <- base
   yloc <- mloc <- doc <- NULL
@@ -83,7 +107,7 @@ tryCatchLog::tryCatchLog({
   # data.frame is y
 
   message("Row bind conversion beginning.")
-  y <- DescTools::DoCall(rbind, y)
+  y <- data.table::rbindlist(y)
   message("Row bind conversion complete.")
 
   rownames(y) <- NULL
@@ -91,7 +115,6 @@ tryCatchLog::tryCatchLog({
   # remainder convert to real numbers
   y <- data.frame(mapply(function(yy,colname) {
     # save the factor column (if any)
-    browser()
     if(!grepl("^.*_TYPE$", colname) && !colname == "DATE") {
         as.numeric(yy)
     } else {
@@ -100,6 +123,7 @@ tryCatchLog::tryCatchLog({
   }, y, colnames(y), SIMPLIFY = F))
   message("Frame conversion complete.")
 
+  # it has a factor, so I cast
   if(any(grepl("^.*_TYPE$", colnames(y)))) {
     message("xcast beginning.")
     y <- xcast(y, IndexVar = "DATE", ValueVar = "RATE")
@@ -110,5 +134,8 @@ tryCatchLog::tryCatchLog({
     rownames(y) <- y[["DATE"]]; y[["DATE"]] <- NULL
     y <- xts::as.xts(y)
   }
+
+  Sys.setenv(TZ=oldtz)
+
   y
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
