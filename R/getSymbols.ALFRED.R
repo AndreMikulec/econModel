@@ -1375,6 +1375,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools Year Month
+#' @importFrom fst write.fst read.fst
 #' @importFrom data.table rbindlist
 #' @importFrom xts as.xts xtsAttributes `xtsAttributes<-`
 #' @export
