@@ -42,14 +42,10 @@ result <- yieldCurve()
 result <- yieldCurve(year = 2020, month = 12)
 result
 
-
-
-
 # (1.5) Everything now and in history of Daily Treasury Yield Curve Rates
 # https://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData
 # result <- yieldCurve(year = NULL, month = NULL)
-
-
+result
 
 # (2) Daily Treasury Bill Rates Data
 # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=billrates
@@ -58,9 +54,6 @@ result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryBillRateDa
             IndexName = "INDEX_DATE")
 result
 
-
-
-
 # (3) Daily Treasury Long Term Rate Data
 # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=longtermrate
 # http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRateData?$filter=month(QUOTE_DATE)\%20eq\%2012\%20and\%20year(QUOTE_DATE)\%20eq\%202020"
@@ -68,18 +61,12 @@ result <- yieldCurve("http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRat
             IndexName = "QUOTE_DATE")
 result
 
-
-
-
 # (4) Daily Treasury Real Yield Curve Rates
 # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=realyield
 # https://data.treasury.gov/feed.svc/DailyTreasuryRealYieldCurveRateData?$filter=month(NEW_DATE)\%20eq\%2012\%20and\%20year(NEW_DATE)\%20eq\%202020"
 result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryRealYieldCurveRateData",
             IndexName = "NEW_DATE")
 result
-
-
-
 
 # (5) Daily Treasury Real Long-Term Rates
 #
@@ -93,9 +80,6 @@ result
 result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryRealLongTermRateAverageData",
             IndexName = "QUOTE_DATE")
 result
-
-
-
 
 }
 }

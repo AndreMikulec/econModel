@@ -62,8 +62,6 @@ tryCatchLog::tryCatchLog({
     FunAggr <- match.fun(FunAggr)
   }
 
-
-
   OrigColNames <- colnames(x)
   OrigIndexVar <- IndexVar
 

@@ -1333,14 +1333,10 @@ tryCatchLog::tryCatchLog({
 #' result <- yieldCurve(year = 2020, month = 12)
 #' result
 #'
-#'
-#'
-#'
 #' # (1.5) Everything now and in history of Daily Treasury Yield Curve Rates
 #' # https://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData
 #' # result <- yieldCurve(year = NULL, month = NULL)
-#'
-#'
+#' result
 #'
 #' # (2) Daily Treasury Bill Rates Data
 #' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=billrates
@@ -1349,9 +1345,6 @@ tryCatchLog::tryCatchLog({
 #'             IndexName = "INDEX_DATE")
 #' result
 #'
-#'
-#'
-#'
 #' # (3) Daily Treasury Long Term Rate Data
 #' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=longtermrate
 #' # http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRateData?$filter=month(QUOTE_DATE)%20eq%2012%20and%20year(QUOTE_DATE)%20eq%202020"
@@ -1359,18 +1352,12 @@ tryCatchLog::tryCatchLog({
 #'             IndexName = "QUOTE_DATE")
 #' result
 #'
-#'
-#'
-#'
 #' # (4) Daily Treasury Real Yield Curve Rates
 #' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=realyield
 #' # https://data.treasury.gov/feed.svc/DailyTreasuryRealYieldCurveRateData?$filter=month(NEW_DATE)%20eq%2012%20and%20year(NEW_DATE)%20eq%202020"
 #' result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryRealYieldCurveRateData",
 #'             IndexName = "NEW_DATE")
 #' result
-#'
-#'
-#'
 #'
 #' # (5) Daily Treasury Real Long-Term Rates
 #' #
@@ -1385,9 +1372,6 @@ tryCatchLog::tryCatchLog({
 #'             IndexName = "QUOTE_DATE")
 #' result
 #'
-#'
-#'
-#'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools Year Month
@@ -1401,6 +1385,17 @@ tryCatchLog::tryCatchLog({
   oldtz <- Sys.getenv("TZ")
   if(oldtz!="UTC") {
     Sys.setenv(TZ="UTC")
+  }
+
+  # determine temp folder
+  ops <- options()
+  if(!"econModel.yieldCurve.folder" %in% Names(ops)) {
+    options(append(ops, list(econModel.yieldCurve.folder = paste0(normalizePath(tempdir(), winslash = "/"), "/", "econModel.yieldCurve.folder"))))
+  }
+
+  # verify/create temp folder
+  if(!dir.exists(getOption("econModel.yieldCurve.folder"))) {
+    dir.create(getOption("econModel.yieldCurve.folder"))
   }
 
   if(missing(year)) {
@@ -1431,125 +1426,155 @@ tryCatchLog::tryCatchLog({
   }
   URL <- paste(location, parameters, sep = "")
 
-  message(paste0("Downloading . . . ", URL))
+  DestFileRootName <- paste0(last(strsplit(URL, "(/|\\?)")[[1]],2), collapse =  "$")
+  InternetFile <- paste0(normalizePath(getOption("econModel.yieldCurve.folder"), winslash = "/"), "/",  DestFileRootName, ".", "Internet")
 
-  # DEC 2020
-  # Warning message:
-  # In readLines(con) :
-  #   incomplete final line found on 'http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData'
-  # "URL encoding (URLencode) already done by the original Author
-  Page <- suppressWarnings(fetchInternet(URL, Collapse = "", encode = F))
+  if(!file.exists(paste0(InternetFile, ".fst"))) {
+    # query and write
 
-  message("Download complete.")
+    message(paste0("Downloading . . . ", URL))
 
-  message("Converting XML, via PCRE2 regular expressions, to a data.frame . . .")
+    # DEC 2020
+    # Warning message:
+    # In readLines(con) :
+    #   incomplete final line found on 'http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData'
+    # "URL encoding" (URLencode) already done by the original Author
+    Page <- suppressWarnings(fetchInternet(URL, Collapse = "", encode = F))
 
-  VectorOfSubPageCoords <- gregexpr("<m:properties>.*?</m:properties>", Page)
+    fst::write.fst(data.frame(cbind(Page)), path = paste0(InternetFile, ".fst"), compress = 100L)
 
-  # 12 seconds # default # (7747 records) # DEC 2020
-  ListOfRecords <- mapply(function(SubPageCoords, SubPageCoordsAttrMatchLength) {
-    SubPage <- substr(Page, SubPageCoords, SubPageCoords + SubPageCoordsAttrMatchLength - 1L)
-    # replace 2 whitespaces with nothing
-    SubPage <- gsub("\\s{2,}", "" , SubPage)
-    SubPage <- sub("<m:properties>", "", SubPage)
-    SubPage <- sub("<\\/m:properties>", "", SubPage)
-    # formatted
-    SubPage <- gsub("<d:", "\n<d:", SubPage)
-    # top - remove that CR
-    SubPage <- gsub("^\\s*", "", SubPage)
-    VectorOfRecordElements <- strsplit(SubPage, "\n")[[1]]
-    # Preceeded by regex "^<d:"
-    # PCRE2 Lookarounds require "perl = TRUE"
-    # PCRE2 [A-Za-z_]+ incorrectly
-    #   breaks after the first found underscore(_)
-    ColNamesCoordinates <- regexpr("(?<=^<d:)\\w+", VectorOfRecordElements, perl = TRUE)
-    ColNames <-  substr(VectorOfRecordElements, ColNamesCoordinates, ColNamesCoordinates + attr(ColNamesCoordinates, "match.length") - 1L)
-    ColTypesCoordinates <- regexpr("(?<=m:type=\"Edm.)\\w+", VectorOfRecordElements, perl = TRUE)
-    ColTypes <-  substr(VectorOfRecordElements, ColTypesCoordinates, ColTypesCoordinates + attr(ColTypesCoordinates, "match.length") - 1L)
-    ColTypes <- sapply(ColTypes, function(x) {
-      if(nchar(x)) {
-        return(x)
-      } else {
-        return("Character")
-      }
-    }, USE.NAMES = F)
+    message("Download complete.")
 
-    # HARD-CODED
-    # Specific case in "DailyTreasuryLongTermRateData"
-    # incorrectly un-Typed at the source
-    # EXTRAPOLATION_FACTOR is (obviously) a Double
-    ColTypes[ColNames %in% "EXTRAPOLATION_FACTOR"] <- "Double"
 
-    # anything between ">" and "<"
-    # CAN be stored a zero length string ""
-    # If this does not find, then the result value becomes NA_character_
-    #   see below: "Character (special cases)"
-    ColValuesCoordinates <- regexpr("(?<=>).*(?=<)", VectorOfRecordElements, perl = TRUE)
-    #
-    ColValues <-  substr(VectorOfRecordElements, ColValuesCoordinates, ColValuesCoordinates + attr(ColValuesCoordinates, "match.length") - 1L)
+  } else {
 
-    Record <- data.frame(mapply(function(ColName, ColType, ColValue) {
+    # read
+    Page <- fst::read.fst(paste0(InternetFile, ".fst"))$Page
 
-      if(ColType == "Int32") {
-        if(nchar(ColValue)) {
-          return(as.integer(ColValue))
+  }
+
+  ConvertedFile <- paste0(InternetFile, ".ConvertedFile")
+
+
+  if(!file.exists(paste0(ConvertedFile, ".fst"))) {
+
+    message("Converting XML, via PCRE2 regular expressions, to a data.frame . . .")
+
+    VectorOfSubPageCoords <- gregexpr("<m:properties>.*?</m:properties>", Page)
+
+    # 12 seconds # default # (7747 records) # DEC 2020
+    ListOfRecords <- mapply(function(SubPageCoords, SubPageCoordsAttrMatchLength) {
+      SubPage <- substr(Page, SubPageCoords, SubPageCoords + SubPageCoordsAttrMatchLength - 1L)
+      # replace 2 whitespaces with nothing
+      SubPage <- gsub("\\s{2,}", "" , SubPage)
+      SubPage <- sub("<m:properties>", "", SubPage)
+      SubPage <- sub("<\\/m:properties>", "", SubPage)
+      # formatted
+      SubPage <- gsub("<d:", "\n<d:", SubPage)
+      # top - remove that CR
+      SubPage <- gsub("^\\s*", "", SubPage)
+      VectorOfRecordElements <- strsplit(SubPage, "\n")[[1]]
+      # Preceeded by regex "^<d:"
+      # PCRE2 Lookarounds require "perl = TRUE"
+      # PCRE2 [A-Za-z_]+ incorrectly
+      #   breaks after the first found underscore(_)
+      ColNamesCoordinates <- regexpr("(?<=^<d:)\\w+", VectorOfRecordElements, perl = TRUE)
+      ColNames <-  substr(VectorOfRecordElements, ColNamesCoordinates, ColNamesCoordinates + attr(ColNamesCoordinates, "match.length") - 1L)
+      ColTypesCoordinates <- regexpr("(?<=m:type=\"Edm.)\\w+", VectorOfRecordElements, perl = TRUE)
+      ColTypes <-  substr(VectorOfRecordElements, ColTypesCoordinates, ColTypesCoordinates + attr(ColTypesCoordinates, "match.length") - 1L)
+      ColTypes <- sapply(ColTypes, function(x) {
+        if(nchar(x)) {
+          return(x)
         } else {
-          return(NA_integer_)
+          return("Character")
         }
-      }
+      }, USE.NAMES = F)
 
-      if(ColType == "Double") {
-        if(nchar(ColValue)) {
-          return(as.numeric(ColValue))
-        } else {
-          return(NA_real_)
-        }
-      }
+      # Specific case in "DailyTreasuryLongTermRateData"
+      # incorrectly un-Typed at the source . . . No.
+      # EXTRAPOLATION_FACTOR looks (obviously) like a Double
+      # but is is "not a Double". Commonly is has the value of "N/A".
+      # NO!
+      # ColTypes[ColNames %in% "EXTRAPOLATION_FACTOR"] <- "Double"
 
-      if(ColType == "DateTime") {
-        if(nchar(ColValue)) {
-          return(as.POSIXct(ColValue))
-        } else {
-          return(NA_real_)
-        }
-      }
-
-      # ColType == "Character"(default)
-
-      # Character (special cases)
-      if(length(ColValue) & !nchar(ColValue)) {
-        # empty string ""
-        return(ColValue)
-      }
-
-      # Character (special cases)
-      if (!length(ColValue)){
-        # NULL or "unknown" or "everything else"
-        return(NA_character_)
-      }
-
-      # Not converting column names like "_DATE$"
-      # that are of type "Character"
-      # that contain "YYYY/MM/DD"
+      # anything between ">" and "<"
+      # CAN be stored a zero length string ""
+      # If this does not find, then the result value becomes NA_character_
+      #   see below: "Character (special cases)"
+      ColValuesCoordinates <- regexpr("(?<=>).*(?=<)", VectorOfRecordElements, perl = TRUE)
       #
-      # The end user can do that.
+      ColValues <-  substr(VectorOfRecordElements, ColValuesCoordinates, ColValuesCoordinates + attr(ColValuesCoordinates, "match.length") - 1L)
 
-      # everything else
-      return(ColValue)
+      Record <- data.frame(mapply(function(ColName, ColType, ColValue) {
 
-    }, ColNames, ColTypes, ColValues, SIMPLIFY = F))
-    Record
+        if(ColType == "Int32") {
+          if(nchar(ColValue)) {
+            return(as.integer(ColValue))
+          } else {
+            return(NA_integer_)
+          }
+        }
 
-  }, VectorOfSubPageCoords[[1]], attr(VectorOfSubPageCoords[[1]], "match.length"), SIMPLIFY = F)
+        if(ColType == "Double") {
+          if(nchar(ColValue)) {
+            return(as.numeric(ColValue))
+          } else {
+            return(NA_real_)
+          }
+        }
 
-  message("Converting complete.")
+        if(ColType == "DateTime") {
+          if(nchar(ColValue)) {
+            return(as.POSIXct(ColValue))
+          } else {
+            return(NA_real_)
+          }
+        }
 
-  message("Row bind conversion beginning.")
-  # Read docs carefully: "fill = T"
-  # ? data.table::rbindlist
-  # instantaneous # default # (7747 records) # DEC 2020
-  Table <- data.table::rbindlist(ListOfRecords, fill = T)
-  message("Row bind conversion complete.")
+        # ColType == "Character"(default)
+
+        # Character (special cases)
+        if(length(ColValue) & !nchar(ColValue)) {
+          # empty string ""
+          return(ColValue)
+        }
+
+        # Character (special cases)
+        if (!length(ColValue)){
+          # NULL or "unknown" or "everything else"
+          return(NA_character_)
+        }
+
+        # Not converting column names like "_DATE$"
+        # that are of type "Character"
+        # that contain "YYYY/MM/DD".
+        #
+        # The end user can do that.
+
+        # everything else
+        return(ColValue)
+
+      }, ColNames, ColTypes, ColValues, SIMPLIFY = F))
+      Record
+
+    }, VectorOfSubPageCoords[[1]], attr(VectorOfSubPageCoords[[1]], "match.length"), SIMPLIFY = F)
+
+    message("Converting complete.")
+
+    message("Row bind conversion beginning.")
+    # Read docs carefully: "fill = T"
+    # ? data.table::rbindlist
+    # instantaneous # default # (7747 records) # DEC 2020
+    Table <- data.table::rbindlist(ListOfRecords, fill = T)
+    message("Row bind conversion complete.")
+
+    fst::write.fst(Table, path = paste0(ConvertedFile, ".fst"), compress = 100)
+
+  } else {
+
+    Table <- fst::read.fst(path = paste0(ConvertedFile, ".fst"), as.data.table = TRUE)
+
+  }
 
   # choose the column of the first DATE in
   # the/a *_DATE and is the 2nd column (after the 1st column that is the *Id)
@@ -1579,10 +1604,14 @@ tryCatchLog::tryCatchLog({
     message("xcast beginning . . .")
     Xts <- xcast(Table[,c("DATE",ColNamesNumericOrFACTOR), drop = F], IndexVar = "DATE", ValueVar = "RATE")
     # xts object is out
+    # NOT USED: Instead returning all of the data
     OtherColumns <- colnames(Table)[!colnames(Table) %in% c("DATE", colnames(Table)[ColNamesNumericOrFACTOR])]
     # anything else is returned in xts user attributes
     # let the user decide what to do with those
-    xts::xtsAttributes(Xts) <-  list(OtherData = Table[, OtherColumns, drop = F])
+    xts::xtsAttributes(Xts) <- list(IndexName = OrigDATEName)
+    # because of the "cast" this data is worthless unless all fo the data is returned.
+    # Approx: only the original "*_DATE$" column has had its name change to "DATE"
+    xts::xtsAttributes(Xts) <- list(ApproxDataSheet = Table)
     message("xcast complete.")
   } else {
     NumericTable    <- Table[,  areColumnsNumeric, drop = F]
@@ -1599,7 +1628,8 @@ tryCatchLog::tryCatchLog({
     xts::xtsAttributes(Xts) <- list(IndexName = OrigDATEName)
     # just appends . . .
     # vectors, lists, data.frames "names of Variables" access
-    xts::xtsAttributes(Xts) <- list(OtherData = NonNumericTable[!colnames(NonNumericTable) %in% "DATE"])
+    # Approx: only the original "*_DATE$" column has had its name change to "DATE"
+    xts::xtsAttributes(Xts) <- list(LimitedApproxDataSheet = NonNumericTable[!colnames(NonNumericTable) %in% "DATE"])
   }
 
   Sys.setenv(TZ=oldtz)
