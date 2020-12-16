@@ -493,6 +493,10 @@ tryCatchLog::tryCatchLog({
   # . . .
   # (since 1990)
   # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield
+  #
+  # What Is the Nominal Interest Rate? (Need Inflation Adjustment)
+  # Nominal interest rate refers to the interest rate before taking inflation into account.
+  # https://www.investopedia.com/terms/n/nominalinterestrate.asp
 
   # S&P Financial Index                                 - STLFSI2 - Change in Log Levels
   # Vanguard Financials Index Fund ETF Shares (VFH)

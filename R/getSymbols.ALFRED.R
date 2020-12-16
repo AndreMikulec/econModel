@@ -940,6 +940,8 @@ tryCatchLog::tryCatchLog({
 
   if(encode) {
     URL <- utils::URLencode(x, ...)
+  } else {
+    URL <- x
   }
 
   # scrape
@@ -1282,6 +1284,332 @@ tryCatchLog::tryCatchLog({
   x
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
+
+
+
+
+
+#' Download US Treasury Yield Curve Data
+#'
+#' @description
+#' Downloads US Treasury yield curve data from the US Treasury web site.
+#' This is a fix and heavy re-write (using regular expressions instead of XML) of R CRAN package ustyc function getYieldCurve.
+#' What is different is the following:
+#' (1) This function works on all of the treasury rate data found at \url{https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics}: the R CRAN package ustyc function getYieldCurve only works on "Daily Treasury Yield Curve Rates".
+#' (2) The function defaults are different than in the R CRAN package ustyc function getYieldCurve.
+#' (3) Instead of using functions from the R CRAN package "XML", because of the "need for speed", the R package "base" PCRE2 regular expression functions are used.
+#' (4) Interprets (with limits) from the (rich datatype) XML namespaces of http://schemas.microsoft.com/ado/2007/08/dataservices/metadata and http://schemas.microsoft.com/ado/2007/08/dataservices) into R.
+#'
+#' @param base String. Required. Default is the URL: See args(yieldCurve). The base URL for the data service, defaulting to http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData.
+#' @param year String or Numeric. Default is none. The desired year number or NULL for all years. If none then the default is the current year.
+#' @param month	String or Numeric.  Default is none. The desired month number in the format (01(or 1) through 12) of Jan-Dec, or NULL for all months. If none then the default is the current month.
+#' @param IndexName String. Default is none. The column IndexName to be used in the URL.  This is specific and in very different per each URL.  See the examples.  If none, then default is "NEW_DATE".
+#' @return xts object
+#' @author Andre Mikulec (re-write)
+#' @author Matt Barry (original)
+#' @references
+#' \cite{GetYieldCurve - XML content does not seem to be XML #1
+#' \url{https://github.com/mrbcuda/ustyc/issues/1}
+#' }
+#' @references
+#' \cite{Unknown IO error #2
+#' \url{https://github.com/mrbcuda/ustyc/issues/2}
+#' }
+#' @references
+#' \cite{Interest Rate Statistics
+#' \url{https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics}
+#' }
+#' @examples
+#' \dontrun{
+#' # (1) Daily Treasury Yield Curve Rates
+#' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=yield
+#' # https://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData?$filter=month(NEW_DATE)%20eq%2012%20and%20year(NEW_DATE)%20eq%202020"
+#' result <- yieldCurve()
+#' # if the current date is in DEC 2020 (then the next example is the same)
+#' result <- yieldCurve(year = 2020, month = 12)
+#' result
+#'
+#'
+#'
+#'
+#' # (1.5) Everything now and in history of Daily Treasury Yield Curve Rates
+#' # https://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData
+#' # result <- yieldCurve(year = NULL, month = NULL)
+#'
+#'
+#'
+#' # (2) Daily Treasury Bill Rates Data
+#' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=billrates
+#' # https://data.treasury.gov/feed.svc/DailyTreasuryBillRateData?$filter=month(INDEX_DATE)%20eq%2012%20and%20year(INDEX_DATE)%20eq%202020
+#' result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryBillRateData",
+#'             IndexName = "INDEX_DATE")
+#' result
+#'
+#'
+#'
+#'
+#' # (3) Daily Treasury Long Term Rate Data
+#' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=longtermrate
+#' # http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRateData?$filter=month(QUOTE_DATE)%20eq%2012%20and%20year(QUOTE_DATE)%20eq%202020"
+#' result <- yieldCurve("http://data.treasury.gov/feed.svc/DailyTreasuryLongTermRateData",
+#'             IndexName = "QUOTE_DATE")
+#' result
+#'
+#'
+#'
+#'
+#' # (4) Daily Treasury Real Yield Curve Rates
+#' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=realyield
+#' # https://data.treasury.gov/feed.svc/DailyTreasuryRealYieldCurveRateData?$filter=month(NEW_DATE)%20eq%2012%20and%20year(NEW_DATE)%20eq%202020"
+#' result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryRealYieldCurveRateData",
+#'             IndexName = "NEW_DATE")
+#' result
+#'
+#'
+#'
+#'
+#' # (5) Daily Treasury Real Long-Term Rates
+#' #
+#' # Since 2000
+#' # Long Term Real Rate Average: The Long-Term Real Rate Average is the
+#' # unweighted average of bid real yields on all outstanding TIPS
+#' # with remaing maturities of more than 10 years and is intended as a
+#' # proxy for long-term real rates.
+#' # https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=reallongtermrate
+#' # https://data.treasury.gov/feed.svc/DailyTreasuryRealLongTermRateAverageData?$filter=month(QUOTE_DATE)%20eq%2012%20and%20year(QUOTE_DATE)%20eq%202020"
+#' result <- yieldCurve("https://data.treasury.gov/feed.svc/DailyTreasuryRealLongTermRateAverageData",
+#'             IndexName = "QUOTE_DATE")
+#' result
+#'
+#'
+#'
+#'
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools Year Month
+#' @importFrom data.table rbindlist
+#' @importFrom xts as.xts xtsAttributes `xtsAttributes<-`
+#' @export
+yieldCurve <- function (base = "http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData",
+                        year, month, IndexName){
+tryCatchLog::tryCatchLog({
+
+  oldtz <- Sys.getenv("TZ")
+  if(oldtz!="UTC") {
+    Sys.setenv(TZ="UTC")
+  }
+
+  if(missing(year)) {
+    year <- DescTools::Year(Sys.Date())
+  }
+  if(missing(month)){
+    month <- DescTools::Month((Sys.Date()))
+  }
+  if(missing(IndexName)){
+    IndexName <- "NEW_DATE"
+  }
+
+  location <- base
+  yloc <- mloc <- doc <- NULL
+  yloc <- if (length(year))
+    paste0("year(", IndexName, ")%20eq%20", year)
+  mloc <- if (length(month))
+    paste0("month(", IndexName, ")%20eq%20", month)
+  parameters <- ""
+  if (length(yloc) && length(mloc)) {
+    parameters = paste0("?$filter=", mloc, "%20and%20", yloc)
+  }
+  else {
+    if (length(yloc))
+      parameters = paste("?$filter=", yloc, sep = "")
+    if (length(mloc))
+      parameters = paste("?$filter=", mloc, sep = "")
+  }
+  URL <- paste(location, parameters, sep = "")
+
+  message(paste0("Downloading . . . ", URL))
+
+  # DEC 2020
+  # Warning message:
+  # In readLines(con) :
+  #   incomplete final line found on 'http://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData'
+  # "URL encoding (URLencode) already done by the original Author
+  Page <- suppressWarnings(fetchInternet(URL, Collapse = "", encode = F))
+
+  message("Download complete.")
+
+  message("Converting XML, via PCRE2 regular expressions, to a data.frame . . .")
+
+  VectorOfSubPageCoords <- gregexpr("<m:properties>.*?</m:properties>", Page)
+
+  # 12 seconds # default # (7747 records) # DEC 2020
+  ListOfRecords <- mapply(function(SubPageCoords, SubPageCoordsAttrMatchLength) {
+    SubPage <- substr(Page, SubPageCoords, SubPageCoords + SubPageCoordsAttrMatchLength - 1L)
+    # replace 2 whitespaces with nothing
+    SubPage <- gsub("\\s{2,}", "" , SubPage)
+    SubPage <- sub("<m:properties>", "", SubPage)
+    SubPage <- sub("<\\/m:properties>", "", SubPage)
+    # formatted
+    SubPage <- gsub("<d:", "\n<d:", SubPage)
+    # top - remove that CR
+    SubPage <- gsub("^\\s*", "", SubPage)
+    VectorOfRecordElements <- strsplit(SubPage, "\n")[[1]]
+    # Preceeded by regex "^<d:"
+    # PCRE2 Lookarounds require "perl = TRUE"
+    # PCRE2 [A-Za-z_]+ incorrectly
+    #   breaks after the first found underscore(_)
+    ColNamesCoordinates <- regexpr("(?<=^<d:)\\w+", VectorOfRecordElements, perl = TRUE)
+    ColNames <-  substr(VectorOfRecordElements, ColNamesCoordinates, ColNamesCoordinates + attr(ColNamesCoordinates, "match.length") - 1L)
+    ColTypesCoordinates <- regexpr("(?<=m:type=\"Edm.)\\w+", VectorOfRecordElements, perl = TRUE)
+    ColTypes <-  substr(VectorOfRecordElements, ColTypesCoordinates, ColTypesCoordinates + attr(ColTypesCoordinates, "match.length") - 1L)
+    ColTypes <- sapply(ColTypes, function(x) {
+      if(nchar(x)) {
+        return(x)
+      } else {
+        return("Character")
+      }
+    }, USE.NAMES = F)
+
+    # HARD-CODED
+    # Specific case in "DailyTreasuryLongTermRateData"
+    # incorrectly un-Typed at the source
+    # EXTRAPOLATION_FACTOR is (obviously) a Double
+    ColTypes[ColNames %in% "EXTRAPOLATION_FACTOR"] <- "Double"
+
+    # anything between ">" and "<"
+    # CAN be stored a zero length string ""
+    # If this does not find, then the result value becomes NA_character_
+    #   see below: "Character (special cases)"
+    ColValuesCoordinates <- regexpr("(?<=>).*(?=<)", VectorOfRecordElements, perl = TRUE)
+    #
+    ColValues <-  substr(VectorOfRecordElements, ColValuesCoordinates, ColValuesCoordinates + attr(ColValuesCoordinates, "match.length") - 1L)
+
+    Record <- data.frame(mapply(function(ColName, ColType, ColValue) {
+
+      if(ColType == "Int32") {
+        if(nchar(ColValue)) {
+          return(as.integer(ColValue))
+        } else {
+          return(NA_integer_)
+        }
+      }
+
+      if(ColType == "Double") {
+        if(nchar(ColValue)) {
+          return(as.numeric(ColValue))
+        } else {
+          return(NA_real_)
+        }
+      }
+
+      if(ColType == "DateTime") {
+        if(nchar(ColValue)) {
+          return(as.POSIXct(ColValue))
+        } else {
+          return(NA_real_)
+        }
+      }
+
+      # ColType == "Character"(default)
+
+      # Character (special cases)
+      if(length(ColValue) & !nchar(ColValue)) {
+        # empty string ""
+        return(ColValue)
+      }
+
+      # Character (special cases)
+      if (!length(ColValue)){
+        # NULL or "unknown" or "everything else"
+        return(NA_character_)
+      }
+
+      # Not converting column names like "_DATE$"
+      # that are of type "Character"
+      # that contain "YYYY/MM/DD"
+      #
+      # The end user can do that.
+
+      # everything else
+      return(ColValue)
+
+    }, ColNames, ColTypes, ColValues, SIMPLIFY = F))
+    Record
+
+  }, VectorOfSubPageCoords[[1]], attr(VectorOfSubPageCoords[[1]], "match.length"), SIMPLIFY = F)
+
+  message("Converting complete.")
+
+  message("Row bind conversion beginning.")
+  # Read docs carefully: "fill = T"
+  # ? data.table::rbindlist
+  # instantaneous # default # (7747 records) # DEC 2020
+  Table <- data.table::rbindlist(ListOfRecords, fill = T)
+  message("Row bind conversion complete.")
+
+  # choose the column of the first DATE in
+  # the/a *_DATE and is the 2nd column (after the 1st column that is the *Id)
+  areColNamesDATE <- !is.na(match(grepl("^.*_DATE$", colnames(Table)), TRUE))
+
+  # the first DATE
+  te <- rep(FALSE, length(colnames(Table)))
+  te[first(seq_along(colnames(Table))[areColNamesDATE])] <- TRUE
+  isColName1stDATE <- te
+  #
+  OrigDATEName <- colnames(Table)[isColName1stDATE]
+
+  # rename
+  colnames(Table)[isColName1stDATE] <- "DATE"
+
+  # col info
+  areColumnsNumeric <- sapply(Table, function(x) inherits(x, "numeric"))
+  areColNamesFACTOR <- !is.na(match(grepl("^.*_TYPE$", colnames(Table)), TRUE))
+  areColNamesNumericOrFACTOR <- areColumnsNumeric | areColNamesFACTOR
+  ColNamesNumericOrFACTOR <- colnames(Table)[areColNamesNumericOrFACTOR]
+
+  # so I can use data.frame assessors
+  Table <- data.frame(Table)
+  #
+  # it has a factor, so I cast
+  if(any(areColNamesFACTOR)) {
+    message("xcast beginning . . .")
+    Xts <- xcast(Table[,c("DATE",ColNamesNumericOrFACTOR), drop = F], IndexVar = "DATE", ValueVar = "RATE")
+    # xts object is out
+    OtherColumns <- colnames(Table)[!colnames(Table) %in% c("DATE", colnames(Table)[ColNamesNumericOrFACTOR])]
+    # anything else is returned in xts user attributes
+    # let the user decide what to do with those
+    xts::xtsAttributes(Xts) <-  list(OtherData = Table[, OtherColumns, drop = F])
+    message("xcast complete.")
+  } else {
+    NumericTable    <- Table[,  areColumnsNumeric, drop = F]
+    NonNumericTable <- Table[, !areColumnsNumeric, drop = F]
+    # move the index to the rownames (data.table does not do rownames)
+    # side note: data.table does not do rownames (directly)
+    # DATE is not numeric!
+    rownames(NumericTable) <- NonNumericTable[["DATE"]]
+
+    Xts <- xts::as.xts(NumericTable)
+    # anything else is returned in xts user attributes
+    # let the user decide what to do with those
+
+    xts::xtsAttributes(Xts) <- list(IndexName = OrigDATEName)
+    # just appends . . .
+    # vectors, lists, data.frames "names of Variables" access
+    xts::xtsAttributes(Xts) <- list(OtherData = NonNumericTable[!colnames(NonNumericTable) %in% "DATE"])
+  }
+
+  Sys.setenv(TZ=oldtz)
+
+  Xts
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
 
 
 #' Download vintage dates of Federal Reserve Economic Data - ALFRED(R)
