@@ -24,29 +24,22 @@
 #' }
 #' @examples
 #' \dontrun{
+#' dateAAIISIPro()
+#' [1] "18565"
 #'
-#' # examples of
-#' # getAAIISIProDate(Data version of the SIPro)
-#'
-#' getAAIISIProDate()
-#' [1] "18535"
-#'
-#' zoo::as.Date(as.integer(getAAIISIProDate()))
-#' [1] "2020-09-30"
+#' zoo::as.Date(as.integer(dateAAIISIPro()))
+#' [1] "2020-10-30"
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom foreign read.dbf
 #' @export
-getAAIISIProDate <- function(
-  From = "C:/Program Files (x86)/Stock Investor/Professional") {
+dateAAIISIPro <- function(From = "C:/Program Files (x86)/Stock Investor/Professional") {
 tryCatchLog::tryCatchLog({
 
   oldtz <- Sys.getenv('TZ')
   if(oldtz=='') {
     Sys.setenv(TZ="UTC")
   }
-
-  From <- normalizePath(From, winslash = "/")
 
   SetupFile <- suppressWarnings(suppressMessages(foreign::read.dbf(file=paste0(From,"/","Setup.dbf"), as.is = TRUE)))
 
@@ -69,8 +62,6 @@ tryCatchLog::tryCatchLog({
 
 
 
-
-
 #' Copy SIPro .DBF Files to a Target Directory
 #'
 #' AAII StockInvestor Pro source corporate and price data is stored in .DBF files.
@@ -82,15 +73,13 @@ tryCatchLog::tryCatchLog({
 #' @return string. Date of the SIPro update, in days since the UNIX epoch (birthday of UNIX: January 1st, 1970). Returned is the "Current as of date" of StockInvestor Pro.  This is the same data found by doing Help -> About (and then reading the bottom line).
 #' @examples
 #' \dontrun{
-#'
-#' # copyAAIISIProDBFs(Copy SIPro .DBF Files to a Target Directory) example
-#'
 #' copyAAIISIProDBFs(
 #'     From = "C:/Program Files (x86)/Stock Investor/Professional",
-#'     To   = paste0(tempdir(),"/", getAAIISIProDate()),
+#'     To   = paste0("C:/DATA/AAIISIPRO","/", dateAAIISIPro()),
 #'     CaseChange = "UpperCase"
 #' )
-#' dir(paste0(tempdir(),"/", getAAIISIProDate()))
+#'
+#' dir(paste0("C:/DATA/AAIISIPRO","/", dateAAIISIPro()))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 copyAAIISIProDBFs <- function(From = "C:/Program Files (x86)/Stock Investor/Professional",
@@ -114,3 +103,18 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
+#' Convert DTF files to FST files
+#'
+#' * NOT YET IMPLEMENTED *
+#' From a vector of DBF file locations (or a list of named (location of each DBF data file) with the value being a data.frame), create an FTS file.
+#'
+#' @param ListOfItems List of named vectors. If ListOfItems is a named vector, then Source and Target locations. If ListOfItems is a list of dataframes than the locations are the names of the list elements.
+#' @return None. FTS files have been created on disk.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom fst read.fst write.fst
+copyToFSTs <- function(ListOfItems) {
+tryCatchLog::tryCatchLog({
+
+  stop("copyToFSTS is not yet implemented")
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}

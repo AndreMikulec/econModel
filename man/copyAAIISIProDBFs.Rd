@@ -26,14 +26,12 @@ Along with the copied .DBF files also the ReadMe.txt and the si.chm help files i
 }
 \examples{
 \dontrun{
-
-# copyAAIISIProDBFs(Copy SIPro .DBF Files to a Target Directory) example
-
 copyAAIISIProDBFs(
     From = "C:/Program Files (x86)/Stock Investor/Professional",
-    To   = paste0(tempdir(),"/", getAAIISIProDate()),
+    To   = paste0("C:/DATA/AAIISIPRO","/", dateAAIISIPro()),
     CaseChange = "UpperCase"
 )
-dir(paste0(tempdir(),"/", getAAIISIProDate()))
+
+dir(paste0("C:/DATA/AAIISIPRO","/", dateAAIISIPro()))
 }
 }
