@@ -5,7 +5,7 @@
 \title{Copy SIPro .DBF Files to a Target Directory}
 \usage{
 copyAAIISIProDBFs(
-  From = "C:/Program Files (x86)/Stock Investor/Professional",
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
   To = tempdir(),
   CaseChange = "UpperCase"
 )
@@ -27,11 +27,11 @@ Along with the copied .DBF files also the ReadMe.txt and the si.chm help files i
 \examples{
 \dontrun{
 copyAAIISIProDBFs(
-    From = "C:/Program Files (x86)/Stock Investor/Professional",
-    To   = paste0("C:/DATA/AAIISIPRO","/", dateAAIISIPro()),
+    From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+    To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE","\\\\", dateAAIISIPro()),
     CaseChange = "UpperCase"
 )
 
-dir(paste0("C:/DATA/AAIISIPRO","/", dateAAIISIPro()))
+dir(paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE", "\\\\", dateAAIISIPro()))
 }
 }
