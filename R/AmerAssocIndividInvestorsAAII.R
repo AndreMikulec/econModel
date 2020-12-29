@@ -721,12 +721,12 @@ tryCatchLog::tryCatchLog({
   FullCollection[["Base"]] <- c(
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\setup.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_ci.dbf",
-    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_date.dbf",
-    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\SI_MGDSC.DBF",
-    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\SI_MGDSC.DBF",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\SI_EXCHG.DBF",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_sp.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_ptyp.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_date.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_trbcs.dbf",
-    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_ptyp.dbf"
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\SI_MGDSC.DBF"
   )
 
   # Needs "Base"
@@ -789,8 +789,8 @@ tryCatchLog::tryCatchLog({
 formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                                      # Base
                        FromFiles = c("SETUP.DBF",
-                                     "SI_CI.DBF" , "SI_DATE.DBF", "SI_EXCHG.DBF", "SI_MGDSC.DBF",
-                                     "SI_SP.DBF", "SI_TRBCS.DBF",  "SI_PTYP.DBF",
+                                     "SI_CI.DBF" , "SI_EXCHG.DBF", "SI_SP.DBF", "SI_PTYP.DBF",
+                                     "SI_DATE.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF",
                                      # Prices
                                      "SI_PSD.DBF", "SI_PSDC.DBF", "SI_PSDD.DBF",
                                      # Sheets

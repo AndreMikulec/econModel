@@ -6,9 +6,9 @@
 \usage{
 formatDBFs(
   From = paste0("C:/DATA/AAIISIPRO/MONTHDATE", "/", 18565),
-  FromFiles = c("SETUP.DBF", "SI_CI.DBF", "SI_DATE.DBF", "SI_EXCHG.DBF",
-    "SI_MGDSC.DBF", "SI_SP.DBF", "SI_TRBCS.DBF", "SI_PTYP.DBF", "SI_PSD.DBF",
-    "SI_PSDC.DBF", "SI_PSDD.DBF", "SI_ISQ.DBF", "SI_BSQ.DBF", "SI_CFQ.DBF"),
+  FromFiles = c("SETUP.DBF", "SI_CI.DBF", "SI_EXCHG.DBF", "SI_SP.DBF", "SI_PTYP.DBF",
+    "SI_DATE.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF", "SI_PSD.DBF", "SI_PSDC.DBF",
+    "SI_PSDD.DBF", "SI_ISQ.DBF", "SI_BSQ.DBF", "SI_CFQ.DBF"),
   To = From,
   PrependColFile = "SETUP.DBF",
   PrefixCols = c(SI_CI = "LASTMOD", SI_MGDSC = "MG_CODE", SI_MGDSC = "MG_DESC",
