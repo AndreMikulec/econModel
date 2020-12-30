@@ -4,7 +4,7 @@
 \alias{viewSIPRO}
 \title{Load and View AAII StockInvestor Pro FoxPro/DBase (DBF) Files}
 \usage{
-viewSIPRO(Collection, Source = "Install", SubDir, ...)
+viewSIPRO(Collection, Source = "Install", SubDir, Ext = "DBF", ...)
 }
 \arguments{
 \item{Collection}{String.  Some of "Base", "Prices", "Sheets", or "Dictionary". Required.}
@@ -12,6 +12,8 @@ viewSIPRO(Collection, Source = "Install", SubDir, ...)
 \item{Source}{String.  One of "Install" or "Repository".}
 
 \item{SubDir}{String.  Single directory containing the "DBF" files. If "Source" = "Repository", then Required. Otherwise, ignored.}
+
+\item{Ext}{String. Default is "DBF". This is always the case when "Source = "Install": so, this parameters is ignored.  Alternatively, this parameter can be "FST" when "Source = "Repository"".}
 }
 \value{
 String. Name of the data.frame loaded. data.frames are loaded into the environment.  Attempted to be started is View() upon each data.frame.
@@ -23,5 +25,6 @@ Creates a data.frame from each  file.  Loads those data.frames into the .Global 
 \dontrun{
 viewSIPRO("Base")
 viewSIPRO("Base", Source = "Repository", SubDir = "C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE\\\\18565")
+viewSIPRO("Base", Source = "Repository", SubDir = "C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE\\\\18565", Ext = "FST")
 }
 }

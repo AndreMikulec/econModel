@@ -670,16 +670,18 @@ tryCatchLog::tryCatchLog({
 #' @param Collection String.  Some of "Base", "Prices", "Sheets", or "Dictionary". Required.
 #' @param Source String.  One of "Install" or "Repository".
 #' @param SubDir String.  Single directory containing the "DBF" files. If "Source" = "Repository", then Required. Otherwise, ignored.
+#' @param Ext String. Default is "DBF". This is always the case when "Source = "Install": so, this parameters is ignored.  Alternatively, this parameter can be "FST" when "Source = "Repository"".
 #' @returns String. Name of the data.frame loaded. data.frames are loaded into the environment.  Attempted to be started is View() upon each data.frame.
 #' @examples
 #' \dontrun{
 #' viewSIPRO("Base")
 #' viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18565")
+#' viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18565", Ext = "FST")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
 #' @export
-viewSIPRO <- function(Collection, Source = "Install", SubDir, ...) {
+viewSIPRO <- function(Collection, Source = "Install", SubDir, Ext = "DBF", ...) {
 tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
@@ -704,6 +706,14 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"SubDir\" required when parameter \"Source\" = \"Repository\".")
   }
 
+  if(!Ext %in% c("DBF","FST")) {
+    stop("Parameter \"Ext\" most be one of  \"DBF\" or \"FST\".")
+  }
+
+  if(Ext %in% "FST" && Source == "Install") {
+    stop("Parameter \"FST\" files will not be \"looked for\" in the \"Install\" directory.")
+  }
+
   OtherReturns <- raw()
   if(1L < NROW(Collection)) {
     OtherReturns <- sapply(Collection[seq_along(Collection)[-1L]], function(Collection) {
@@ -712,6 +722,8 @@ tryCatchLog::tryCatchLog({
   }
 
   FullCollection <- list()
+
+  # Install area
 
   FullCollection[["Dictionary"]] <- c(
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Datadict\\filemast.dbf",
@@ -725,6 +737,7 @@ tryCatchLog::tryCatchLog({
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_sp.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_ptyp.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_date.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_utyp.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_trbcs.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\SI_MGDSC.DBF"
   )
@@ -748,11 +761,25 @@ tryCatchLog::tryCatchLog({
 
   if(Source == "Repository") {
 
+    # Repository Area
+
     Coordinates <- regexpr("\\w+[.]\\w+$", SelectedFromFullCollection, perl = TRUE)
     SelectedFromFullCollection <-  toupper(substr(SelectedFromFullCollection, Coordinates, Coordinates + attr(Coordinates, "match.length") - 1L))
 
     SelectedFromFullCollection <- paste0(SubDir, "/", SelectedFromFullCollection)
+    if(Ext == "DBF") {
+      SelectedFromFullCollection <- SelectedFromFullCollection
+    }
 
+    if(Ext == "FST") {
+      SelectedFromFullCollection <- sub("DBF$", "FST", SelectedFromFullCollection)
+    }
+
+  }
+
+  FileExistsConclusion <- file.exists(SelectedFromFullCollection)
+  if(!any(FileExistsConclusion)) {
+    stop(paste0("Missing requested files: ", paste0(SelectedFromFullCollection[!FileExistsConclusion], collapse = " and ")  , " . . . . Aborting."))
   }
 
   ReturnLoadAndView <- DescTools::DoCall("loadAndView", c(list(), list(SubPathFileExt = SelectedFromFullCollection), list(HowFileName = "filePostFixName"), list(env = .GlobalEnv), Dots[Names(Dots) %in% "loadAndView"]))
@@ -769,12 +796,13 @@ tryCatchLog::tryCatchLog({
 #'
 #' Removed useless columns.  Remove duplicated data.  Change column datatypes.
 #'
-#' @param From Directory containing the Files xor R object list of data.frames
-#' @param FromFiles if From is a directory, then a vector of "DBF" files of interest
-#' @param To if From is a directory, then the new directory location.
+#' @param From Directory containing the Files (xor R object list of data.frames - NOT-IMPLEMENTED).
+#' @param FromFiles if From is a directory, then a vector of "DBF" files of interest.
+#' @param To if From is a directory, then the new directory location (xor R object list of data.frames - NOT-IMPLEMENTED).
 #' @param PrependColFile DBF file that has the  Unique identifier column name.  This is the first column.
 #' @param RemoveCols Vector of regular expressions(PERL = T) of columns to remove.
-#' @param RemoveDupsColValues Column name to remove duplicates.
+#' @param RemoveDupsColFileExceptions Files to non-remove duplicate column values.  See the next parameter. RemoveDupsColValues.
+#' @param RemoveDupsColValues Column name to have its duplicates (and an corresponding non-duplicates) removed.
 #' @param ChangeType list of named vectors, with the name of the vector to be the output datatype, and the values of the vectors to be regular expressions identifying the columns to be converted.  Remaining columns not yet converted are converted to numeric.
 #' @return If "From" is a directory, then new files are placed on disk. Alternately, if "From" is an R list, then return a list of modified data.tables.
 #' @examples
@@ -790,7 +818,7 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                                      # Base
                        FromFiles = c("SETUP.DBF",
                                      "SI_CI.DBF" , "SI_EXCHG.DBF", "SI_SP.DBF", "SI_PTYP.DBF",
-                                     "SI_DATE.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF",
+                                     "SI_DATE.DBF", "SI_UTYP.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF",
                                      # Prices
                                      "SI_PSD.DBF", "SI_PSDC.DBF", "SI_PSDD.DBF",
                                      # Sheets
@@ -800,9 +828,13 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                        PrependColFile = "SETUP.DBF",
                        PrefixCols = c(SI_CI = "LASTMOD",
                                       SI_MGDSC = "MG_CODE", SI_MGDSC = "MG_DESC",
-                                      SI_TRBCS = "MG_CODE", SI_TRBCS = "MG_DESC"
-                                    ),
-                       RemoveCols = c("^X.*$", "X_NullFlags", "REPNO", "LASTMOD", "UPDATED"),
+                                      SI_TRBCS = "MG_CODE", SI_TRBCS = "MG_DESC",
+                                      SI_PTYP  = "TYPE_CODE", SI_PTYP = "TYPE_DESCR",
+                                      SI_UTYP  = "TYPE_CODE", SI_UTYP = "TYPE_DESCR"
+                                    ),                                 # only one that has different dates
+                       RemoveCols = c("^X.*$", "X_NullFlags", "REPNO", "(?<!CI_)LASTMOD", "UPDATED"),
+                       # because the "UTYP" codes (re-statements) are in here
+                       RemoveDupsColFileExceptions = c(""), # SI_DATE.DBF only has the most recent 'statement' (so no DUPS)
                        RemoveDupsColValues = c("COMPANY_ID"),
                                                 # Dates seem to be already Dates (NOTHING TO DO)
                        ChangeType = list(Date = c("^.*DATE$", "^PRICED.*$", "^.*DT$", "^.*LASTMOD$", "^PEREND_.*$"),
@@ -814,7 +846,7 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                                                       "^COUNTRY$", "^PHONE$", "^WEB_ADDR$", "^BUSINESS$", "^ANALYST_FN$", "IND_2_DIG", "^IND_3_DIG$", "^SIC$", "^SP$", "^DOW$",
                                                       "^EXCHG_CODE$", "^EXCHG_DESC$", "^.*MG_CODE$", "^.*MG_DESC$",
                                                       "^PERTYP_.*$", "^UPDTYP_.*$",
-                                                      "^SP_CODE$", "^SP_DESC$", "^TYPE_CODE$", "^TYPE_DESCR$")
+                                                      "^SP_CODE$", "^SP_DESC$", "^.*TYPE_CODE$", "^.*TYPE_DESCR$", "^TYPE_SHORT$")
 
                                         )
                        ) {
@@ -897,10 +929,12 @@ tryCatchLog::tryCatchLog({
       })
 
       # remove duplicates
-      if(length(RemoveDupsColValues) && any(RemoveDupsColValues %in% colnames(ReadFile))) {
-         for(RemoveDupsColValue in RemoveDupsColValues) {
-           ReadFile <- ReadFile[!(duplicated(unlist(ReadFile[, RemoveDupsColValue])) | duplicated(unlist(ReadFile[, RemoveDupsColValue]), fromLast=TRUE)), , drop = FALSE]
-         }
+      if(!FromFile %in% RemoveDupsColFileExceptions) {
+        if(length(RemoveDupsColValues) && any(RemoveDupsColValues %in% colnames(ReadFile))) {
+           for(RemoveDupsColValue in RemoveDupsColValues) {
+             ReadFile <- ReadFile[!(duplicated(unlist(ReadFile[, RemoveDupsColValue])) | duplicated(unlist(ReadFile[, RemoveDupsColValue]), fromLast=TRUE)), , drop = FALSE]
+           }
+        }
       }
       # determine
       # PrependColFile garanteed to be first (SEE above)

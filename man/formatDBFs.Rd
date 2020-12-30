@@ -7,13 +7,15 @@
 formatDBFs(
   From = paste0("C:/DATA/AAIISIPRO/MONTHDATE", "/", 18565),
   FromFiles = c("SETUP.DBF", "SI_CI.DBF", "SI_EXCHG.DBF", "SI_SP.DBF", "SI_PTYP.DBF",
-    "SI_DATE.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF", "SI_PSD.DBF", "SI_PSDC.DBF",
-    "SI_PSDD.DBF", "SI_ISQ.DBF", "SI_BSQ.DBF", "SI_CFQ.DBF"),
+    "SI_DATE.DBF", "SI_UTYP.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF", "SI_PSD.DBF",
+    "SI_PSDC.DBF", "SI_PSDD.DBF", "SI_ISQ.DBF", "SI_BSQ.DBF", "SI_CFQ.DBF"),
   To = From,
   PrependColFile = "SETUP.DBF",
   PrefixCols = c(SI_CI = "LASTMOD", SI_MGDSC = "MG_CODE", SI_MGDSC = "MG_DESC",
-    SI_TRBCS = "MG_CODE", SI_TRBCS = "MG_DESC"),
-  RemoveCols = c("^X.*$", "X_NullFlags", "REPNO", "LASTMOD", "UPDATED"),
+    SI_TRBCS = "MG_CODE", SI_TRBCS = "MG_DESC", SI_PTYP = "TYPE_CODE", SI_PTYP =
+    "TYPE_DESCR", SI_UTYP = "TYPE_CODE", SI_UTYP = "TYPE_DESCR"),
+  RemoveCols = c("^X.*$", "X_NullFlags", "REPNO", "(?<!CI_)LASTMOD", "UPDATED"),
+  RemoveDupsColFileExceptions = c(""),
   RemoveDupsColValues = c("COMPANY_ID"),
   ChangeType = list(Date = c("^.*DATE$", "^PRICED.*$", "^.*DT$", "^.*LASTMOD$",
     "^PEREND_.*$"), logical = c("^ADR$", "^OPTIONABLE$", "^DRP_AVAIL$", "^UPDATED$"),
@@ -22,21 +24,23 @@ formatDBFs(
     "^STATE$", "^ZIP$", "^COUNTRY$", "^PHONE$", "^WEB_ADDR$", "^BUSINESS$",
     "^ANALYST_FN$", "IND_2_DIG", "^IND_3_DIG$", "^SIC$", "^SP$", "^DOW$", "^EXCHG_CODE$",
     "^EXCHG_DESC$", "^.*MG_CODE$", "^.*MG_DESC$", "^PERTYP_.*$",      "^UPDTYP_.*$",
-    "^SP_CODE$", "^SP_DESC$", "^TYPE_CODE$", "^TYPE_DESCR$"))
+    "^SP_CODE$", "^SP_DESC$", "^.*TYPE_CODE$", "^.*TYPE_DESCR$", "^TYPE_SHORT$"))
 )
 }
 \arguments{
-\item{From}{Directory containing the Files xor R object list of data.frames}
+\item{From}{Directory containing the Files (xor R object list of data.frames - NOT-IMPLEMENTED).}
 
-\item{FromFiles}{if From is a directory, then a vector of "DBF" files of interest}
+\item{FromFiles}{if From is a directory, then a vector of "DBF" files of interest.}
 
-\item{To}{if From is a directory, then the new directory location.}
+\item{To}{if From is a directory, then the new directory location (xor R object list of data.frames - NOT-IMPLEMENTED).}
 
 \item{PrependColFile}{DBF file that has the  Unique identifier column name.  This is the first column.}
 
 \item{RemoveCols}{Vector of regular expressions(PERL = T) of columns to remove.}
 
-\item{RemoveDupsColValues}{Column name to remove duplicates.}
+\item{RemoveDupsColFileExceptions}{Files to non-remove duplicate column values.  See the next parameter. RemoveDupsColValues.}
+
+\item{RemoveDupsColValues}{Column name to have its duplicates (and an corresponding non-duplicates) removed.}
 
 \item{ChangeType}{list of named vectors, with the name of the vector to be the output datatype, and the values of the vectors to be regular expressions identifying the columns to be converted.  Remaining columns not yet converted are converted to numeric.}
 }
