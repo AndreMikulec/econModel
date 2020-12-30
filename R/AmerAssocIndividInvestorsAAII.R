@@ -1029,21 +1029,22 @@ dbWriteTableEm <- function(conn, DfName = substitute(Df), Df, FillNull = TRUE,
                            ...) {
 tryCatchLog::tryCatchLog({
 
+  # R CRAN package caroline function dbWriteTable2
+  # can not see DBI/RPostgreSQL S4 methods, so I am importing
+  # the package "DBI" methods that the package "caroline" uses.
+  # #' @importFrom DBI db* ETC
+
   # Influenced by R CRAN packages
   # "RPostgreSQL",
   # "caroline",
-  # and (especially) "rpostgis". (excellent: but requires the "PostGIS extension")
+  # and (especially) "rpostgis".
+  #   (excellent: but pg* functions require the "PostGIS extension")
 
   # Influenced by the github/gitlab R packages
   # https://github.com/jangorecki/pg (https://gitlab.com/jangorecki/pg)
   # https://github.com/jangorecki/logR (https://gitlab.com/jangorecki/logR)
   #
 
-  # R CRAN package caroline function dbWriteTable2
-  # can not see DBI/RPostgreSQL S4 methods, so I am importing them.
-
-  # if new columns exist in Df but do not exist at con
-  # then I MUST add them here to the con
 
   # Note: Please also read
   #
@@ -1087,6 +1088,10 @@ tryCatchLog::tryCatchLog({
   #   ret
   # }
   # # DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
+
+  # if new columns exist in Df but do not exist at con(remote database)
+  # then I MUST add them here to the con
+  # *** TO BE IMPLEMENTED
 
   # Because caroline dbWriteTable2 requires it.
   # Just (badly) needed to (indirectly) get the column data types.
