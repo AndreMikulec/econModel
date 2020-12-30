@@ -17,6 +17,7 @@ Imports:
     reshape2,
     DBI,
     caroline,
+    rpostgis,
     data.table,
     fst,
     R.oo,

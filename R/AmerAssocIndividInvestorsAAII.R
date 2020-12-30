@@ -1021,12 +1021,23 @@ tryCatchLog::tryCatchLog({
 #' @importFrom caroline dbWriteTable2
 #' @importFrom DBI dbExistsTable dbWriteTable
 #' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
+#' @importFrom rpostgis dbColumn
 #' @export
 dbWriteTableEm <- function(conn, DfName = substitute(Df), Df, FillNull = TRUE,
                            AddID = FALSE, RowNames = FALSE, PgUpdateSeq = FALSE,
                            lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
                            ...) {
 tryCatchLog::tryCatchLog({
+
+  # Influenced by R CRAN packages
+  # "RPostgreSQL",
+  # "caroline",
+  # and (especially) "rpostgis". (excellent: but requires the "PostGIS extension")
+
+  # Influenced by the github/gitlab R packages
+  # https://github.com/jangorecki/pg (https://gitlab.com/jangorecki/pg)
+  # https://github.com/jangorecki/logR (https://gitlab.com/jangorecki/logR)
+  #
 
   # R CRAN package caroline function dbWriteTable2
   # can not see DBI/RPostgreSQL S4 methods, so I am importing them.
@@ -1070,18 +1081,19 @@ tryCatchLog::tryCatchLog({
     DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
   }
 
-  # https://github.com/tomoakin/RPostgreSQL/blob/master/RPostgreSQL/R/PostgreSQLSupport.R
-  postgresqlTableRef <- function(identifiers){
-    ret <- paste('"', gsub('"','""',identifiers), '"', sep="", collapse=".")
-    ret
-  }
+  # # https://github.com/tomoakin/RPostgreSQL/blob/master/RPostgreSQL/R/PostgreSQLSupport.R
+  # postgresqlTableRef <- function(identifiers){
+  #   ret <- paste('"', gsub('"','""',identifiers), '"', sep="", collapse=".")
+  #   ret
+  # }
+  # # DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
 
   # Because caroline dbWriteTable2 requires it.
   # Just (badly) needed to (indirectly) get the column data types.
   # Could have better used: SELECT * FROM name where 1 = 0;
   createdFakeId <- FALSE
   if(!"id" %in% dbListFields(conn, name = DfName)) {
-     DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
+    rpostgis::dbColumn(conn, name = DfName, colname = "id")
     createdFakeId <- TRUE
   }
 
