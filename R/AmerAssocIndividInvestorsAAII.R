@@ -1123,19 +1123,191 @@ tryCatchLog::tryCatchLog({
 
 
 
+
+
+
+
+
+
+
+
+
+
+#' Connect to the econModel database.
+#'
+#' Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
+#'
+#' This function tries to return a new "DBI" connection object to the enviroment "env".
+#'
+#' This function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
+#'
+#' If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
+#' If successful, the schema (if not exists) "r_user_econmodel" will attempt to be created.
+#' Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
+#' getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.
+#' Next, the new connection object "connEM" will be returned to the "env".
+#' Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
+#'
+#' If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
+#' If successful, the login/user/dbname/schema (if any do not exists) "r_user_econmodel" will attempt to be created.
+#' Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
+#' getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.  This is set in this package econModel ".unLoad" function.
+#' Next, the new connection object "connEM" will be returned to the "env".
+#' Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
+#'
+#' If the connection still can not be made, the program stops with a message.
+#'
+#' @param driver Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
+#' @param user Defaults to getOption("econmodel_db_user").
+#' @param password Defaults to getOption("econmodel_db_password") .
+#' @param host Defaults to getOption("econmodel_db_host").
+#' @param dbname Defaults to getOption("econmodel_db_dbname").
+#' @param port Defaults to getOption("econmodel_db_port").
+#' @param tty Default to getOption("econmodel_db_tty").
+#' @param options Defaults to getOption("econmodel_db_dboptions").
+#' @param forceISOdate Default is getOption("econmodel_db_forceISOdate").
+#' @param env Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".
+#' @param ... Dots passed.
+#' @returns DBI connection object named "connEM" is created, connected and assigned to the environment "env".
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbConnect
+#' @export
+connectEM <- function(driver, user, password, host, dbname, port,
+                      tty, options, forceISOdate, env, ...) {
+tryCatchLog::tryCatchLog({
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+    ReturnedTo <- "the Global environment."
+  }
+  if(!identical(env, .GlobalEnv)) {
+    ReturnTo <- paste0("environment ", capture.output(env))
+  }
+  if(missing(driver)) {
+    driver <- getOption("econmodel_db_driver")
+  }
+  if(!driver %in% "PostgreSQL") {
+  stop("Parameter \"driver\" must be \"PostreSQL\".  No other driver is implemented at this time.")
+  }
+  if(missing(user)) {
+    user <- getOption("econmodel_db_user")
+  }
+  if(missing(password)) {
+    password <- getOption("econmodel_db_password")
+  }
+  if(missing(host)) {
+    host <- getOption("econmodel_db_host")
+  }
+  if(missing(dbname)) {
+    dbname <- getOption("econmodel_db_dbname")
+  }
+  if(missing(port)) {
+    port <- getOption("econmodel_db_port")
+  }
+  if(missing(tty)) {
+    tty <- getOption("econmodel_db_tty")
+  }
+  if(missing(options)) {
+    dboptions <- getOption("econmodel_db_dboptions")
+  }
+  if(missing(forceISOdate)) {
+    forceISOdate <- getOption("econmodel_db_forceISOdate")
+  }
+
+  drv <- try(drv <- DBI::dbDriver(getOption("econmodel_db_driver")), silent = TRUE)
+  if(!inherits(drv, "try-error")) {
+
+    conn <- try(conn <- DBI::dbConnect(drv,
+                                       user = user, password = password,
+                                       host = host, dbname = dbname, port = port,
+                                       tty = tty, options = dboptions, forceISOdate=forceISOdate),
+                silent = TRUE)
+    if(!inherits(conn, "try-error")) {
+      cat("Successfully connected.\n")
+      assign("connEM", conn, envir = env)
+      cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
+    }
+    else {
+      # try another connection
+      conn <- try(conn <- DBI::dbConnect(drv,
+                                         user = "r_user_econmodel", password = "r_user_econmodel",
+                                         host = host, dbname = "r_user_econmodel", port = port,
+                                         tty = tty, options = dboptions, forceISOdate=forceISOdate),
+                  silent = TRUE)
+      if(!inherits(conn, "try-error")) {
+        #
+        # create (if not exists schema) "r_user_econmodel"
+        # assign user "r_user_econmodel" to the schema "r_user_econmodel" and set search path.
+        #
+        # create (if not exists) user getOption("econmodel_storage_name")
+        # create (if not exists) password getOption("econmodel_storage_name")
+        # create (if not exists) database getOption("econmodel_storage_name")
+        # create (if not exists) schema getOption("econmodel_storage_name")
+        # assign (if not done ) default schema and put at the head of the users path
+        # logout -> login as getOption("econmodel_storage_name")
+        cat("Successfully connected.\n")
+        assign("connEM", conn, envir = env)
+        cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
+        disconnectEM("connEm", env = env)
+        connectEM(driver)
+      } else {
+        # try another connection
+        conn <- try(conn <- DBI::dbConnect(drv,
+                                           user = "postgres", password = "postgres",
+                                           host = host, dbname = "postgres", port = port,
+                                           tty = tty, options = dboptions, forceISOdate=forceISOdate),
+                    silent = TRUE)
+        if(!inherits(conn, "try-error")) {
+          cat("Successfully connected.\n")
+          assign("connEM", conn, envir = env)
+
+          # create (if not exists user)     "r_user_econmodel"
+          # create (if not exists password) "r_user_econmodel"
+          # create (if not exists dbname)   "r_user_econmodel"
+          # create (if not exists schema)   "r_user_econmodel"
+          # assign user "r_user_econmodel" to the schema "r_user_econmodel" and set search path.
+          # logout -> login as "r_user_econmodel"
+          #
+          # create (if not exists) user getOption("econmodel_storage_name")
+          # create (if not exists) password getOption("econmodel_storage_name")
+          # create (if not exists) database getOption("econmodel_storage_name")
+          # create (if not exists) schema getOption("econmodel_storage_name")
+          # assign (if not done ) default schema and put at the head of the users path
+          # logout -> login as getOption("econmodel_storage_name")
+          cat("Successfully connected.\n")
+          assign("connEM", conn, envir = env)
+          cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
+          disconnectEM("connEm", env = env)
+          connectEM(driver)
+        } else {
+          stop("Failed to login as getOption(\"econmodel_db_user\"), \"r_user_econmodel\", and \"postgres.\"  Please set options()")
+        }
+      }
+    }
+  } else {
+    stop(paste0("Parameter \"driver\" is specified as \"", driver, "\".  But the driver failed to load."))
+  }
+  invisible()
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
 #' Disconnect from and econModel database
 #'
 #' Also, removes the DBI connection object from the environment "env".
 #'
 #' @param connName String.  Required.  Name of the database connection object
-#' @param env Environment.  Default is the global environment .GlobalEnv.  Location of the connection object "connName"
+#' @param env Environment.  Default is the global environment .GlobalEnv.  Location of the connection object "connName".
+#' @param ... Dots passed.
 #' @returns Disconnects "connName" and removes it from the environment "env".
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-disconnectEM <- function(connName, env) {
+disconnectEM <- function(connName, env, ...) {
 
   if(missing(connName)) {
-    connName <- "connEm"
+    connName <- "connEM"
   }
   if(missing(env)) {
     env <- .GlobalEnv

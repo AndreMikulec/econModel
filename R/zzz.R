@@ -74,42 +74,62 @@ tryCatchLog::tryCatchLog({
   # temporary or permanent storage
 
   ops <- options()
-  if(!"econmodel_storage_name" %in% names(ops)) {
+  if(!"econmodel_db_storage_name" %in% names(ops)) {
     splitted <- strsplit(normalizePath(tempdir(), winslash = "/"),"/")
-    econmodel_storage_name <- tolower(splitted[[1]][length(splitted[[1]])])
+    econmodel_db_storage_name <- tolower(splitted[[1]][length(splitted[[1]])])
     rm(splitted)
-    ops <- append(ops, list(econmodel_storage_name = econmodel_storage_name))
-  }
-  # currently, I only have an implementation for
-  # PostgreSQL (or PostgreSQL-like) databases
-  if(!"econmodel_db_driver" %in% names(ops)) {
-    ops <- append(ops, list(econmodel_db_driver = "PostgreSQL"))
-  }
-  if(!"ecommodel_db_user" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_user = getOption("econmodel_storage_name")))
-  }
-  if(!"ecommodel_db_password" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_password = getOption("econmodel_storage_name")))
-  }
-  if(!"ecommodel_db_host" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_host = "localhost"))
-  }
-  if(!"ecommodel_db_dbname" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_dbname = getOption("econmodel_storage_name")))
-  }
-  if(!"ecommodel_db_port" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_port = 5432L))
-  }
-  if(!"ecommodel_db_tty" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_tty = character()))
-  }
-  if(!"ecommodel_db_dboptions" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_dboptions = character()))
-  }
-  if(!"ecommodel_db_forceISOdate" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_forceISOdate = TRUE))
+    ops <- append(ops, list(econmodel_db_storage_name = econmodel_db_storage_name))
+    rm(econmodel_db_storage_name)
   }
   options(ops)
+  ops <- options()
+  if(!"econmodel_db_driver" %in% names(ops)) {
+    # currently, I only have an implementation for
+    # PostgreSQL (or PostgreSQL-like) databases
+    ops <- append(ops, list(econmodel_db_driver = "PostgreSQL"))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_user" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_user = getOption("econmodel_storage_name")))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_password" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_password = getOption("econmodel_storage_name")))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_host" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_host = "localhost"))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_dbname" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_dbname = getOption("econmodel_storage_name")))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_port" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_port = 5432L))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_tty" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_tty = character()))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_dboptions" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_dboptions = character()))
+  }
+  options(ops)
+  ops <- options()
+  if(!"econmodel_db_forceISOdate" %in% names(ops)) {
+    ops <- append(ops, list(econmodel_db_forceISOdate = TRUE))
+  }
+  options(ops)
+
   rm(ops)
 
   invisible()

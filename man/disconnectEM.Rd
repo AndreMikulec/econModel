@@ -4,12 +4,14 @@
 \alias{disconnectEM}
 \title{Disconnect from and econModel database}
 \usage{
-disconnectEM(connName, env)
+disconnectEM(connName, env, ...)
 }
 \arguments{
 \item{connName}{String.  Required.  Name of the database connection object}
 
-\item{env}{Environment.  Default is the global environment .GlobalEnv.  Location of the connection object "connName"}
+\item{env}{Environment.  Default is the global environment .GlobalEnv.  Location of the connection object "connName".}
+
+\item{...}{Dots passed.}
 }
 \value{
 Disconnects "connName" and removes it from the environment "env".
