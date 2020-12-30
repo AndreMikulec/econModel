@@ -15,6 +15,8 @@ Imports:
     foreign,
     TSrepr,
     reshape2,
+    DBI,
+    caroline,
     data.table,
     fst,
     R.oo,

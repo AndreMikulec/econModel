@@ -970,3 +970,137 @@ tryCatchLog::tryCatchLog({
   }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
+
+#' Results column names are always in UPPERCASE.
+#'
+#' Thin wrapper over R CRAN package DBI function dbGetQuery
+#'
+#' @param conn A DBIConnection object, as returned by dbConnect().
+#' @param statement	a character string containing SQL.
+#' @param ...	Other parameters passed on to methods.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbGetQuery
+#' @export
+dbGetQueryEm <- function(conn, Statement, ...) {
+tryCatchLog::tryCatchLog({
+
+  Results <- DBI::dbGetQuery(conn, statement = Statement, ...)
+  colnames(Results) <- toupper(colnames(Results))
+  return(Results)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
+
+
+#' Results column names are always in UPPERCASE.
+#'
+#' Thin wrapper over R CRAN package caroline function dbWriteTable2
+#'
+#' @param conn A DBIConnection object, as returned by dbConnect().
+
+
+#' Insert a new table into the PostgreSQL database or append data.
+#'
+#' Thin wrapper over R CRAN package caroline function dbWriteTable2
+#'
+#' @param conn A DBIConnection object, as returned by dbConnect().
+#' @param DfName  String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.
+#' @param Df, data.frame. Required. To be loaded to the database.
+#' @param FillNull Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?
+#' @param AddID Logical. Default is FALSE.  Should a new column should be added for the database id?
+#' @param RowNames Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).
+#' @param PgUpdateSeq Logical. Default is FALSE. Should the table primary key's sequence be updated to the highest id value +1? (Postgres specific)
+#' @param lowerDfName Logical. Default is TRUE. Make the target database table name to be in lowercase.
+#' @param lowerColNames Logical. Default is TRUE. Make the target database table column names to be in lowercase.
+#' @param replaceDotUsingUnderscore Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).
+#' @param ... Dots. Other parameters passed to R CRAN package DBI dbWriteTable.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom caroline dbWriteTable2
+#' @importFrom DBI dbExistsTable dbWriteTable
+#' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
+#' @export
+dbWriteTableEm <- function(conn, DfName = substitute(Df), Df, FillNull = TRUE,
+                           AddID = FALSE, RowNames = FALSE, PgUpdateSeq = FALSE,
+                           lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
+                           ...) {
+tryCatchLog::tryCatchLog({
+
+  # R CRAN package caroline function dbWriteTable2
+  # can not see DBI/RPostgreSQL S4 methods, so I am importing them.
+
+  # if new columns exist in Df but do not exist at con
+  # then I MUST add them here to the con
+
+  # Note: Please also read
+  #
+  # dbWriteTable assumes creation (but caroline:dbWriteTable2 assumes "append").
+  # Behavior may have changed over time from (original default) "append" to (now) "create"
+  #
+  # overwrite = TRUE # destroy and re-create
+  # append = TRUE (do not "destroy and re-create") # append data
+  #
+  # DEC 2020
+  # RPostgreSQL/html/dbReadTable-methods.html
+  # DBI/html/dbWriteTable.html
+
+  Dots <- list(...)
+
+  if(lowerDfName) {
+    DfName       <- tolower(DfName)
+  }
+  if(lowerColNames) {
+    colnames(Df) <- tolower(colnames(Df))
+  }
+  if(replaceDotUsingUnderscore) {
+    colnames(Df) <- gsub("[.]", "_", colnames(Df))
+  }
+
+  NewDots <- c(list(),Dots, append = TRUE)
+
+  # so the function call can see it them
+  # NOTE: this is "per session"
+  # dbListFields <<- DBI::dbListFields
+
+  # Because caroline dbWriteTable2 requires the table to pre-exist.
+  if(!DBI::dbExistsTable(conn, name = DfName)) {
+    # just need the structure (not the data)
+    DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
+  }
+
+  # https://github.com/tomoakin/RPostgreSQL/blob/master/RPostgreSQL/R/PostgreSQLSupport.R
+  postgresqlTableRef <- function(identifiers){
+    ret <- paste('"', gsub('"','""',identifiers), '"', sep="", collapse=".")
+    ret
+  }
+
+  # Because caroline dbWriteTable2 requires it.
+  # Just (badly) needed to (indirectly) get the column data types.
+  # Could have better used: SELECT * FROM name where 1 = 0;
+  createdFakeId <- FALSE
+  if(!"id" %in% dbListFields(conn, name = DfName)) {
+     DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
+    createdFakeId <- TRUE
+  }
+
+  # expect the table to already be there
+  DescTools::DoCall(
+    "caroline::dbWriteTable2", c(list(),
+                                 list(conn), list(table.name = DfName), list(df = Df), list(fill.null = FillNull),
+                                 list(add.id = AddID), list(row.names = RowNames), list(pg.update.seq = PgUpdateSeq),
+                                 NewDots
+    )
+  )
+
+  if(createdFakeId) {
+    DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " DROP COLUMN id;"))
+  }
+  invisible()
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
