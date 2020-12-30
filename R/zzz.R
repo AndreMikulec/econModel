@@ -82,7 +82,7 @@ tryCatchLog::tryCatchLog({
   }
   # currently, I only have an implementation for
   # PostgreSQL (or PostgreSQL-like) databases
-  if(!"econmodel_db_type" %in% names(ops)) {
+  if(!"econmodel_db_driver" %in% names(ops)) {
     ops <- append(ops, list(econmodel_db_driver = "PostgreSQL"))
   }
   if(!"ecommodel_db_user" %in% names(ops)) {
@@ -103,8 +103,8 @@ tryCatchLog::tryCatchLog({
   if(!"ecommodel_db_tty" %in% names(ops)) {
     ops <- append(ops, list(ecommodel_db_tty = character()))
   }
-  if(!"ecommodel_db_options" %in% names(ops)) {
-    ops <- append(ops, list(ecommodel_db_options = character()))
+  if(!"ecommodel_db_dboptions" %in% names(ops)) {
+    ops <- append(ops, list(ecommodel_db_dboptions = character()))
   }
   if(!"ecommodel_db_forceISOdate" %in% names(ops)) {
     ops <- append(ops, list(ecommodel_db_forceISOdate = TRUE))

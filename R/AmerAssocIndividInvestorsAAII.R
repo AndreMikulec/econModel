@@ -1093,6 +1093,9 @@ tryCatchLog::tryCatchLog({
   # then I MUST add them here to the con
   # *** TO BE IMPLEMENTED
 
+  # STOP BECAUSE THIS IS CRITICAL
+  stop("Need to Implement case: if the Df has more/different col than the remoted database, \nthen FIRST, add those columns to the database.")
+
   # Because caroline dbWriteTable2 requires it.
   # Just (badly) needed to (indirectly) get the column data types.
   # Could have better used: SELECT * FROM name where 1 = 0;
@@ -1120,4 +1123,24 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Disconnect from and econModel database
+#'
+#' Also, removes the DBI connection object from the environment "env".
+#'
+#' @param connName String.  Required.  Name of the database connection object
+#' @param env Environment.  Default is the global environment .GlobalEnv.  Location of the connection object "connName"
+#' @returns Disconnects "connName" and removes it from the environment "env".
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+disconnectEM <- function(connName, env) {
 
+  if(missing(connName)) {
+    connName <- "connEm"
+  }
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+  with(env, { DBI::dbDisconnect(get(connName)); rm(list = c(connName)) })
+  print(paste0("Successfully disconnected the Robject \"", connName, "\" and removed it from the environment ", capture.output(env), "."))
+  invisible()
+}
