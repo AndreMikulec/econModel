@@ -91,12 +91,12 @@ tryCatchLog::tryCatchLog({
   options(ops)
   ops <- options()
   if(!"econmodel_db_user" %in% names(ops)) {
-    ops <- append(ops, list(econmodel_db_user = getOption("econmodel_storage_name")))
+    ops <- append(ops, list(econmodel_db_user = getOption("econmodel_db_storage_name")))
   }
   options(ops)
   ops <- options()
   if(!"econmodel_db_password" %in% names(ops)) {
-    ops <- append(ops, list(econmodel_db_password = getOption("econmodel_storage_name")))
+    ops <- append(ops, list(econmodel_db_password = getOption("econmodel_db_storage_name")))
   }
   options(ops)
   ops <- options()
@@ -106,7 +106,7 @@ tryCatchLog::tryCatchLog({
   options(ops)
   ops <- options()
   if(!"econmodel_db_dbname" %in% names(ops)) {
-    ops <- append(ops, list(econmodel_db_dbname = getOption("econmodel_storage_name")))
+    ops <- append(ops, list(econmodel_db_dbname = getOption("econmodel_db_storage_name")))
   }
   options(ops)
   ops <- options()
