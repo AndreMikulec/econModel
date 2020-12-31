@@ -4,12 +4,14 @@
 \alias{dbExistsSchemaEM}
 \title{Schema Existence?}
 \usage{
-dbExistsSchemaEM(conn, schema)
+dbExistsSchemaEM(conn, schema, ...)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required}
+\item{conn}{PostgreSQL DBI connection. Required.}
 
-\item{schema}{String. Required.  Potential schema in the database}
+\item{schema}{String. Required.  Potential schema in the database.}
+
+\item{...}{Dots passed.}
 }
 \value{
 TRUE(exists) or FALSE(not exists)
@@ -19,6 +21,7 @@ Determine if a schema exists in the database.
 }
 \examples{
 \dontrun{
- dbExistsSchema(conn, schema = "r_user_econmodel")
+ dbExistsSchemaEM(conn, schema = "r_user_econmodel")
+ dbExistsSchemaEM(conn, schema = "rtmp")
 }
 }

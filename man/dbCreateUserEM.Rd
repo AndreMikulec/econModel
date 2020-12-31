@@ -4,23 +4,26 @@
 \alias{dbCreateUserEM}
 \title{User Creation}
 \usage{
-dbCreateUserEM(conn, user, attributes = c("login"), password)
+dbCreateUserEM(conn, user, attributes = c("login"), password, ...)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Required.}
 
 \item{user}{String. Required.  Potential user in the database.}
 
+\item{...}{Dots Passed.}
+
 \item{attributes.}{vector of Strings. User attributes.}
 }
 \value{
-TRUE(success) or FALSE(failure)
+TRUE(success) or Error(failure)
 }
 \description{
 Create a user exists in the database.
 }
 \examples{
 \dontrun{
- dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("login", "createdb") , password = "r_user_econmodel")
+dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("login", "createdb", "createrole") , password = "r_user_econmodel")
+dbCreateUserEM(conn, user = "rtmp", attributes = c("login") , password = "rtmp")
 }
 }

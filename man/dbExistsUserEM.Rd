@@ -4,12 +4,14 @@
 \alias{dbExistsUserEM}
 \title{User Existence?}
 \usage{
-dbExistsUserEM(conn, user)
+dbExistsUserEM(conn, user, ...)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required}
+\item{conn}{PostgreSQL DBI connection. Required.}
 
-\item{user}{String. Required.  Potential user in the database}
+\item{user}{String. Required.  Potential user in the database.}
+
+\item{...}{Dots passed.}
 }
 \value{
 TRUE(exists) or FALSE(not exists)
@@ -20,5 +22,6 @@ Determine if a user exists in the database.
 \examples{
 \dontrun{
  dbExistsUserEM(conn, user = "r_user_econmodel")
+ dbExistsUserEM(conn, user = "rtmp")
 }
 }
