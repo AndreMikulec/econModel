@@ -7,9 +7,9 @@
 dbConnectEM(
   driver,
   user,
-  password,
+  password = user,
   host,
-  dbname,
+  dbname = user,
   port,
   tty,
   options,
@@ -19,23 +19,23 @@ dbConnectEM(
 )
 }
 \arguments{
-\item{driver}{Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.}
+\item{driver}{String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.}
 
-\item{user}{Defaults to getOption("econmodel_db_user").}
+\item{user}{String. Defaults to getOption("econmodel_db_user").}
 
-\item{password}{Defaults to getOption("econmodel_db_password") .}
+\item{password}{String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_password") .}
 
-\item{host}{Defaults to getOption("econmodel_db_host").}
+\item{host}{String. Defaults to getOption("econmodel_db_host").}
 
-\item{dbname}{Defaults to getOption("econmodel_db_dbname").}
+\item{dbname}{String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_dbname").}
 
-\item{port}{Defaults to getOption("econmodel_db_port").}
+\item{port}{Integer. Defaults to getOption("econmodel_db_port").}
 
 \item{tty}{Default to getOption("econmodel_db_tty").}
 
 \item{options}{Defaults to getOption("econmodel_db_dboptions").}
 
-\item{forceISOdate}{Default is getOption("econmodel_db_forceISOdate").}
+\item{forceISOdate}{Logical. Default is getOption("econmodel_db_forceISOdate").}
 
 \item{env}{Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".}
 

@@ -13,7 +13,7 @@ dbCreateUserEM(conn, user, attributes = c("login"), password = user, ...)
 
 \item{attributes}{vector of Strings. User attributes.}
 
-\item{password}{String. Defaults to user.}
+\item{password}{String. Defaults to "user".}
 
 \item{...}{Dots Passed.}
 }

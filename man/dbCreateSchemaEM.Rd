@@ -19,9 +19,9 @@ dbCreateSchemaEM(
 
 \item{...}{Dots passed.}
 
-\item{role_specification.}{String. The schema role specification.  Default to schema.}
+\item{role_specification.}{String. The schema role specification.  Defaults to "schema".}
 
-\item{grant_all}{vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to schema.}
+\item{grant_all}{vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to "schema".}
 }
 \value{
 TRUE(success) or Error(failure)

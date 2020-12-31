@@ -1157,23 +1157,23 @@ tryCatchLog::tryCatchLog({
 #'
 #' If the connection still can not be made, the program stops with a message.
 #'
-#' @param driver Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
-#' @param user Defaults to getOption("econmodel_db_user").
-#' @param password Defaults to getOption("econmodel_db_password") .
-#' @param host Defaults to getOption("econmodel_db_host").
-#' @param dbname Defaults to getOption("econmodel_db_dbname").
-#' @param port Defaults to getOption("econmodel_db_port").
+#' @param driver String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
+#' @param user String. Defaults to getOption("econmodel_db_user").
+#' @param password String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_password") .
+#' @param host String. Defaults to getOption("econmodel_db_host").
+#' @param dbname String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_dbname").
+#' @param port Integer. Defaults to getOption("econmodel_db_port").
 #' @param tty Default to getOption("econmodel_db_tty").
 #' @param options Defaults to getOption("econmodel_db_dboptions").
-#' @param forceISOdate Default is getOption("econmodel_db_forceISOdate").
+#' @param forceISOdate Logical. Default is getOption("econmodel_db_forceISOdate").
 #' @param env Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".
 #' @param ... Dots passed.
 #' @returns DBI connection object named "connEM" is created, connected and assigned to the environment "env".
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
 #' @export
-dbConnectEM <- function(driver, user, password, host, dbname, port,
-                      tty, options, forceISOdate, env, ...) {
+dbConnectEM <- function(driver, user, password = user, host, dbname = user, port,
+                        tty, options, forceISOdate, env, ...) {
 tryCatchLog::tryCatchLog({
 
   if(missing(env)) {
@@ -1313,7 +1313,7 @@ dbDisconnectEM <- function(connName, env, ...) {
     env <- .GlobalEnv
   }
   with(env, { DBI::dbDisconnect(get(connName)); rm(list = c(connName)) })
-  print(paste0("Successfully disconnected the Robject \"", connName, "\" and removed it from the environment ", capture.output(env), "."))
+  print(paste0("Successfully disconnected the R object \"", connName, "\" and removed it from the environment ", capture.output(env), "."))
   invisible()
 }
 
@@ -1354,7 +1354,7 @@ tryCatchLog::tryCatchLog({
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param user String. Required.  Potential user in the database.
 #' @param attributes  vector of Strings. User attributes.
-#' @param password String. Defaults to user.
+#' @param password String. Defaults to "user".
 #' @param ... Dots Passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
@@ -1431,8 +1431,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param schema String. Required.  Potential schema in the database.
-#' @param role_specification.  String. The schema role specification.  Default to schema.
-#' @param grant_all vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to schema.
+#' @param role_specification.  String. The schema role specification.  Defaults to "schema".
+#' @param grant_all vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to "schema".
 #' @param ... Dots passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
