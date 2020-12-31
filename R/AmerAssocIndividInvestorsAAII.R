@@ -1168,6 +1168,10 @@ tryCatchLog::tryCatchLog({
 #' @param env Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".
 #' @param ... Dots passed.
 #' @returns DBI connection object named "connEM" is created, connected and assigned to the environment "env".
+#' @examples
+#' \dontrun{
+#' dbConnectEM()
+#' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
 #' @export

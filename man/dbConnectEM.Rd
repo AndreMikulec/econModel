@@ -67,3 +67,8 @@ Next, disconnection occurs. Connection re-occurs using the user getOption("econm
 
 If the connection still can not be made, the program stops with a message.
 }
+\examples{
+\dontrun{
+dbConnectEM()
+}
+}
