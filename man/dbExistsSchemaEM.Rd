@@ -4,12 +4,16 @@
 \alias{dbExistsSchemaEM}
 \title{Schema Existence?}
 \usage{
-dbExistsSchemaEM(conn, schema, ...)
+dbExistsSchemaEM(conn, schema, display = TRUE, exec = TRUE, ...)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Required.}
 
 \item{schema}{String. Required.  Potential schema in the database.}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 
 \item{...}{Dots passed.}
 }

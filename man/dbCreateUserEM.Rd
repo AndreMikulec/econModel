@@ -4,7 +4,15 @@
 \alias{dbCreateUserEM}
 \title{User Creation}
 \usage{
-dbCreateUserEM(conn, user, attributes = c("login"), password = user, ...)
+dbCreateUserEM(
+  conn,
+  user,
+  attributes = c("login"),
+  password = user,
+  display = TRUE,
+  exec = TRUE,
+  ...
+)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Required.}
@@ -14,6 +22,10 @@ dbCreateUserEM(conn, user, attributes = c("login"), password = user, ...)
 \item{attributes}{vector of Strings. User attributes.}
 
 \item{password}{String. Defaults to "user".}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 
 \item{...}{Dots Passed.}
 }

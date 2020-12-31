@@ -1309,6 +1309,8 @@ dbDisconnectEM <- function(connName, env, ...) {
 #'
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param user String. Required.  Potential user in the database.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
@@ -1317,14 +1319,25 @@ dbDisconnectEM <- function(connName, env, ...) {
 #'  dbExistsUserEM(conn, user = "rtmp")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsUserEM <- function(conn, user, ...) {
+dbExistsUserEM <- function(conn, user, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
-  Result <- dbGetQueryEM(conn, paste0("select exists(select usename from pg_catalog.pg_user where usename = ", DBI::dbQuoteLiteral(conn, user), ");"))
-  if(unlist(Result)) {
-   return(TRUE)
-  } else {
-   return(FALSE)
+  ## Build the query
+  tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, user), ");")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    Result <- dbGetQueryEM(conn, tmp.query)
+    if(unlist(Result)) {
+     return(TRUE)
+    } else {
+     return(FALSE)
+    }
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -1339,6 +1352,8 @@ tryCatchLog::tryCatchLog({
 #' @param user String. Required.  Potential user in the database.
 #' @param attributes  vector of Strings. User attributes.
 #' @param password String. Defaults to "user".
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots Passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
@@ -1348,7 +1363,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateUserEM <- function(conn, user, attributes = c("login"), password = user, ...) {
+dbCreateUserEM <- function(conn, user, attributes = c("login"), password = user, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
@@ -1366,15 +1381,26 @@ tryCatchLog::tryCatchLog({
     password <- paste0("password ", DBI::dbQuoteLiteral(conn, password))
   }
 
-  if(!dbExistsUserEM(conn, user)) {
-    Result <- try({Result <- DBI::dbExecute(conn, paste0("create role ", user, " ", attributes, " noinherit ", password, ";"))})
-    if(!inherits(Result, "try-error")) {
-      return(TRUE)
+  ## Build the query
+  tmp.query <- paste0("CREATE ROLE ", user, " ", attributes, " NOINHERIT ", password, ";")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    if(!dbExistsUserEM(conn, user)) {
+      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      if(!inherits(Result, "try-error")) {
+        return(TRUE)
+      } else {
+        stop("Failed to create the user.")
+      }
     } else {
-      stop("Failed to create the user.")
+      stop(paste0("User ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
     }
-  } else {
-    stop(paste0("User ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -1387,6 +1413,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param schema String. Required.  Potential schema in the database.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
@@ -1395,14 +1423,25 @@ tryCatchLog::tryCatchLog({
 #'  dbExistsSchemaEM(conn, schema = "rtmp")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsSchemaEM <- function(conn, schema, ...) {
+dbExistsSchemaEM <- function(conn, schema, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
-  Result <- dbGetQueryEM(conn, paste0("select exists(select 1 from pg_catalog.pg_namespace where nspname = ", DBI::dbQuoteLiteral(conn, schema), ");"))
-  if(unlist(Result)) {
-   return(TRUE)
-  } else {
-   return(FALSE)
+  ## Build the query
+  tmp.query <-  paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ", DBI::dbQuoteLiteral(conn, schema), ");")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    Result <- dbGetQueryEM(conn,)
+    if(unlist(Result)) {
+     return(TRUE)
+    } else {
+     return(FALSE)
+    }
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -1416,7 +1455,9 @@ tryCatchLog::tryCatchLog({
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param schema String. Required.  Potential schema in the database.
 #' @param role_specification.  String. The schema role specification.  Defaults to "schema".
-#' @param grant_all vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to "schema".
+#' @param grant_all vector of Strings. Roles to be GRANT ALLed to this schema.  Defaults to "schema".
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
@@ -1426,7 +1467,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateSchemaEM <- function(conn, schema, role_specification = schema, grant_all_roles = schema, ...) {
+dbCreateSchemaEM <- function(conn, schema, role_specification = schema, grant_all_roles = schema, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
@@ -1437,20 +1478,43 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"role_specification\" can only have one role.")
   }
 
-  if(!dbExistsSchemaEM(conn, schema)) {
-    Result <- try({Result <- DBI::dbExecute(conn, paste0("create schema ", schema, " authorization ", role_specification, ";"))})
-    if(inherits(Result, "try-error")) {
-      stop("Failed to create the schema.")
+  ## Build the query
+  tmp.query <- paste0("CREATE SCHEMA ", schema, " AUTHORIZATION ", role_specification, ";")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    if(!dbExistsSchemaEM(conn, schema)) {
+      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      if(inherits(Result, "try-error")) {
+        stop("Failed to create the schema.")
+      }
+    } else {
+      stop(paste0("Schema ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
     }
-  } else {
-    stop(paste0("Schema ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
   }
 
   lapply(grant_all_roles, function(grant_all_role) {
-    Result <- try({Result <- DBI::dbExecute(conn, paste0("grant all on schema ", schema, " to ", grant_all_role, ";"))})
-    if(inherits(Result, "try-error")) {
-      stop(paste0("Failed to create the schema to ", grant_all_role))
+
+    ## Build the query
+    tmp.query <- paste0("GRANT ALL ON SCHEMA ", schema, " TO ", grant_all_role, ";")
+    ## Display the query
+    if (display) {
+      message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+      message(tmp.query)
     }
+    ## Execute the query and return TRUE
+    if (exec) {
+      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      if(inherits(Result, "try-error")) {
+        stop(paste0("Failed to grant all on the schema to ", grant_all_role))
+      }
+    }
+
   })
 
   TRUE
@@ -1465,6 +1529,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param dbname String. Required.  Potential database in the cluster.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
@@ -1473,14 +1539,25 @@ tryCatchLog::tryCatchLog({
 #'  dbExistsDbaseEM(conn, dbname = "rtmp")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsDbaseEM <- function(conn, dbname, ...) {
+dbExistsDbaseEM <- function(conn, dbname, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
-  Result <- dbGetQueryEM(conn, paste0("select exists(select 1 from pg_catalog.pg_database where datname = ", DBI::dbQuoteLiteral(conn, dbname), ");"))
-  if(unlist(Result)) {
-    return(TRUE)
-  } else {
-    return(FALSE)
+  ## Build the query
+  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(conn, dbname), ");")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    Result <- dbGetQueryEM(conn, tmp.query)
+    if(unlist(Result)) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -1495,6 +1572,8 @@ tryCatchLog::tryCatchLog({
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param dbname String. Required.  Potential database in the cluster.
 #' @param owner String. Database owner. Defaults to parameter "dbname".
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots Passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
@@ -1504,7 +1583,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateDbaseEM <- function(conn, dbname, owner = dbname, ...) {
+dbCreateDbaseEM <- function(conn, dbname, owner = dbname, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
@@ -1514,16 +1593,26 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"dbname\" is required.")
   }
 
-  RestOfDbCreate <- "encoding = 'utf-8' lc_collate = 'C' lc_ctype = 'C' tablespace = pg_default connection_limit = -1"
-  if(!dbExistsDbaseEM(conn, dbname)) {
-    Result <- try({Result <- DBI::dbExecute(conn, paste0("create database ", dbname, " ", " with owner ", owner, " ",  RestOfDbCreate, ";"))})
-    if(!inherits(Result, "try-error")) {
-      return(TRUE)
+  ## Build the query
+  RestOfDbCreate <- "ENCODING  = 'UTF-8' LC_COLLATE = 'C' LC_CTYPE  = 'C' TABLESPACE = pg_default CONNECTION_LIMIT = -1"
+  tmp.query <- paste0("CREATE DATABASE ", dbname, " ", " WITH OWNER ", owner, " ",  RestOfDbCreate, ";")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+  ## Execute the query and return TRUE
+  if (exec) {
+    if(!dbExistsDbaseEM(conn, dbname)) {
+      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      if(!inherits(Result, "try-error")) {
+        return(TRUE)
+      } else {
+        stop("Failed to create the database.")
+      }
     } else {
-      stop("Failed to create the database.")
+      stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " is already in the cluster."))
     }
-  } else {
-    stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " is already in the cluster."))
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
