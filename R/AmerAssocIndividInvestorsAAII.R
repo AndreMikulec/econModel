@@ -1137,19 +1137,18 @@ tryCatchLog::tryCatchLog({
 #'
 #' Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
 #'
-#' This function tries to return a new "DBI" connection object to the enviroment "env".
+#' This function tries to return a new "DBI" connection object to the environment "env".
 #'
-#' This function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
+#' First, this function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
 #'
-#' If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
-#' If successful, the schema (if not exists) "r_user_econmodel" will attempt to be created.
+#' If the connection can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "r_user_econmodel".
 #' Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
 #' getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.
 #' Next, the new connection object "connEM" will be returned to the "env".
 #' Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
 #'
-#' If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
-#' If successful, the login/user/dbname/schema (if any do not exists) "r_user_econmodel" will attempt to be created.
+#' If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "postgres".
+#' If successful, the login/user/dbname/schema (if any do not exists) of "r_user_econmodel" will attempt to be created.
 #' Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
 #' getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.  This is set in this package econModel ".unLoad" function.
 #' Next, the new connection object "connEM" will be returned to the "env".
@@ -1220,10 +1219,12 @@ tryCatchLog::tryCatchLog({
     conn <- try({conn <- DBI::dbConnect(drv,
                                        user = user, password = password,
                                        host = host, dbname = dbname, port = port,
-                                       tty = tty, options = dboptions, forceISOdate=forceISOdate)},
+                                       tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                 silent = TRUE)
     if(!inherits(conn, "try-error")) {
-      cat("Successfully connected.\n")
+
+      cat(paste0("Successfully connected to user \"", user, "\"\n"))
+      if(!dbExistsSchemaEM(conn, schema = schema)) dbCreateSchemaEM(conn, schema = schema)
       assign("connEM", conn, envir = env)
       cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
     }
@@ -1232,53 +1233,30 @@ tryCatchLog::tryCatchLog({
       conn <- try({conn <- DBI::dbConnect(drv,
                                          user = "r_user_econmodel", password = "r_user_econmodel",
                                          host = host, dbname = "r_user_econmodel", port = port,
-                                         tty = tty, options = dboptions, forceISOdate=forceISOdate)},
+                                         tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                   silent = TRUE)
       if(!inherits(conn, "try-error")) {
-        #
-        # create (if not exists schema) "r_user_econmodel"
-        # assign user "r_user_econmodel" to the schema "r_user_econmodel" and set search path.
-        #
-        # create (if not exists) user getOption("econmodel_storage_name")
-        # create (if not exists) password getOption("econmodel_storage_name")
-        # create (if not exists) database getOption("econmodel_storage_name")
-        # create (if not exists) schema getOption("econmodel_storage_name")
-        # assign (if not done ) default schema and put at the head of the users path
-        # logout -> login as getOption("econmodel_storage_name")
-        cat("Successfully connected.\n")
-        assign("connEM", conn, envir = env)
-        cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
-        disconnectEM("connEm", env = env)
-        connectEM(driver)
+
+        cat(paste0("Successfully connected to user \"", "r_user_econmodel", "\"\n"))
+        if(!dbExistsSchemaEM(conn, schema = "r_user_econmodel")) dbCreateSchemaEM(conn, schema = "r_user_econmodel")
+        if(!dbExistsUserEM( conn, user   = user))    dbCreateUserEM(conn,   user   = user)
+        if(!dbExistsDbaseEM(conn, dbname = dbname))  dbCreateDbaseEM(conn,  dbname = user)
+        dbConnectEM(driver, user = user, env = env)
+
       } else {
         # try another connection
         conn <- try({conn <- DBI::dbConnect(drv,
                                            user = "postgres", password = "postgres",
                                            host = host, dbname = "postgres", port = port,
-                                           tty = tty, options = dboptions, forceISOdate=forceISOdate)},
+                                           tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                     silent = TRUE)
         if(!inherits(conn, "try-error")) {
-          cat("Successfully connected.\n")
-          assign("connEM", conn, envir = env)
 
-          # create (if not exists user)     "r_user_econmodel"
-          # create (if not exists password) "r_user_econmodel"
-          # create (if not exists dbname)   "r_user_econmodel"
-          # create (if not exists schema)   "r_user_econmodel"
-          # assign user "r_user_econmodel" to the schema "r_user_econmodel" and set search path.
-          # logout -> login as "r_user_econmodel"
-          #
-          # create (if not exists) user getOption("econmodel_storage_name")
-          # create (if not exists) password getOption("econmodel_storage_name")
-          # create (if not exists) database getOption("econmodel_storage_name")
-          # create (if not exists) schema getOption("econmodel_storage_name")
-          # assign (if not done ) default schema and put at the head of the users path
-          # logout -> login as getOption("econmodel_storage_name")
-          cat("Successfully connected.\n")
-          assign("connEM", conn, envir = env)
-          cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
-          disconnectEM("connEm", env = env)
-          connectEM(driver)
+          cat(paste0("Successfully connected to user \"", "postgres", "\"\n"))
+          if(!dbExistsUserEM( conn, user   = "r_user_econmodel")) dbCreateUserEM( conn, user   = "r_user_econmodel")
+          if(!dbExistsDbaseEM(conn, dbname = "r_user_econmodel")) dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
+          dbConnectEM(driver, user = "r_user_econmodel", env = env)
+
         } else {
           stop("Failed to login as getOption(\"econmodel_db_user\"), \"r_user_econmodel\", and \"postgres.\"  Please set options()")
         }

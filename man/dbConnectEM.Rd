@@ -48,19 +48,18 @@ DBI connection object named "connEM" is created, connected and assigned to the e
 Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
 }
 \details{
-This function tries to return a new "DBI" connection object to the enviroment "env".
+This function tries to return a new "DBI" connection object to the environment "env".
 
-This function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
+First, this function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
 
-If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
-If successful, the schema (if not exists) "r_user_econmodel" will attempt to be created.
+If the connection can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "r_user_econmodel".
 Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
 getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.
 Next, the new connection object "connEM" will be returned to the "env".
 Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
 
-If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
-If successful, the login/user/dbname/schema (if any do not exists) "r_user_econmodel" will attempt to be created.
+If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "postgres".
+If successful, the login/user/dbname/schema (if any do not exists) of "r_user_econmodel" will attempt to be created.
 Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
 getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.  This is set in this package econModel ".unLoad" function.
 Next, the new connection object "connEM" will be returned to the "env".
