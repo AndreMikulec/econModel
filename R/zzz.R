@@ -113,15 +113,21 @@ tryCatchLog::tryCatchLog({
   if(!"econmodel_db_port" %in% names(ops)) {
     ops <- append(ops, list(econmodel_db_port = 5432L))
   }
+  # zero length R types (type()) cause R to crash
+  # postgresqlNewConnection <- function(drv, user = "", password = "",
+  #                                     host = "", dbname = "",
+  #                                     port = "", tty = "", options = "", forceISOdate=TRUE)
+  # DEC 2020
+  # https://github.com/tomoakin/RPostgreSQL/blob/master/RPostgreSQL/R/PostgreSQLSupport.R
   options(ops)
   ops <- options()
   if(!"econmodel_db_tty" %in% names(ops)) {
-    ops <- append(ops, list(econmodel_db_tty = character()))
+    ops <- append(ops, list(econmodel_db_tty = ""))
   }
   options(ops)
   ops <- options()
   if(!"econmodel_db_dboptions" %in% names(ops)) {
-    ops <- append(ops, list(econmodel_db_dboptions = character()))
+    ops <- append(ops, list(econmodel_db_dboptions = ""))
   }
   options(ops)
   ops <- options()

@@ -1195,12 +1195,14 @@ tryCatchLog::tryCatchLog({
   if(missing(user)) {
     user <- getOption("econmodel_db_user")
   }
+  # note: "password" is never missing
   if(missing(password)) {
     password <- getOption("econmodel_db_password")
   }
   if(missing(host)) {
     host <- getOption("econmodel_db_host")
   }
+  # note: "dbname" is never missing
   if(missing(dbname)) {
     dbname <- getOption("econmodel_db_dbname")
   }
@@ -1217,7 +1219,7 @@ tryCatchLog::tryCatchLog({
     forceISOdate <- getOption("econmodel_db_forceISOdate")
   }
 
-  drv <- try(drv <- DBI::dbDriver(getOption("econmodel_db_driver")), silent = TRUE)
+  drv <- try({drv <- DBI::dbDriver(getOption("econmodel_db_driver"))}, silent = TRUE)
   if(!inherits(drv, "try-error")) {
 
     conn <- try({conn <- DBI::dbConnect(drv,
