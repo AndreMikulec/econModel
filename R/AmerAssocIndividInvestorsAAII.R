@@ -1217,10 +1217,10 @@ tryCatchLog::tryCatchLog({
   drv <- try(drv <- DBI::dbDriver(getOption("econmodel_db_driver")), silent = TRUE)
   if(!inherits(drv, "try-error")) {
 
-    conn <- try(conn <- DBI::dbConnect(drv,
+    conn <- try({conn <- DBI::dbConnect(drv,
                                        user = user, password = password,
                                        host = host, dbname = dbname, port = port,
-                                       tty = tty, options = dboptions, forceISOdate=forceISOdate),
+                                       tty = tty, options = dboptions, forceISOdate=forceISOdate)},
                 silent = TRUE)
     if(!inherits(conn, "try-error")) {
       cat("Successfully connected.\n")
@@ -1229,10 +1229,10 @@ tryCatchLog::tryCatchLog({
     }
     else {
       # try another connection
-      conn <- try(conn <- DBI::dbConnect(drv,
+      conn <- try({conn <- DBI::dbConnect(drv,
                                          user = "r_user_econmodel", password = "r_user_econmodel",
                                          host = host, dbname = "r_user_econmodel", port = port,
-                                         tty = tty, options = dboptions, forceISOdate=forceISOdate),
+                                         tty = tty, options = dboptions, forceISOdate=forceISOdate)},
                   silent = TRUE)
       if(!inherits(conn, "try-error")) {
         #
@@ -1252,10 +1252,10 @@ tryCatchLog::tryCatchLog({
         connectEM(driver)
       } else {
         # try another connection
-        conn <- try(conn <- DBI::dbConnect(drv,
+        conn <- try({conn <- DBI::dbConnect(drv,
                                            user = "postgres", password = "postgres",
                                            host = host, dbname = "postgres", port = port,
-                                           tty = tty, options = dboptions, forceISOdate=forceISOdate),
+                                           tty = tty, options = dboptions, forceISOdate=forceISOdate)},
                     silent = TRUE)
         if(!inherits(conn, "try-error")) {
           cat("Successfully connected.\n")
@@ -1316,3 +1316,147 @@ disconnectEM <- function(connName, env, ...) {
   print(paste0("Successfully disconnected the Robject \"", connName, "\" and removed it from the environment ", capture.output(env), "."))
   invisible()
 }
+
+
+
+#' User Existence?
+#'
+#' Determine if a user exists in the database.
+#'
+#' @param conn PostgreSQL DBI connection. Required
+#' @param user String. Required.  Potential user in the database
+#' @returns TRUE(exists) or FALSE(not exists)
+#' @examples
+#' \dontrun{
+#'  dbExistsUserEM(conn, user = "r_user_econmodel")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+dbExistsUserEM <- function(conn, user) {
+tryCatchLog::tryCatchLog({
+
+  Result <- dbGetQueryEM(conn, paste0("select exists(select username from pg_catalog.pg_user where user = ", DBI::dbQuoteIdentifier(conn, user), ";"))
+  if(Result) {
+   return(TRUE)
+  } else {
+   return(FALSE)
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' User Creation
+#'
+#' Create a user exists in the database.
+#'
+#' @param conn PostgreSQL DBI connection. Required.
+#' @param user String. Required.  Potential user in the database.
+#' @param attributes.  vector of Strings. User attributes.
+#' @returns TRUE(success) or FALSE(failure)
+#' @examples
+#' \dontrun{
+#'  dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("login", "createdb") , password = "r_user_econmodel")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+dbCreateUserEM <- function(conn, user, attributes = c("login"), password) {
+tryCatchLog::tryCatchLog({
+
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+  if(missing(user)) {
+    stop("Parameter \"user\" is required.")
+  }
+
+  if(missing(password)) {
+    password <- character()
+  } else {
+    password <- paste0("password ", DBI::dbQuoteIdentifier(conn, password), ";")
+  }
+  if(length(attributes)) {
+    attributes <- paste0(  DBI::dbQuoteLiteral(conn, attributes) , collapse = " ")
+  }
+
+  if(!dbExistsUserEM(conn, user)) {
+    Result <- try({Result <- dbExecute(conn, paste0("create role ", DBI::dbQuoteLiteral(conn, user), attributes , " noinherit ", password, ";"))})
+    if(!inherits(Result, "try-error")) {
+    } else {
+      return(TRUE)
+      stop("Failed to create the user.")
+    }
+  } else {
+    stop(paste0("User ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Schema Existence?
+#'
+#' Determine if a schema exists in the database.
+#'
+#' @param conn PostgreSQL DBI connection. Required
+#' @param schema String. Required.  Potential schema in the database
+#' @returns TRUE(exists) or FALSE(not exists)
+#' @examples
+#' \dontrun{
+#'  dbExistsSchema(conn, schema = "r_user_econmodel")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+dbExistsSchemaEM <- function(conn, schema) {
+tryCatchLog::tryCatchLog({
+
+  Result <- dbGetQueryEM(conn, paste0("select exists(select 1 from pg_catalog.pg_namespace where nspname = ", DBI::dbQuoteIdentifier(conn, schema), ";"))
+  if(Result) {
+   return(TRUE)
+  } else {
+   return(FALSE)
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Schema Creation
+#'
+#' Create a schema in the database.
+#'
+#' @param conn PostgreSQL DBI connection. Required.
+#' @param schema String. Required.  Potential schema in the database.
+#' @param role_specification.  String. The schema role specification.  Required.
+#' @returns TRUE(success) or FALSE(failure)
+#' @examples
+#' \dontrun{
+#'  dbCreateSchemaEM(conn, schema = "r_user_econmodel",  role_specification = "r_user_econmodel")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+dbCreateSchemaEM <- function(conn, schema, role_specification) {
+tryCatchLog::tryCatchLog({
+
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+  if(missing(role_specification)) {
+    stop("Parameter \"schema\" is required.")
+  }
+  if(1L < NROW(role_specification)) {
+    stop("Parameter \"role_specification\" can only have one role.")
+  }
+
+  if(!dbExistsSchemaEM(conn, schema)) {
+    Result <- try({Result <- dbExecute(conn, paste0("create schema ", DBI::dbQuoteLiteral(conn, schema), " authorization ", DBI::dbQuoteLiteral(conn, role_specification), ";"))})
+    if(!inherits(Result, "try-error")) {
+    } else {
+      return(TRUE)
+      stop("Failed to create the schema.")
+    }
+  } else {
+    stop(paste0("Schema ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
