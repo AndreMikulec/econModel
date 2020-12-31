@@ -4,7 +4,13 @@
 \alias{dbCreateSchemaEM}
 \title{Schema Creation}
 \usage{
-dbCreateSchemaEM(conn, schema, role_specification, grant_all_roles, ...)
+dbCreateSchemaEM(
+  conn,
+  schema,
+  role_specification = schema,
+  grant_all_roles = schema,
+  ...
+)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Required.}
@@ -13,9 +19,9 @@ dbCreateSchemaEM(conn, schema, role_specification, grant_all_roles, ...)
 
 \item{...}{Dots passed.}
 
-\item{role_specification.}{String. The schema role specification.  Required.}
+\item{role_specification.}{String. The schema role specification.  Default to schema.}
 
-\item{grant_all}{vector of Strings. Roles to be GRANTE ALLed to this schema.}
+\item{grant_all}{vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to schema.}
 }
 \value{
 TRUE(success) or Error(failure)
@@ -25,7 +31,7 @@ Create a schema in the database.
 }
 \examples{
 \dontrun{
- dbCreateSchemaEM(conn, schema = "r_user_econmodel",  role_specification = "r_user_econmodel", grant_all_roles = "r_user_econmodel")
- dbCreateSchemaEM(conn, schema = "rtmp",  role_specification = "rtmp", grant_all_roles = "rtmp")
+ dbCreateSchemaEM(conn, schema = "r_user_econmodel")
+ dbCreateSchemaEM(conn, schema = "rtmp")
 }
 }

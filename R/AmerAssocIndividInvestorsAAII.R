@@ -1172,7 +1172,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
 #' @export
-connectEM <- function(driver, user, password, host, dbname, port,
+dbConnectEM <- function(driver, user, password, host, dbname, port,
                       tty, options, forceISOdate, env, ...) {
 tryCatchLog::tryCatchLog({
 
@@ -1304,7 +1304,7 @@ tryCatchLog::tryCatchLog({
 #' @returns Disconnects "connName" and removes it from the environment "env".
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-disconnectEM <- function(connName, env, ...) {
+dbDisconnectEM <- function(connName, env, ...) {
 
   if(missing(connName)) {
     connName <- "connEM"
@@ -1353,16 +1353,18 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param user String. Required.  Potential user in the database.
-#' @param attributes.  vector of Strings. User attributes.
+#' @param attributes  vector of Strings. User attributes.
+#' @param password String. Defaults to user.
 #' @param ... Dots Passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
-#' dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("login", "createdb", "createrole") , password = "r_user_econmodel")
-#' dbCreateUserEM(conn, user = "rtmp", attributes = c("login") , password = "rtmp")
+#' dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("login", "createdb", "createrole"))
+#' dbCreateUserEM(conn, user = "rtmp", attributes = c("login"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbCreateUserEM <- function(conn, user, attributes = c("login"), password, ...) {
+#' @importFrom DBI dbExecute dbQuoteLiteral
+dbCreateUserEM <- function(conn, user, attributes = c("login"), password = user, ...) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
@@ -1381,7 +1383,7 @@ tryCatchLog::tryCatchLog({
   }
 
   if(!dbExistsUserEM(conn, user)) {
-    Result <- try({Result <- dbExecute(conn, paste0("create role ", user, " ", attributes, " noinherit ", password, ";"))})
+    Result <- try({Result <- DBI::dbExecute(conn, paste0("create role ", user, " ", attributes, " noinherit ", password, ";"))})
     if(!inherits(Result, "try-error")) {
       return(TRUE)
     } else {
@@ -1429,35 +1431,30 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection. Required.
 #' @param schema String. Required.  Potential schema in the database.
-#' @param role_specification.  String. The schema role specification.  Required.
-#' @param grant_all vector of Strings. Roles to be GRANTE ALLed to this schema.
+#' @param role_specification.  String. The schema role specification.  Default to schema.
+#' @param grant_all vector of Strings. Roles to be GRANTE ALLed to this schema.  Defaults to schema.
 #' @param ... Dots passed.
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
-#'  dbCreateSchemaEM(conn, schema = "r_user_econmodel",  role_specification = "r_user_econmodel", grant_all_roles = "r_user_econmodel")
-#'  dbCreateSchemaEM(conn, schema = "rtmp",  role_specification = "rtmp", grant_all_roles = "rtmp")
+#'  dbCreateSchemaEM(conn, schema = "r_user_econmodel")
+#'  dbCreateSchemaEM(conn, schema = "rtmp")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbCreateSchemaEM <- function(conn, schema, role_specification, grant_all_roles, ...) {
+#' @importFrom DBI dbExecute dbQuoteLiteral
+dbCreateSchemaEM <- function(conn, schema, role_specification = schema, grant_all_roles = schema, ...) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
     stop("Parameter \"conn\" is required.")
   }
-  if(missing(role_specification)) {
-    stop("Parameter \"schema\" is required.")
-  }
+
   if(1L < NROW(role_specification)) {
     stop("Parameter \"role_specification\" can only have one role.")
   }
 
-  if(missing(grant_all_roles)) {
-    grant_all_rols <- character()
-  }
-
   if(!dbExistsSchemaEM(conn, schema)) {
-    Result <- try({Result <- dbExecute(conn, paste0("create schema ", schema, " authorization ", role_specification, ";"))})
+    Result <- try({Result <- DBI::dbExecute(conn, paste0("create schema ", schema, " authorization ", role_specification, ";"))})
     if(inherits(Result, "try-error")) {
       stop("Failed to create the schema.")
     }
@@ -1466,7 +1463,7 @@ tryCatchLog::tryCatchLog({
   }
 
   lapply(grant_all_roles, function(grant_all_role) {
-    Result <- try({Result <- dbExecute(conn, paste0("grant all on schema ", schema, " to ", grant_all_role, ";"))})
+    Result <- try({Result <- DBI::dbExecute(conn, paste0("grant all on schema ", schema, " to ", grant_all_role, ";"))})
     if(inherits(Result, "try-error")) {
       stop(paste0("Failed to create the schema to ", grant_all_role))
     }
@@ -1477,5 +1474,74 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
+
+#' Database Existence?
+#'
+#' Determine if a database exists in the cluster.
+#'
+#' @param conn PostgreSQL DBI connection. Required.
+#' @param dbname String. Required.  Potential database in the cluster.
+#' @param ... Dots passed.
+#' @returns TRUE(exists) or FALSE(not exists)
+#' @examples
+#' \dontrun{
+#'  dbExistsDbaseEM(conn, dbname = "r_user_econmodel")
+#'  dbExistsDbaseEM(conn, dbname = "rtmp")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+dbExistsDbaseEM <- function(conn, dbname, ...) {
+tryCatchLog::tryCatchLog({
+
+  Result <- dbGetQueryEM(conn, paste0("select exists(select 1 from pg_catalog.pg_database where datname = ", DBI::dbQuoteLiteral(conn, dbname), ");"))
+  if(unlist(Result)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
+#' Database Creation
+#'
+#' Create a a database in the cluster.
+#'
+#' @param conn PostgreSQL DBI connection. Required.
+#' @param dbname String. Required.  Potential database in the cluster.
+#' @param owner String. Database owner. Defaults to parameter "dbname".
+#' @param ... Dots Passed.
+#' @returns TRUE(success) or Error(failure)
+#' @examples
+#' \dontrun{
+#' dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
+#' dbCreateDbaseEM(conn, dbname = "rtmp")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbExecute dbQuoteLiteral
+dbCreateDbaseEM <- function(conn, dbname, owner = dbname, ...) {
+tryCatchLog::tryCatchLog({
+
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+  if(missing(dbname)) {
+    stop("Parameter \"dbname\" is required.")
+  }
+
+  RestOfDbCreate <- "encoding = 'utf-8' lc_collate = 'C' lc_ctype = 'C' tablespace = pg_default connection_limit = -1"
+  if(!dbExistsDbaseEM(conn, dbname)) {
+    Result <- try({Result <- DBI::dbExecute(conn, paste0("create database ", dbname, " ", " with owner ", owner, " ",  RestOfDbCreate, ";"))})
+    if(!inherits(Result, "try-error")) {
+      return(TRUE)
+    } else {
+      stop("Failed to create the database.")
+    }
+  } else {
+    stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " is already in the cluster."))
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 

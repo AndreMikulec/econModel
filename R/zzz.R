@@ -17,7 +17,7 @@ tryCatchLog::tryCatchLog({
                       , "R package \"econModel\" is *not yet* connected(ing) to a PosgreSQL-like database.\n"
                       , "\n"
                       , "(1) (If not already started), start the  PosgreSQL-like database.\n"
-                      , "(2) Run \"connectEM()\" or for help type \"? econModel::connectEm\"\n"
+                      , "(2) Run \"dbConnectEM()\" or for help type \"? econModel::dbConnectEM\"\n"
   )
   packageStartupMessage(start_message)
   invisible()
