@@ -7,7 +7,7 @@
 dbCreateUserEM(
   conn,
   user,
-  attributes = c("login"),
+  attributes = c("LOGIN"),
   password = user,
   display = TRUE,
   exec = TRUE,
@@ -37,7 +37,7 @@ Create a user exists in the database.
 }
 \examples{
 \dontrun{
-dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("login", "createdb", "createrole"))
-dbCreateUserEM(conn, user = "rtmp", attributes = c("login"))
+dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
+dbCreateUserEM(conn, user = "rtmp")
 }
 }

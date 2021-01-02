@@ -14,6 +14,7 @@ dbConnectEM(
   tty,
   options,
   forceISOdate,
+  connName,
   env,
   ...
 )
@@ -36,6 +37,8 @@ dbConnectEM(
 \item{options}{Defaults to getOption("econmodel_db_dboptions").}
 
 \item{forceISOdate}{Logical. Default is getOption("econmodel_db_forceISOdate").}
+
+\item{connName}{String.  Name of the database connection object.  The default is "connEM".}
 
 \item{env}{Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".}
 
