@@ -53,22 +53,18 @@ Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases
 \details{
 This function tries to return a new "DBI" connection object to the environment "env".
 
-First, this function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
+First, this function will try to connect to the database using the user name "user" specified from getOption("econmodel_db_*") parameters listed in the "parameters" section.
 
-If the connection can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "r_user_econmodel".
-Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
-getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.
-Next, the new connection object "connEM" will be returned to the "env".
-Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
+If the connection can be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
+If the connection is made, then next the schema "r_user_econmodel" is attempted to be made..
 
-If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "postgres".
-If successful, the login/user/dbname/schema (if any do not exists) of "r_user_econmodel" will attempt to be created.
-Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
-getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.  This is set in this package econModel ".unLoad" function.
-Next, the new connection object "connEM" will be returned to the "env".
-Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
-
-If the connection still can not be made, the program stops with a message.
+If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
+If the connection can be made, the the user/password/dbname/schema of "r_user_econmodel" will be made.
+Next, disconnect. Connect as "r_user_econmodel".
+Create the user/password/dbname of "user"
+Next, disconnect. Connect as "user".
+Create the schema "user".
+Store the new connection object connName in "env".
 }
 \examples{
 \dontrun{

@@ -4,12 +4,10 @@
 \alias{dbSetPerformance}
 \title{PostgreSQL Performance}
 \usage{
-dbSetPerformance(connName, env)
+dbSetPerformance(conn)
 }
 \arguments{
-\item{connName}{String.  Name of the database connection object.  The default is "connEM".}
-
-\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
+\item{conn}{PostgreSQL DBI connection.}
 }
 \value{
 PostgreSQL parameters are set
@@ -19,6 +17,6 @@ Set PostgreSQL memory parameters.
 }
 \examples{
 \dontrun{
-dbSetPerformance()
+dbSetPerformance(get("connEM"))
 }
 }

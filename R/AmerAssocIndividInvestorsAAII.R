@@ -1140,28 +1140,16 @@ tryCatchLog::tryCatchLog({
 #'
 #' Set PostgreSQL memory parameters.
 #'
-#' @param connName String.  Name of the database connection object.  The default is "connEM".
-#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
+#' @param conn PostgreSQL DBI connection.
 #' @returns PostgreSQL parameters are set
 #' @examples
 #' \dontrun{
-#' dbSetPerformance()
+#' dbSetPerformance(get("connEM"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbSetPerformance <- function(connName, env) {
+dbSetPerformance <- function(conn) {
 tryCatchLog::tryCatchLog({
-
-  if(missing(connName)) {
-
-    connName <- "connEM"
-  }
-  if(missing(env)) {
-
-    env <- .GlobalEnv
-  }
-
-  conn <- get(connName, envir = env)
 
   dbGetQueryEM(conn, "SET EFFECTIVE_CACHE_SIZE TO '6144MB';")
   dbGetQueryEM(conn, "SET WORK_MEM TO '2047MB';")
@@ -1179,7 +1167,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' Is the connection not expired or not valid?
 #'
-#' @param conn PostgreSQL DBI connection
+#' @param conn PostgreSQL DBI connection.
 #' @param ... Dots passed.
 #' @returns TRUE(connected) or FALSE(otherwise)
 #' @examples
@@ -1218,8 +1206,8 @@ tryCatchLog::tryCatchLog({
 
 #' Extra Information About The RPostgreSQL Connection
 #'
-#' Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_storage_name, and timeZone.
-#' It will not report the working database (econmodel_db_storage_name)  (if it does not yet exist).
+#' Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_dbname, and timeZone.
+#' It will not report the working database (econmodel_db_dbname)  (if it does not yet exist).
 #' It will not report the user temporary database (temp_dbname) (if it does not yet exist).
 #'
 #' @param conn PostgreSQL DBI connection
@@ -1233,31 +1221,31 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
 dbGetInfoExtraEM <- function(conn, ...) {
-  tryCatchLog::tryCatchLog({
+tryCatchLog::tryCatchLog({
 
-    if(missing(conn)) {
-      stop(paste0("Paramter \"conn\" is required."))
+  if(missing(conn)) {
+    stop(paste0("Paramter \"conn\" is required."))
+  }
+
+  Results <- list()
+
+  if(inherits(conn, "PostgreSQLConnection")) {
+
+
+    One <-try({dbGetQueryEM(conn, "SELECT 1;")}, silent = TRUE)
+    if(inherits(One, "try-error")) {
+      stop(paste0("Parameter \"conn\" is not a [working] DBI connection."))
     }
 
-    Results <- list()
+    Results["current_schema"] <- unlist(tolower(dbGetQueryEM(conn, "SELECT current_schema();")))
 
-    if(inherits(conn, "PostgreSQLConnection")) {
-
-
-      One <-try({dbGetQueryEM(conn, "SELECT 1;")}, silent = TRUE)
-      if(inherits(One, "try-error")) {
-        stop(paste0("Parameter \"conn\" is not a [working] DBI connection."))
-      }
-
-      Results["current_schema"] <- unlist(tolower(dbGetQueryEM(conn, "SELECT current_schema();")))
-
-      Results["search_path"]    <- unlist(tolower(dbGetQueryEM(conn, "SHOW SEARCH_PATH;")))
+    Results["search_path"]    <- unlist(tolower(dbGetQueryEM(conn, "SHOW SEARCH_PATH;")))
     InterimResult               <- unlist(tolower(dbGetQueryEM(conn, "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();")))
     if(length(InterimResult)) {
       Results["temp_dbname"]  <- InterimResult
     }
-    if(length(getOption("econmodel_db_storage_name"))) {
-       Results[["econmodel_db_storage_name"]] <- getOption("econmodel_db_storage_name")
+    if(length(getOption("econmodel_db_dbname"))) {
+       Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
     }
 
     Results["timeZone"]       <- unlist(tolower(dbGetQueryEM(conn, "SHOW TIMEZONE;")))
@@ -1275,22 +1263,18 @@ dbGetInfoExtraEM <- function(conn, ...) {
 #'
 #' This function tries to return a new "DBI" connection object to the environment "env".
 #'
-#' First, this function will try to connect to the database using the getOption("econmodel_db_*") parameters listed in the "parameters" section.
+#' First, this function will try to connect to the database using the user name "user" specified from getOption("econmodel_db_*") parameters listed in the "parameters" section.
 #'
-#' If the connection can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "r_user_econmodel".
-#' Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
-#' getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.
-#' Next, the new connection object "connEM" will be returned to the "env".
-#' Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
+#' If the connection can be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
+#' If the connection is made, then next the schema "r_user_econmodel" is attempted to be made..
 #'
-#' If the connection still can not be made, then next the connection is tried to be made using the user/password/dbname/schema of "postgres".
-#' If successful, the login/user/dbname/schema (if any do not exists) of "r_user_econmodel" will attempt to be created.
-#' Next, the user/password/database/schema of name getOption("econmodel_storage_name") will attempt to be created.
-#' getOption("econmodel_storage_name") defaults to the lower case name of the tempdir() tail folder.  This is set in this package econModel ".unLoad" function.
-#' Next, the new connection object "connEM" will be returned to the "env".
-#' Next, disconnection occurs. Connection re-occurs using the user getOption("econmodel_storage_name").
-#'
-#' If the connection still can not be made, the program stops with a message.
+#' If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
+#' If the connection can be made, the the user/password/dbname/schema of "r_user_econmodel" will be made.
+#' Next, disconnect. Connect as "r_user_econmodel".
+#' Create the user/password/dbname of "user"
+#' Next, disconnect. Connect as "user".
+#' Create the schema "user".
+#' Store the new connection object connName in "env".
 #'
 #' @param driver String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
 #' @param user String. Defaults to getOption("econmodel_db_user").
@@ -1884,5 +1868,79 @@ tryCatchLog::tryCatchLog({
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' From the Cluster, Remove Old Work Databases
+#'
+#' In the cluster, logs on to the database "r_user_econmodel" as user "rtmp%" and (tries to) drop the "rtmp%" database.
+#' Does not drop the "current work database": "getOption("econmodel_db_dbname")".
+#'
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @param Dots passed.
+#' @returns TRUE(always).  Will attempt to drop each 'rtmp%' database (but not the current work database).
+#' @examples
+#' \dontrun{
+#' clRemoveOldWorkDbasesEM()
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbDriver dbConnect dbGetQuery, dbQuoteLiteral dbDisconnect
+#' @export
+clRemoveOldWorkDbasesEM <- function(display = TRUE, exec = TRUE, ...) {
+tryCatchLog::tryCatchLog({
+
+  ops <- options()
+  options(warn = 1L)
+
+  Dots <- list(...)
+
+  drv  <- DBI::dbDriver("PostgreSQL")
+  conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
+  NotDatabase <- DBI::dbQuoteLiteral(conn, getOption("econmodel_db_dbname"))
+  tmp.query <-  paste0("SELECT datname FROM pg_catalog.pg_database WHERE datname LIKE 'rtmp%' AND datname != ", NotDatabase, ";")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+  ## Execute the query
+  if(exec) {
+    Databases   <- dbGetQueryEM(conn, tmp.query)
+  }
+  Databases   <- unlist(Databases)
+
+  lapply(Databases, function(dbname) {
+    try({
+      # I can not be "in" the database I am trying to drop
+      # Avoid the error: ERROR:  cannot drop the currently open database
+      conn <- DBI::dbConnect(drv, user = dbname, password = dbname, dbname = "r_user_econmodel")
+      # trying to drop my own database
+      tmp.query <- paste0("DROP DATABASE ", dbname, ";")
+      ## Display the query
+      if (display) {
+        message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+        message(tmp.query)
+      }
+      ## Execute the query
+      if(exec) {
+        Results <- DBI::dbGetQuery(conn, tmp.query)
+        if(inherits(Results, "try-error")) {
+          message(paste0("Failed to drop database ", dbname, "."))
+        }
+      }
+      DBI::dbDisconnect(conn)
+
+    }, silent = TRUE)
+    invisible()
+  })
+
+  options(ops)
+  return(TRUE)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
 
 

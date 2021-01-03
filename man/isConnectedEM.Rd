@@ -7,7 +7,7 @@
 isConnectedEM(conn, ...)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection}
+\item{conn}{PostgreSQL DBI connection.}
 
 \item{...}{Dots passed.}
 }
