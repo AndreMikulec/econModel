@@ -4,7 +4,7 @@
 \alias{dbGetQueryEM}
 \title{Results column names are always in UPPERCASE.}
 \usage{
-dbGetQueryEM(conn, Statement, ...)
+dbGetQueryEM(conn, Statement, display = TRUE, exec = TRUE, ...)
 }
 \arguments{
 \item{conn}{A DBIConnection object, as returned by dbConnect().}

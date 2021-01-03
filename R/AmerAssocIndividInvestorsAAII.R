@@ -981,12 +981,24 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery
 #' @export
-dbGetQueryEM <- function(conn, Statement, ...) {
+dbGetQueryEM <- function(conn, Statement, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
-  Results <- DBI::dbGetQuery(conn, statement = Statement, ...)
-  colnames(Results) <- toupper(colnames(Results))
-  return(Results)
+  Dots <- list(...)
+
+  tmp.query <- Statement
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    Results <- DBI::dbGetQuery(conn, statement = tmp.query, ...)
+    colnames(Results) <- toupper(colnames(Results))
+    return(Results)
+  }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1124,6 +1136,44 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' PostgreSQL Performance
+#'
+#' Set PostgreSQL memory parameters.
+#'
+#' @param connName String.  Name of the database connection object.  The default is "connEM".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
+#' @returns PostgreSQL parameters are set
+#' @examples
+#' \dontrun{
+#' dbSetPerformance()
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dbSetPerformance <- function(connName, env) {
+tryCatchLog::tryCatchLog({
+
+  if(missing(connName)) {
+
+    connName <- "connEM"
+  }
+  if(missing(env)) {
+
+    env <- .GlobalEnv
+  }
+
+  conn <- get(connName, envir = env)
+
+  dbGetQueryEM(conn, "SET EFFECTIVE_CACHE_SIZE TO '6144MB';")
+  dbGetQueryEM(conn, "SET WORK_MEM TO '2047MB';")
+  dbGetQueryEM(conn, "SET MAINTENANCE_WORK_MEM TO '2047MB';")
+  dbGetQueryEM(conn, "SET CONSTRAINT_EXCLUSION = ON;")
+  dbGetQueryEM(conn, "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
+
+  return(TRUE)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 
 #' Test The RPostgreSQL Connection
 #'
@@ -1246,7 +1296,7 @@ dbGetInfoExtraEM <- function(conn, ...) {
 #' @param options Defaults to getOption("econmodel_db_dboptions").
 #' @param forceISOdate Logical. Default is getOption("econmodel_db_forceISOdate").
 #' @param connName String.  Name of the database connection object.  The default is "connEM".
-#' @param env Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param ... Dots passed.
 #' @returns DBI connection object named "connEM" is created, connected and assigned to the environment "env".
 #' @examples

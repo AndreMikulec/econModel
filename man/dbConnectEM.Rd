@@ -40,7 +40,7 @@ dbConnectEM(
 
 \item{connName}{String.  Name of the database connection object.  The default is "connEM".}
 
-\item{env}{Environment.  Default is the .Global environmet.  This is the environment to return the connection object "connEM".}
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{...}{Dots passed.}
 }
