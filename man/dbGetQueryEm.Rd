@@ -9,6 +9,10 @@ dbGetQueryEM(conn, Statement, display = TRUE, exec = TRUE, ...)
 \arguments{
 \item{conn}{A DBIConnection object, as returned by dbConnect().}
 
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
+
 \item{...}{Other parameters passed on to methods.}
 
 \item{statement}{a character string containing SQL.}

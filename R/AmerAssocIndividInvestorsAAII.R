@@ -51,8 +51,6 @@ tryCatchLog::tryCatchLog({
 
   NewRepositoryEntryName <- as.character(as.integer(SetupFile[,"MONTHDATE"]))
 
-  Sys.setenv(TZ=oldtz)
-
   return(NewRepositoryEntryName)
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -977,12 +975,21 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn A DBIConnection object, as returned by dbConnect().
 #' @param statement	a character string containing SQL.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ...	Other parameters passed on to methods.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery
 #' @export
 dbGetQueryEM <- function(conn, Statement, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
+
+  #correct for TZ
+  oldtz <- Sys.getenv('TZ')
+  if(oldtz=='') {
+    Sys.setenv(TZ="UTC")
+  }
+  on.exit({Sys.setenv(TZ=oldtz)})
 
   Dots <- list(...)
 
@@ -995,10 +1002,12 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    Results <- DBI::dbGetQuery(conn, statement = tmp.query, ...)
+    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query, ...)})
     colnames(Results) <- toupper(colnames(Results))
     return(Results)
   }
+
+  invisible()
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1029,6 +1038,36 @@ tryCatchLog::tryCatchLog({
 #' @param lowerColNames Logical. Default is TRUE. Make the target database table column names to be in lowercase.
 #' @param replaceDotUsingUnderscore Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).
 #' @param ... Dots. Other parameters passed to R CRAN package DBI dbWriteTable.
+#' @examples
+#' \dontrun{
+#' mtcars2 <- mtcars
+#' mtcars2[["model"]] <- rownames(mtcars2)
+#' mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
+#' mtcars2[["vs"]] <- as.logical(mtcars2[["vs"]])
+#' mtcars2[["gear"]] <- as.integer(mtcars2[["gear"]])
+#' mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
+#' rownames(mtcars2) <- NULL
+#' #
+#' # Creates the table (with zero rows).
+#' # Appends data (with the Df having the same columns that the server).
+#' mtcars2s <- mtcars2[1:5,]
+#' dbWriteTableEM(get("connEM"), Df = mtcars2s)
+#'
+#' # Appends data (with the Df having less columns that the server database).
+#' # Those server columns, that are not found in the Df, are added to the Df.
+#' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
+#' dbWriteTableEM(get("connEM"), Df = mtcars2lDf)
+#'
+#' # Appends data (with the server database having less columns that the Df).
+#' # Those Df columns, that are not found in the server, are added to the sever.
+#' mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
+#'                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
+#'                DfNew[["model"]] <- DfNew[["model_new"]]
+#'                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
+#'                DfNew
+#'               }; rm(DfNew)
+#' dbWriteTableEM(get("connEM"), Df = mtcars2lSv)
+#' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom caroline dbWriteTable2
 #' @importFrom DBI dbExistsTable dbWriteTable
@@ -1056,7 +1095,6 @@ tryCatchLog::tryCatchLog({
   # https://github.com/jangorecki/pg (https://gitlab.com/jangorecki/pg)
   # https://github.com/jangorecki/logR (https://gitlab.com/jangorecki/logR)
   #
-
 
   # Note: Please also read
   #
@@ -1099,14 +1137,16 @@ tryCatchLog::tryCatchLog({
   #   ret <- paste('"', gsub('"','""',identifiers), '"', sep="", collapse=".")
   #   ret
   # }
-  # # DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
+  # # dbExecuteEM(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
 
   # if new columns exist in Df but do not exist at con(remote database)
   # then I MUST add them here to the con
   # *** TO BE IMPLEMENTED
 
   # STOP BECAUSE THIS IS CRITICAL
-  stop("Need to Implement case: if the Df has more/different col than the remoted database, \nthen FIRST, add those columns to the database.")
+  ### ANDRE
+  message("Need to Implement case: if the Df has more/different col than the remoted database, \nthen FIRST, add those columns to the database.")
+  ### stop("Need to Implement case: if the Df has more/different col than the remoted database, \nthen FIRST, add those columns to the database.")
 
   # Because caroline dbWriteTable2 requires it.
   # Just (badly) needed to (indirectly) get the column data types.
@@ -1116,6 +1156,10 @@ tryCatchLog::tryCatchLog({
     rpostgis::dbColumn(conn, name = DfName, colname = "id")
     createdFakeId <- TRUE
   }
+
+
+
+
 
   # expect the table to already be there
   DescTools::DoCall(
@@ -1300,11 +1344,18 @@ dbConnectEM <- function(driver, user, password = user, host, dbname = user, port
                         tty, options, forceISOdate, connName, env, ...) {
 tryCatchLog::tryCatchLog({
 
+  #correct for TZ
+  oldtz <- Sys.getenv('TZ')
+  if(oldtz=='') {
+    Sys.setenv(TZ="UTC")
+  }
+  on.exit({Sys.setenv(TZ=oldtz)})
+
   if(missing(driver)) {
     driver <- getOption("econmodel_db_driver")
   }
   if(!driver %in% "PostgreSQL") {
-  stop("Parameter \"driver\" must be \"PostreSQL\".  No other driver is implemented at this time.")
+    stop("Parameter \"driver\" must be \"PostreSQL\".  No other driver is implemented at this time.")
   }
 
   if(missing(user)) {
@@ -1406,6 +1457,7 @@ tryCatchLog::tryCatchLog({
         cat(paste0("Successfully connected to user \"", "r_user_econmodel", "\"\n"))
         if(!dbExistsSchemaEM(conn, schema = "r_user_econmodel")) dbCreateSchemaEM(conn, schema = "r_user_econmodel")
         # user = user
+
         if(!dbExistsUserEM( conn, user   = user))    dbCreateUserEM(conn,   user   = user)
         if(!dbExistsDbaseEM(conn, dbname = dbname))  dbCreateDbaseEM(conn,  dbname = user)
         dbDisconnectEM(conn)
@@ -1452,6 +1504,70 @@ tryCatchLog::tryCatchLog({
   } else {
     stop(paste0("Parameter \"driver\" is specified as \"", driver, "\".  But the driver failed to load."))
   }
+
+  invisible()
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Executes in the  database
+#'
+#' Disconnects the R object passed "conn".
+#' Alternately, can disconnect and remove the DBI connection object connName (default is "connEM") from the environment "env".
+#' The function will just do one or the other, but not both.  Does NOT remove the passed R object "conn".
+#'
+#' @param conn PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".
+#' @param Statement String. Required.  DML/DDL/DCL to execute
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @param ... Dots passed.
+#' @returns Execution of "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
+#' @examples
+#' \dontrun{
+#' dbExecuteEM(get("connEM"), "CREATE TABLE xyz();")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dbExecuteEM <- function(conn, Statement, display = TRUE, exec = TRUE, ...) {
+tryCatchLog::tryCatchLog({
+
+  #correct for TZ
+  oldtz <- Sys.getenv('TZ')
+  if(oldtz=='') {
+    Sys.setenv(TZ="UTC")
+  }
+  on.exit({Sys.setenv(TZ=oldtz)})
+
+  Dots <- list(...)
+
+  if(missing(conn)) {
+    stop("Parameter \"conn\" must be provided.")
+  }
+
+  if(missing(Statement)) {
+    stop("Parameter \"Statement\" must be provided.")
+  }
+
+  ## Build the query
+  tmp.query <- Statement
+
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  # Execute the query
+  if(exec) {
+    Results <- try({DBI::dbExecute(conn, tmp.query)}, silent = T)
+    if(inherits(Result, "try-error")) {
+      stop("Execution of statement \"", tmp.query, "\" failed.")
+    } else {
+      return(Results)
+    }
+  }
+
   invisible()
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -1604,7 +1720,7 @@ tryCatchLog::tryCatchLog({
   ## Execute the query and return TRUE
   if (exec) {
     if(!dbExistsUserEM(conn, user)) {
-      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
       if(!inherits(Result, "try-error")) {
         return(TRUE)
       } else {
@@ -1701,7 +1817,7 @@ tryCatchLog::tryCatchLog({
   ## Execute the query and return TRUE
   if (exec) {
     if(!dbExistsSchemaEM(conn, schema)) {
-      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
       if(inherits(Result, "try-error")) {
         stop("Failed to create the schema.")
       }
@@ -1721,7 +1837,7 @@ tryCatchLog::tryCatchLog({
     }
     ## Execute the query and return TRUE
     if (exec) {
-      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
       if(inherits(Result, "try-error")) {
         stop(paste0("Failed to grant all on the schema to ", grant_all_role))
       }
@@ -1820,7 +1936,7 @@ tryCatchLog::tryCatchLog({
   }
   ## Execute the query and return TRUE
   if (exec) {
-    Result <- try({Result <- DBI::dbExecute(conn, tmp.query) })
+    Result <- try({Result <- dbExecuteEM(conn, tmp.query) })
     if (inherits(Result, "try-error")) {
       stop(paste0("Failed to grant: ", tmp.query))
     }
@@ -1856,7 +1972,7 @@ tryCatchLog::tryCatchLog({
   ## Execute the query and return TRUE
   if (exec) {
     if(!dbExistsDbaseEM(conn, dbname)) {
-      Result <- try({Result <- DBI::dbExecute(conn, tmp.query)})
+      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
       if(!inherits(Result, "try-error")) {
         return(TRUE)
       } else {
@@ -1866,6 +1982,28 @@ tryCatchLog::tryCatchLog({
       stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " is already in the cluster."))
     }
   }
+
+  tmp.query <- paste0("ALTER DATABASE ", dbname, " SET TIME ZONE 'UTC';")
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+  ## Execute the query and return TRUE
+  if (exec) {
+    if(!dbExistsDbaseEM(conn, dbname)) {
+      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
+      if(!inherits(Result, "try-error")) {
+        return(TRUE)
+      } else {
+        stop("Failed to alter the database.")
+      }
+    } else {
+      stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " can not be alterned from here."))
+    }
+  }
+
+  invisible()
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1924,12 +2062,12 @@ tryCatchLog::tryCatchLog({
       }
       ## Execute the query
       if(exec) {
-        Results <- DBI::dbGetQuery(conn, tmp.query)
+        Results <- dbExecuteEM(conn, tmp.query)
         if(inherits(Results, "try-error")) {
           message(paste0("Failed to drop database ", dbname, "."))
         }
       }
-      DBI::dbDisconnect(conn)
+      dbDisconnectEM(conn)
 
     }, silent = TRUE)
     invisible()

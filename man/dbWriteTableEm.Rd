@@ -44,3 +44,34 @@ dbWriteTableEM(
 \description{
 Thin wrapper over R CRAN package caroline function dbWriteTable2
 }
+\examples{
+\dontrun{
+mtcars2 <- mtcars
+mtcars2[["model"]] <- rownames(mtcars2)
+mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
+mtcars2[["vs"]] <- as.logical(mtcars2[["vs"]])
+mtcars2[["gear"]] <- as.integer(mtcars2[["gear"]])
+mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
+rownames(mtcars2) <- NULL
+#
+# Creates the table (with zero rows).
+# Appends data (with the Df having the same columns that the server).
+mtcars2s <- mtcars2[1:5,]
+dbWriteTableEM(get("connEM"), Df = mtcars2s)
+
+# Appends data (with the Df having less columns that the server database).
+# Those server columns, that are not found in the Df, are added to the Df.
+mtcars2lDf <- mtcars2[6:10, "model", drop = F]
+dbWriteTableEM(get("connEM"), Df = mtcars2lDf)
+
+# Appends data (with the server database having less columns that the Df).
+# Those Df columns, that are not found in the server, are added to the sever.
+mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
+               colnames(DfNew) <- paste0(colnames(DfNew),"_new")
+               DfNew[["model"]] <- DfNew[["model_new"]]
+               DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
+               DfNew
+              }; rm(DfNew)
+dbWriteTableEM(get("connEM"), Df = mtcars2lSv)
+}
+}
