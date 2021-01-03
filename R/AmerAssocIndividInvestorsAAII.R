@@ -1218,7 +1218,8 @@ tryCatchLog::tryCatchLog({
 
 #' Extra Information About The RPostgreSQL Connection
 #'
-#' Adds extra information: current_schema, search_path, temp_dbname, and timeZone.
+#' Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_storage_name, and timeZone.
+#' It will not report the working database (econmodel_db_storage_name)  (if it does not yet exist).
 #' It will not report the user temporary database (temp_dbname) (if it does not yet exist).
 #'
 #' @param conn PostgreSQL DBI connection
@@ -1226,7 +1227,8 @@ tryCatchLog::tryCatchLog({
 #' @returns R list of Strings of properties.
 #' @examples
 #' \dontrun{
-#' dbInfoExtraEM(conn)
+#' dbGetInfoExtraEM(conn)
+#' dbGetInfoExtraEM(get("connEM"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1254,6 +1256,10 @@ dbGetInfoExtraEM <- function(conn, ...) {
     if(length(InterimResult)) {
       Results["temp_dbname"]  <- InterimResult
     }
+    if(length(getOption("econmodel_db_storage_name"))) {
+       Results[["econmodel_db_storage_name"]] <- getOption("econmodel_db_storage_name")
+    }
+
     Results["timeZone"]       <- unlist(tolower(dbGetQueryEM(conn, "SHOW TIMEZONE;")))
   }
 
