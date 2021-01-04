@@ -993,6 +993,20 @@ tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
 
+  tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query, ...)})
+    colnames(Results) <- toupper(colnames(Results))
+    return(Results)
+  }
+
   tmp.query <- Statement
   ## Display the query
   if (display) {
@@ -1547,6 +1561,20 @@ tryCatchLog::tryCatchLog({
 
   if(missing(Statement)) {
     stop("Parameter \"Statement\" must be provided.")
+  }
+
+  tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+  ## Display the query
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+
+  ## Execute the query and return TRUE
+  if (exec) {
+    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query, ...)})
+    colnames(Results) <- toupper(colnames(Results))
+    return(Results)
   }
 
   ## Build the query
