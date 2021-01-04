@@ -1036,11 +1036,27 @@ tryCatchLog::tryCatchLog({
 dbSetPerformanceEM <- function(conn) {
 tryCatchLog::tryCatchLog({
 
-  dbGetQueryEM(conn, Statement = "SET EFFECTIVE_CACHE_SIZE TO '6144MB';")
-  dbGetQueryEM(conn, Statement = "SET WORK_MEM TO '2047MB';")
-  dbGetQueryEM(conn, Statement = "SET MAINTENANCE_WORK_MEM TO '2047MB';")
-  dbGetQueryEM(conn, Statement = "SET CONSTRAINT_EXCLUSION = ON;")
-  dbGetQueryEM(conn, Statement = "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
+  # DELL HOME "COMPUTER" ( 2017 / WINDOWS 10 PROFESSIONAL )
+  # HAS 16GB of RAM AND 4 CORES
+
+  # EXPERIMENT ( memory for disk caching ) -- 2048(GUESSING) + 4096(shared buffers)
+  dbExecuteEM(conn, Statement = "SET EFFECTIVE_CACHE_SIZE  TO '6144MB';")
+
+  # windows LIMIT 2047
+  # A good rule of thumb is to keep: work_mem*max_connections*2 < 1/4 of memory
+  # NOTE: WATCH OUT FOR 'R language: parallel, each process GETS 'work_mem' limit
+  dbExecuteEM(conn, Statement = "SET WORK_MEM TO '2047MB';")
+
+  # maximum amount of memory to be used by maintenance operations, such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY
+  # https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
+  dbExecuteEM(conn, Statement = "SET MAINTENANCE_WORK_MEM  TO '2047MB';")
+
+  # Controls the query planner's use of table constraints
+  # to optimize queries.
+  dbExecuteEM(conn, Statement = "SET CONSTRAINT_EXCLUSION TO ON;")
+
+  # Postgresql 9.6
+  dbExecuteEM(conn, Statement = "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
 
   return(TRUE)
 
