@@ -15,7 +15,7 @@ dbGetInfoExtraEM(conn, ...)
 R list of Strings of properties.
 }
 \description{
-Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_dbname, and timeZone.
+Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_dbname, client_encoding, and time_zone.
 It will not report the working database (econmodel_db_dbname)  (if it does not yet exist).
 It will not report the user temporary database (temp_dbname) (if it does not yet exist).
 }

@@ -993,20 +993,6 @@ tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
 
-  tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
-  ## Display the query
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
-
-  ## Execute the query and return TRUE
-  if (exec) {
-    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query, ...)})
-    colnames(Results) <- toupper(colnames(Results))
-    return(Results)
-  }
-
   tmp.query <- Statement
   ## Display the query
   if (display) {
@@ -1030,166 +1016,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Results column names are always in UPPERCASE.
-#'
-#' Thin wrapper over R CRAN package caroline function dbWriteTable2
-#'
-#' @param conn A DBIConnection object, as returned by dbConnect().
 
-
-#' Insert a new table into the PostgreSQL database or append data.
-#'
-#' Thin wrapper over R CRAN package caroline function dbWriteTable2
-#'
-#' @param conn A DBIConnection object, as returned by dbConnect().
-#' @param DfName  String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.
-#' @param Df, data.frame. Required. To be loaded to the database.
-#' @param FillNull Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?
-#' @param AddID Logical. Default is FALSE.  Should a new column should be added for the database id?
-#' @param RowNames Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).
-#' @param PgUpdateSeq Logical. Default is FALSE. Should the table primary key's sequence be updated to the highest id value +1? (Postgres specific)
-#' @param lowerDfName Logical. Default is TRUE. Make the target database table name to be in lowercase.
-#' @param lowerColNames Logical. Default is TRUE. Make the target database table column names to be in lowercase.
-#' @param replaceDotUsingUnderscore Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).
-#' @param ... Dots. Other parameters passed to R CRAN package DBI dbWriteTable.
-#' @examples
-#' \dontrun{
-#' mtcars2 <- mtcars
-#' mtcars2[["model"]] <- rownames(mtcars2)
-#' mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
-#' mtcars2[["vs"]] <- as.logical(mtcars2[["vs"]])
-#' mtcars2[["gear"]] <- as.integer(mtcars2[["gear"]])
-#' mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
-#' rownames(mtcars2) <- NULL
-#' #
-#' # Creates the table (with zero rows).
-#' # Appends data (with the Df having the same columns that the server).
-#' mtcars2s <- mtcars2[1:5,]
-#' dbWriteTableEM(get("connEM"), Df = mtcars2s)
-#'
-#' # Appends data (with the Df having less columns that the server database).
-#' # Those server columns, that are not found in the Df, are added to the Df.
-#' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-#' dbWriteTableEM(get("connEM"), Df = mtcars2lDf)
-#'
-#' # Appends data (with the server database having less columns that the Df).
-#' # Those Df columns, that are not found in the server, are added to the sever.
-#' mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
-#'                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
-#'                DfNew[["model"]] <- DfNew[["model_new"]]
-#'                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
-#'                DfNew
-#'               }; rm(DfNew)
-#' dbWriteTableEM(get("connEM"), Df = mtcars2lSv)
-#' }
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom caroline dbWriteTable2
-#' @importFrom DBI dbExistsTable dbWriteTable
-#' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
-#' @importFrom rpostgis dbColumn
-#' @export
-dbWriteTableEM <- function(conn, DfName = substitute(Df), Df, FillNull = TRUE,
-                           AddID = FALSE, RowNames = FALSE, PgUpdateSeq = FALSE,
-                           lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
-                           ...) {
-tryCatchLog::tryCatchLog({
-
-  # R CRAN package caroline function dbWriteTable2
-  # can not see DBI/RPostgreSQL S4 methods, so I am importing
-  # the package "DBI" methods that the package "caroline" uses.
-  # #' @importFrom DBI db* ETC
-
-  # Influenced by R CRAN packages
-  # "RPostgreSQL",
-  # "caroline",
-  # and (especially) "rpostgis".
-  #   (excellent: but pg* functions require the "PostGIS extension")
-
-  # Influenced by the github/gitlab R packages
-  # https://github.com/jangorecki/pg (https://gitlab.com/jangorecki/pg)
-  # https://github.com/jangorecki/logR (https://gitlab.com/jangorecki/logR)
-  #
-
-  # Note: Please also read
-  #
-  # dbWriteTable assumes creation (but caroline:dbWriteTable2 assumes "append").
-  # Behavior may have changed over time from (original default) "append" to (now) "create"
-  #
-  # overwrite = TRUE # destroy and re-create
-  # append = TRUE (do not "destroy and re-create") # append data
-  #
-  # DEC 2020
-  # RPostgreSQL/html/dbReadTable-methods.html
-  # DBI/html/dbWriteTable.html
-
-  Dots <- list(...)
-
-  if(lowerDfName) {
-    DfName       <- tolower(DfName)
-  }
-  if(lowerColNames) {
-    colnames(Df) <- tolower(colnames(Df))
-  }
-  if(replaceDotUsingUnderscore) {
-    colnames(Df) <- gsub("[.]", "_", colnames(Df))
-  }
-
-  NewDots <- c(list(),Dots, append = TRUE)
-
-  # so the function call can see it them
-  # NOTE: this is "per session"
-  # dbListFields <<- DBI::dbListFields
-
-  # Because caroline dbWriteTable2 requires the table to pre-exist.
-  if(!DBI::dbExistsTable(conn, name = DfName)) {
-    # just need the structure (not the data)
-    DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
-  }
-
-  # # https://github.com/tomoakin/RPostgreSQL/blob/master/RPostgreSQL/R/PostgreSQLSupport.R
-  # postgresqlTableRef <- function(identifiers){
-  #   ret <- paste('"', gsub('"','""',identifiers), '"', sep="", collapse=".")
-  #   ret
-  # }
-  # # dbExecuteEM(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " ADD COLUMN id INTEGER;"))
-
-  # if new columns exist in Df but do not exist at con(remote database)
-  # then I MUST add them here to the con
-  # *** TO BE IMPLEMENTED
-
-  # STOP BECAUSE THIS IS CRITICAL
-  ### ANDRE
-  message("Need to Implement case: if the Df has more/different col than the remoted database, \nthen FIRST, add those columns to the database.")
-  ### stop("Need to Implement case: if the Df has more/different col than the remoted database, \nthen FIRST, add those columns to the database.")
-
-  # Because caroline dbWriteTable2 requires it.
-  # Just (badly) needed to (indirectly) get the column data types.
-  # Could have better used: SELECT * FROM name where 1 = 0;
-  createdFakeId <- FALSE
-  if(!"id" %in% dbListFields(conn, name = DfName)) {
-    rpostgis::dbColumn(conn, name = DfName, colname = "id")
-    createdFakeId <- TRUE
-  }
-
-
-
-
-
-  # expect the table to already be there
-  DescTools::DoCall(
-    "caroline::dbWriteTable2", c(list(),
-                                 list(conn), list(table.name = DfName), list(df = Df), list(fill.null = FillNull),
-                                 list(add.id = AddID), list(row.names = RowNames), list(pg.update.seq = PgUpdateSeq),
-                                 NewDots
-    )
-  )
-
-  if(createdFakeId) {
-    DBI::dbExecute(conn, paste0("ALTER TABLE ", postgresqlTableRef(DfName), " DROP COLUMN id;"))
-  }
-  invisible()
-
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1206,14 +1033,14 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbSetPerformance <- function(conn) {
+dbSetPerformanceEM <- function(conn) {
 tryCatchLog::tryCatchLog({
 
-  dbGetQueryEM(conn, "SET EFFECTIVE_CACHE_SIZE TO '6144MB';")
-  dbGetQueryEM(conn, "SET WORK_MEM TO '2047MB';")
-  dbGetQueryEM(conn, "SET MAINTENANCE_WORK_MEM TO '2047MB';")
-  dbGetQueryEM(conn, "SET CONSTRAINT_EXCLUSION = ON;")
-  dbGetQueryEM(conn, "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
+  dbGetQueryEM(conn, Statement = "SET EFFECTIVE_CACHE_SIZE TO '6144MB';")
+  dbGetQueryEM(conn, Statement = "SET WORK_MEM TO '2047MB';")
+  dbGetQueryEM(conn, Statement = "SET MAINTENANCE_WORK_MEM TO '2047MB';")
+  dbGetQueryEM(conn, Statement = "SET CONSTRAINT_EXCLUSION = ON;")
+  dbGetQueryEM(conn, Statement = "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
 
   return(TRUE)
 
@@ -1227,6 +1054,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection.
 #' @param ... Dots passed.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(connected) or FALSE(otherwise)
 #' @examples
 #' \dontrun{
@@ -1234,20 +1063,20 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-isConnectedEM <- function(conn, ...) {
+dbIsConnectedEM <- function(conn, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
 
   if(missing(conn)) {
-    stop(paste0("Paramter \"conn\" is required."))
+    stop(paste0("Parameter \"conn\" is required."))
   }
 
   Results <- list()
 
   if(inherits(conn, "PostgreSQLConnection")) {
 
-    One <-try({dbGetQueryEM(conn, "SELECT 1;")}, silent = TRUE)
+    One <-try({dbGetQueryEM(conn, Statement = "SELECT 1;", display = display, exec = exec)}, silent = TRUE)
     if(inherits(One, "try-error")) {
       return(FALSE)
     } else {
@@ -1264,7 +1093,7 @@ tryCatchLog::tryCatchLog({
 
 #' Extra Information About The RPostgreSQL Connection
 #'
-#' Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_dbname, and timeZone.
+#' Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_dbname, client_encoding, and time_zone.
 #' It will not report the working database (econmodel_db_dbname)  (if it does not yet exist).
 #' It will not report the user temporary database (temp_dbname) (if it does not yet exist).
 #'
@@ -1289,16 +1118,9 @@ tryCatchLog::tryCatchLog({
 
   if(inherits(conn, "PostgreSQLConnection")) {
 
-
-    One <-try({dbGetQueryEM(conn, "SELECT 1;")}, silent = TRUE)
-    if(inherits(One, "try-error")) {
-      stop(paste0("Parameter \"conn\" is not a [working] DBI connection."))
-    }
-
-    Results["current_schema"] <- unlist(tolower(dbGetQueryEM(conn, "SELECT current_schema();")))
-
-    Results["search_path"]    <- unlist(tolower(dbGetQueryEM(conn, "SHOW SEARCH_PATH;")))
-    InterimResult               <- unlist(tolower(dbGetQueryEM(conn, "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();")))
+    Results["current_schema"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT current_schema();")))
+    Results["search_path"]    <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;")))
+    InterimResult             <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();")))
     if(length(InterimResult)) {
       Results["temp_dbname"]  <- InterimResult
     }
@@ -1306,7 +1128,8 @@ tryCatchLog::tryCatchLog({
        Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
     }
 
-    Results["timeZone"]       <- unlist(tolower(dbGetQueryEM(conn, "SHOW TIMEZONE;")))
+    Results["client_encoding"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW CLIENT_ENCODING;")))
+    Results["time_zone"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW TIMEZONE;")))
   }
 
   return(Results)
@@ -1345,6 +1168,8 @@ tryCatchLog::tryCatchLog({
 #' @param forceISOdate Logical. Default is getOption("econmodel_db_forceISOdate").
 #' @param connName String.  Name of the database connection object.  The default is "connEM".
 #' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
 #' @returns DBI connection object named "connEM" is created, connected and assigned to the environment "env".
 #' @examples
@@ -1355,7 +1180,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom DBI dbConnect
 #' @export
 dbConnectEM <- function(driver, user, password = user, host, dbname = user, port,
-                        tty, options, forceISOdate, connName, env, ...) {
+                        tty, options, forceISOdate, connName, env, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   #correct for TZ
@@ -1419,7 +1244,7 @@ tryCatchLog::tryCatchLog({
     connNameConnected <- FALSE
     connNameExists      <- exists(connName, envir = env, inherits = FALSE)
     if(connNameExists) {
-      connNameConnected <- isConnectedEM(get(connName, envir = env, inherits = FALSE))
+      connNameConnected <- dbIsConnectedEM(get(connName, envir = env, inherits = FALSE))
     }
 
     haveConnLocal <- FALSE
@@ -1429,6 +1254,19 @@ tryCatchLog::tryCatchLog({
     }
     if(!inherits(conn, "try-error")) {
       haveConnLocal <- TRUE
+
+      tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+      ## Display the query
+      if (display) {
+        message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+        message(tmp.query)
+      }
+
+      ## Execute the query and return TRUE
+      if (exec) {
+        try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+      }
+
     }
 
     if( !haveConnLocal
@@ -1439,18 +1277,31 @@ tryCatchLog::tryCatchLog({
         (connNameExists && !connNameConnected)
         )
     ) {
-      conn <- try({conn <- DBI::dbConnect(drv,
+      conn <- try({DBI::dbConnect(drv,
                                          user = user, password = password,
                                          host = host, dbname = dbname, port = port,
                                          tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                   silent = TRUE)
     }
     if(!inherits(conn, "try-error") && dbGetInfo(conn)$user == user) {
-      cat(paste0("Successfully connected to user \"", user, "\"\n"))
+      message(paste0("Successfully connected to user \"", user, "\"."))
+
+      tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+      ## Display the query
+      if (display) {
+        message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+        message(tmp.query)
+      }
+
+      ## Execute the query and return TRUE
+      if (exec) {
+        try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+      }
+
       if(!dbExistsSchemaEM(conn, schema = user)) dbCreateSchemaEM(conn, schema = user)
       # creates a reference
       assign(connName, conn, envir = env)
-      cat(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
+      message(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
       # "r_user_econmodel" in the "r_user_econmodel" database
       # tries to create the schema "r_user_econmodel"
       # do not Disconnect
@@ -1460,15 +1311,28 @@ tryCatchLog::tryCatchLog({
       if(haveConnLocal) {
         dbDisconnectEM(conn)
       }
-      conn <- try({conn <- DBI::dbConnect(drv,
-                                         user = "r_user_econmodel", password = "r_user_econmodel",
-                                         host = host, dbname = "r_user_econmodel", port = port,
-                                         tty = tty, options = dboptions, forceISOdate = forceISOdate)},
+      conn <- try({DBI::dbConnect(drv,
+                                 user = "r_user_econmodel", password = "r_user_econmodel",
+                                 host = host, dbname = "r_user_econmodel", port = port,
+                                 tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                   silent = TRUE)
 
       if(!inherits(conn, "try-error")) {
 
-        cat(paste0("Successfully connected to user \"", "r_user_econmodel", "\"\n"))
+        message(paste0("Successfully connected to user \"", "r_user_econmodel", "."))
+
+        tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+        ## Display the query
+        if (display) {
+          message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+          message(tmp.query)
+        }
+
+        ## Execute the query and return TRUE
+        if (exec) {
+          try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+        }
+
         if(!dbExistsSchemaEM(conn, schema = "r_user_econmodel")) dbCreateSchemaEM(conn, schema = "r_user_econmodel")
         # user = user
 
@@ -1479,13 +1343,26 @@ tryCatchLog::tryCatchLog({
         # as "ruser"
         # login to the database "user" and and create the "user" schema
         #
-        conn <- try({conn <- DBI::dbConnect(drv,
-                                            user = user, password = password,
-                                            host = host, dbname = user, port = port,
-                                            tty = tty, options = dboptions, forceISOdate = forceISOdate)},
+        conn <- try({DBI::dbConnect(drv,
+                                    user = user, password = password,
+                                    host = host, dbname = user, port = port,
+                                    tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                     silent = TRUE)
         if(!inherits(conn, "try-error")) {
           # "user" in the "user" database
+
+          tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+          ## Display the query
+          if (display) {
+            message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+            message(tmp.query)
+          }
+
+          ## Execute the query and return TRUE
+          if (exec) {
+            try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+          }
+
           # tries to create the schema "user"
           if(!dbExistsSchemaEM(conn, schema = user)) dbCreateSchemaEM(conn, schema = user)
           dbDisconnectEM(conn)
@@ -1497,14 +1374,26 @@ tryCatchLog::tryCatchLog({
 
       } else {
         # try another connection
-        conn <- try({conn <- DBI::dbConnect(drv,
-                                           user = "postgres", password = "postgres",
-                                           host = host, dbname = "postgres", port = port,
-                                           tty = tty, options = dboptions, forceISOdate = forceISOdate)},
+        conn <- try({DBI::dbConnect(drv,
+                                   user = "postgres", password = "postgres",
+                                   host = host, dbname = "postgres", port = port,
+                                   tty = tty, options = dboptions, forceISOdate = forceISOdate)},
                     silent = TRUE)
         if(!inherits(conn, "try-error")) {
+          message(paste0("Successfully connected to user \"", "postgres", "\"."))
 
-          cat(paste0("Successfully connected to user \"", "postgres", "\"\n"))
+          tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+          ## Display the query
+          if (display) {
+            message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+            message(tmp.query)
+          }
+
+          ## Execute the query and return TRUE
+          if (exec) {
+            try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+          }
+
           if(!dbExistsUserEM( conn, user   = "r_user_econmodel")) dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
           if(!dbExistsDbaseEM(conn, dbname = "r_user_econmodel")) dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
           dbDisconnectEM(conn)
@@ -1539,7 +1428,7 @@ tryCatchLog::tryCatchLog({
 #' @returns Execution of "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
-#' dbExecuteEM(get("connEM"), "CREATE TABLE xyz();")
+#' dbExecuteEM(get("connEM"), Statement = "CREATE TABLE xyz();")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1563,19 +1452,6 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"Statement\" must be provided.")
   }
 
-  tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
-  ## Display the query
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
-
-  ## Execute the query and return TRUE
-  if (exec) {
-    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query, ...)})
-    colnames(Results) <- toupper(colnames(Results))
-    return(Results)
-  }
 
   ## Build the query
   tmp.query <- Statement
@@ -1588,8 +1464,8 @@ tryCatchLog::tryCatchLog({
 
   # Execute the query
   if(exec) {
-    Results <- try({DBI::dbExecute(conn, tmp.query)}, silent = T)
-    if(inherits(Result, "try-error")) {
+    Results <- try({DBI::dbExecute(conn, statement = tmp.query)}, silent = T)
+    if(inherits(Results, "try-error")) {
       stop("Execution of statement \"", tmp.query, "\" failed.")
     } else {
       return(Results)
@@ -1637,7 +1513,7 @@ tryCatchLog::tryCatchLog({
   TriedDisconnectedOne <- FALSE
   if(!missing(conn)) {
     try(DBI::dbDisconnect(conn), silent = T)
-    cat(paste0("Tried to disconnect the passed R object \"conn\".\n"))
+    message(paste0("Tried to disconnect the passed R object \"conn\"."))
     TriedDisconnectedOne <- TRUE
   }
 
@@ -1649,7 +1525,7 @@ tryCatchLog::tryCatchLog({
       #
       rm(list = c(connNameName, "connNameName"))
     })
-    cat(paste0("Tried to disconnect the R object \"", connName, "\" and remove it\nfrom the environment ", capture.output(env), ".\n"))
+    message(paste0("Tried to disconnect the R object \"", connName, "\" and remove it\nfrom the environment ", capture.output(env), "."))
   }
 
   # DBI::dbDisconnect
@@ -1679,7 +1555,7 @@ dbExistsUserEM <- function(conn, user, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   ## Build the query
-  tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, user), ");")
+  tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, x = user), ");")
   ## Display the query
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1688,7 +1564,7 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    Result <- dbGetQueryEM(conn, tmp.query)
+    Result <- dbGetQueryEM(conn, Statement = tmp.query)
     if(unlist(Result)) {
      return(TRUE)
     } else {
@@ -1734,7 +1610,7 @@ tryCatchLog::tryCatchLog({
   if(missing(password)) {
     password <- character()
   } else {
-    password <- paste0("password ", DBI::dbQuoteLiteral(conn, password))
+    password <- paste0("password ", DBI::dbQuoteLiteral(conn, x = password))
   }
 
   ## Build the query
@@ -1747,15 +1623,15 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    if(!dbExistsUserEM(conn, user)) {
-      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
-      if(!inherits(Result, "try-error")) {
+    if(!dbExistsUserEM(conn, user = user)) {
+      Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
+      if(!inherits(Results, "try-error")) {
         return(TRUE)
       } else {
         stop("Failed to create the user.")
       }
     } else {
-      stop(paste0("User ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
+      stop(paste0("User ", DBI::dbQuoteLiteral(conn, x = user), " is already in the database."))
     }
   }
 
@@ -1783,7 +1659,7 @@ dbExistsSchemaEM <- function(conn, schema, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   ## Build the query
-  tmp.query <-  paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ", DBI::dbQuoteLiteral(conn, schema), ");")
+  tmp.query <-  paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ", DBI::dbQuoteLiteral(conn, x = schema), ");")
   ## Display the query
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1792,7 +1668,7 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    Result <- dbGetQueryEM(conn, tmp.query)
+    Result <- dbGetQueryEM(conn, Statement = tmp.query)
     if(unlist(Result)) {
      return(TRUE)
     } else {
@@ -1844,13 +1720,13 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    if(!dbExistsSchemaEM(conn, schema)) {
-      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
-      if(inherits(Result, "try-error")) {
+    if(!dbExistsSchemaEM(conn, schema = schema)) {
+      Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
+      if(inherits(Results, "try-error")) {
         stop("Failed to create the schema.")
       }
     } else {
-      stop(paste0("Schema ", DBI::dbQuoteLiteral(conn, user), " is already in the database."))
+      stop(paste0("Schema ", DBI::dbQuoteLiteral(conn, x = user), " is already in the database."))
     }
   }
 
@@ -1865,8 +1741,8 @@ tryCatchLog::tryCatchLog({
     }
     ## Execute the query and return TRUE
     if (exec) {
-      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
-      if(inherits(Result, "try-error")) {
+      Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
+      if(inherits(Results, "try-error")) {
         stop(paste0("Failed to grant all on the schema to ", grant_all_role))
       }
     }
@@ -1899,7 +1775,7 @@ dbExistsDbaseEM <- function(conn, dbname, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   ## Build the query
-  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(conn, dbname), ");")
+  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(conn, x = dbname), ");")
   ## Display the query
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1908,7 +1784,7 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    Result <- dbGetQueryEM(conn, tmp.query)
+    Result <- dbGetQueryEM(conn, Statement = tmp.query)
     if(unlist(Result)) {
       return(TRUE)
     } else {
@@ -1955,7 +1831,7 @@ tryCatchLog::tryCatchLog({
   # “ERROR: must be member of role” When creating schema in PostgreSQL
   # 2014
   # https://stackoverflow.com/questions/26684643/error-must-be-member-of-role-when-creating-schema-in-postgresql
-  CurrentUser <- unlist(dbGetQueryEM(conn, "SELECT CURRENT_USER;"))
+  CurrentUser <- unlist(dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER;"))
   tmp.query <- paste0("GRANT ", owner, " TO ", CurrentUser, ";")
   ## Display the query
   if (display) {
@@ -1964,8 +1840,8 @@ tryCatchLog::tryCatchLog({
   }
   ## Execute the query and return TRUE
   if (exec) {
-    Result <- try({Result <- dbExecuteEM(conn, tmp.query) })
-    if (inherits(Result, "try-error")) {
+    Results <- try({dbExecuteEM(conn, Statement = tmp.query) })
+    if (inherits(Results, "try-error")) {
       stop(paste0("Failed to grant: ", tmp.query))
     }
   }
@@ -1999,15 +1875,15 @@ tryCatchLog::tryCatchLog({
   }
   ## Execute the query and return TRUE
   if (exec) {
-    if(!dbExistsDbaseEM(conn, dbname)) {
-      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
-      if(!inherits(Result, "try-error")) {
+    if(!dbExistsDbaseEM(conn, dbname = dbname)) {
+      Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
+      if(!inherits(Results, "try-error")) {
         return(TRUE)
       } else {
         stop("Failed to create the database.")
       }
     } else {
-      stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " is already in the cluster."))
+      stop(paste0("Database ", DBI::dbQuoteLiteral(conn, x = dbname), " is already in the cluster."))
     }
   }
 
@@ -2019,15 +1895,15 @@ tryCatchLog::tryCatchLog({
   }
   ## Execute the query and return TRUE
   if (exec) {
-    if(!dbExistsDbaseEM(conn, dbname)) {
-      Result <- try({Result <- dbExecuteEM(conn, tmp.query)})
-      if(!inherits(Result, "try-error")) {
+    if(!dbExistsDbaseEM(conn, dbname = dbname)) {
+      Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
+      if(!inherits(Results, "try-error")) {
         return(TRUE)
       } else {
         stop("Failed to alter the database.")
       }
     } else {
-      stop(paste0("Database ", DBI::dbQuoteLiteral(conn, dbname), " can not be alterned from here."))
+      stop(paste0("Database ", DBI::dbQuoteLiteral(conn, x = dbname), " can not be alterned from here."))
     }
   }
 
@@ -2063,7 +1939,7 @@ tryCatchLog::tryCatchLog({
 
   drv  <- DBI::dbDriver("PostgreSQL")
   conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
-  NotDatabase <- DBI::dbQuoteLiteral(conn, getOption("econmodel_db_dbname"))
+  NotDatabase <- DBI::dbQuoteLiteral(conn, x = getOption("econmodel_db_dbname"))
   tmp.query <-  paste0("SELECT datname FROM pg_catalog.pg_database WHERE datname LIKE 'rtmp%' AND datname != ", NotDatabase, ";")
   ## Display the query
   if (display) {
@@ -2072,7 +1948,7 @@ tryCatchLog::tryCatchLog({
   }
   ## Execute the query
   if(exec) {
-    Databases   <- dbGetQueryEM(conn, tmp.query)
+    Databases   <- dbGetQueryEM(conn, Statement = tmp.query)
   }
   Databases   <- unlist(Databases)
 
@@ -2090,7 +1966,7 @@ tryCatchLog::tryCatchLog({
       }
       ## Execute the query
       if(exec) {
-        Results <- dbExecuteEM(conn, tmp.query)
+        Results <- dbExecuteEM(conn, Statement = tmp.query)
         if(inherits(Results, "try-error")) {
           message(paste0("Failed to drop database ", dbname, "."))
         }
@@ -2108,5 +1984,336 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Create a Named Vector from a dataframe, Table or Vector
+#'
+#' @description
+#' \preformatted{
+#' see ? caroline::nv
+#'
+#' This is R cran package caroline function "nv" with modifications
+#' JAN 2021
+#' https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R/convert.R
+#'
+#' modifications
+#'
+#' * function "names" is replaced with the safer function "Names"
+#'   Note, keeping function "Names" and not replacing using "colnames" keeps generalization ??
+#' }
+#' @param x	The source dataframe, table, vector, or factor
+#' @param name	The column name you would like to pull out as a named vector. OR the names of the vector (if x is a vector)
+#' @returns a named vector or factor
+#' @importFrom tryCatchLog tryCatchLog
+caroline__nv <- function(x, name){
+tryCatchLog::tryCatchLog({
 
+  if(class(x)=='data.frame'){
+    v <- x[,name[1]]
+    if(length(name)==2)
+      Names(v) <- x[,name[2]]
+    else
+      Names(v) <- rownames(x)
+  }else{
+    if(NCOL(x)!=1)
+      stop('x must be unidimentional')
+    v <- x
+    Names(v) <- name
+  }
+  v
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Using a Local data.frame Update a Currenly Existing PostgreSQL server table
+#'
+#' @description
+#' \preformatted{
+#' This is R cran package "caroline" function "dbWriteTable2" with modifications
+#' JAN 2021
+#' https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R/database.R
+#'
+#' modifications
+#'
+#' 1. add.id domain specific feature is removed
+#' 2. pg.update.seq domain specific feature is removed
+#' 3. "ORDER BY id DESC LIMIT 1" is replaced by " WHERE FALSE "
+#' 4. function "names" upon "df" is replaced with the modern "colnames"
+#'    where appropriate
+#' 5. function "names" is replaced with the safer "Names"
+#' 6. nv is replaced with caroline__nv
+#' 7. Calls to DBI are called through "PACKAGE::".
+#'    These are the (working) dbListFields, dbSendQuery, dbColumnInfo,
+#'    dbClearResult, and dbWriteTable
+#' 8. If a column exists in the local table.name(data.frame) but does not
+#'    exist on the server
+#'    then it is added to the server's table fields.
+#' 9. Fix and Put back the type mismatch test.
+#' 10. Added drop = F to prevent dropping to a vector.
+#' 11. Changed message - not in fields of '", table.name,"' table. Omiting
+#'                  To - not in fields of '", table.name,"' Adding.
+#' }
+#'
+#' @param con connection.
+#' @param table.name The name of the table to which the data frame is to be loaded.
+#' @param df A dataframe to be loaded to the database.
+#' @param fill.null Should new db present fields be added to the data.frame before it is loaded?
+#' @param row.names Should the row names be loaded as a seperate column? (unlike the original dbWriteTable, default is FALSE)
+#' @param display Logical. Whether to display the query ALTER TABLE ADD (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query ALTER TABLE ADD (defaults to \code{TRUE}).
+#' @returns results of DBI::dbWriteTable
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbListFields dbDataType dbSendQuery dbColumnInfo dbClearResult dbWriteTable
+#' @importFrom rpostgis dbColumn
+caroline__dbWriteTable2 <- function(con, table.name, df, fill.null = TRUE,
+                                    # add.id=TRUE,           # domain specific feature removed
+                                    row.names=FALSE,
+                                    # pg.update.seq=FALSE,  # domain specific feature removed
+                                    display = TRUE, exec = TRUE,
+                                    ...){
+tryCatchLog::tryCatchLog({
+
+  fields <- DBI::dbListFields(con, name = table.name)
+  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
+
+  #
+  # add.id feature domain specific removed
+  #
+
+  ## look for unloadable columns in the df
+  colnames(df) <- tolower(colnames(df))
+  colnames(df) <- gsub("\\.",'_',colnames(df))
+
+  clmn.match <- match(colnames(df), fields)
+  if(any(is.na(clmn.match))) {
+    # OLD
+    # warning(paste("Found '", colnames(df)[is.na(clmn.match)], "' not in fields of '", table.name,"' table. Omiting.\n", sep=''))
+    # REPLACEMENT
+    message(paste0("Found '", colnames(df)[is.na(clmn.match)], "' not in fields of '", table.name,"' table. So Adding.\n"))
+  }
+
+  # NEW CODE (BY ANDRE MIKULEC) (NEW clmns.add.to.fields, fields.types.new)
+  # From the "df" columns, that do not exist in the fields(server)
+  # Add these columns to the server
+  # recalculate the variable "fields" and "clmn.match"
+  clmns.add.to.fields <- which(is.na(clmn.match))
+  if(length(clmns.add.to.fields)) {
+    # fields.classes.new <- sapply(df[clmns.add.to.fields], class)
+    #  SQL type of an R object according to the SQL 92 specification
+    fields.types.new <- sapply(df[clmns.add.to.fields], function(clmn) DBI::dbDataType(con, clmn))
+    mapply(function(colname, coltype) {
+      rpostgis::dbColumn(con, name = table.name, colname = colname, coltype = coltype, display = display, exec = exec)
+      invisible()
+    }, Names(fields.types.new), fields.types.new, SIMPLIFY = FALSE)
+    # cleanup
+    rm(fields.types.new)
+  }
+  # cleanup
+  rm(clmns.add.to.fields)
+  # recalculate
+  fields <- DBI::dbListFields(con, name = table.name)
+  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
+  clmn.match <- match(colnames(df), fields)
+
+  ## add missing fields to df
+  field.match <- match(fields, colnames(df))
+  if(sum(is.na(field.match))>0 & fill.null == TRUE){
+    message("creating NAs/NULLs for for fields of table that are missing in your df")
+    nl <- as.list(rep(NA, sum(is.na(field.match))))
+    df.nms.orgnl <- colnames(df)
+    df <- cbind(df, nl)
+    colnames(df) <- c(df.nms.orgnl, fields[is.na(field.match)])
+  }
+
+  ## reorder df columns as per field order
+  reordered.names <- colnames(df)[match(fields, colnames(df))]
+  if(any(is.na(reordered.names)))
+    stop('Too many unmatched columns to database column list. Stopping')
+  df <- df[ ,reordered.names, drop = F]
+
+  ## BEGIN ERROR CHECKING
+  r <- DBI::dbSendQuery(con, statement = paste("SELECT * FROM ", table.name, " WHERE FALSE "))
+  db.col.info <- DBI::dbColumnInfo(r); rownames(db.col.info) <- db.col.info$name
+  # BEGIN ANDRE NOTE
+  # tolower(db.colinfo$type)
+  # is the same as
+  # sapply(df, function(x) DBI::dbDataType(con, x))
+  # typical results
+  # "text"  "float8" "bool"  "integer"    "date"
+  # END ANDRE NOTE
+
+  ## check for na's which might prevent a load
+  null.OK <- caroline__nv(db.col.info,'nullOK')
+  reqd.fields <- Names(null.OK[!null.OK])
+  na.cols <- sapply(df, function(x) any(is.na(x)) )
+  req.miss <- na.cols[reqd.fields]
+  if(any(req.miss))
+    stop(paste("Didn't load df because required field(s)", paste(Names(req.miss)[req.miss],collapse=', '),"contained missing values"))
+
+  ## check for length mismatches
+  db.precisions <- caroline__nv(db.col.info, 'precision')
+  df.nchars <- sapply(df, function(c) max(nchar(c)))
+  prec.reqd <- db.precisions > 0
+  too.long <- db.precisions[prec.reqd] < df.nchars[prec.reqd]
+  if(any(too.long))
+    stop(paste("Didn't load df because fields", paste(Names(df.nchars)[prec.reqd][too.long],collapse=', '),'were too long'))
+
+  ## check for type mismatches
+  db.sclasses <- caroline__nv(db.col.info,'Sclass')
+  # BEGIN ANDRE ADDED (NEW db.classes)
+  db.classes <- sapply(db.sclasses, function(sdatatype) {
+    if(sdatatype == "double") {sdatatype <- "numeric"}
+     return(sdatatype)
+  })
+  # END ANDRE ADDED
+  df.classes <- sapply(df, class)
+  type.mismatches <- Names(df.classes)[db.sclasses != df.classes & !na.cols]
+  #if(length(type.mismatches)>0)
+  #  warning(paste('The dataframe columns:',paste(type.mismatches, collapse=','),'may have type mismatches from their sclass mappings to the database table fields.'))
+
+  # ANDRE ADDED (USES NEW db.classes)
+  type.mismatches <- Names(df.classes)[df.classes != db.classes & !na.cols]
+  if(length(type.mismatches) > 0) {
+    message(paste('The dataframe columns:',paste(type.mismatches, collapse=','),'may have type mismatches from their sclass mappings to the database table fields.'))
+  }
+  # END ANDRE ADDED
+
+
+  DBI::dbClearResult(r)
+
+  ## check unique constrains
+  #r <- DBI::dbGetQuery(con, statement = paste("SELECT constraint_name FROM information_schema.table_constraints WHERE table_name = '",table.name,"'", sep=''))
+  #if(nrow(df) != length(unique(apply(df[,c('day','file')],1, paste, collapse='.')))
+  #stop
+
+  ## load table (appending only)
+  message(paste0("Loading", table.name, " table to database."))
+  db.write <- DBI::dbWriteTable(con, name = table.name, value = df, row.names = row.names, append = TRUE, ...)
+
+  #
+  # pg.update.seq domain specific feature removed
+  #
+
+  #
+  # add.id domain specific feature removed
+  #
+
+  return(db.write)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
+
+#' Insert a new table into the PostgreSQL database or append data.
+#'
+#' Thin wrapper over R CRAN package caroline function dbWriteTable2.
+#'
+#' @param conn A DBIConnection object, as returned by dbConnect().
+#' @param DfName  String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.
+#' @param Df, data.frame. Required. To be loaded to the database.
+#' @param FillNull Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?
+#' @param RowNames Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).
+#' @param lowerDfName Logical. Default is TRUE. Make the target database table name to be in lowercase.
+#' @param lowerColNames Logical. Default is TRUE. Make the target database table column names to be in lowercase.
+#' @param replaceDotUsingUnderscore Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).'
+#' @param ... Dots. Other parameters passed to R CRAN package DBI dbWriteTable.
+#' @examples
+#' \dontrun{
+#' mtcars2 <- mtcars
+#' mtcars2[["model"]] <- rownames(mtcars2)
+#' mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
+#' mtcars2[["vs"]] <- as.logical(mtcars2[["vs"]])
+#' mtcars2[["gear"]] <- as.integer(mtcars2[["gear"]])
+#' mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
+#' rownames(mtcars2) <- NULL
+#' #
+#' # Creates the table (with zero rows).
+#' # Appends data (with the Df having the same columns that the server).
+#' mtcars2s <- mtcars2[1:5,]
+#' dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s)
+#'
+#' # Appends data (with the Df having less columns that the server database).
+#' # Those server columns, that are not found in the Df, are added to the Df.
+#' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
+#' dbWriteTableEM(get("connEM"), DfName = "mtcars", Df = mtcars2lDf)
+#'
+#' # Appends data (with the server database having less columns that the Df).
+#' # Those Df columns, that are not found in the server, are added to the sever.
+#' mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
+#'                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
+#'                DfNew[["model"]] <- DfNew[["model_new"]]
+#'                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
+#'                DfNew
+#'               }; rm(DfNew)
+#' dbWriteTableEM(get("connEM"), DfName = "mtcars", Df = mtcars2lSv)
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbExistsTable dbWriteTable
+#' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
+#' @export
+dbWriteTableEM <- function(conn, DfName = substitute(Df), Df, FillNull = TRUE,
+                           RowNames = FALSE,
+                           lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
+                           display = TRUE, exec = TRUE,
+                           ...) {
+tryCatchLog::tryCatchLog({
+
+  # R CRAN package caroline function dbWriteTable2
+  # can not see DBI/RPostgreSQL S4 methods, so I am importing
+  # the package "DBI" methods that the package "caroline" uses.
+  # #' @importFrom DBI db* ETC
+
+  # Influenced by R CRAN packageS
+  # "RPostgreSQL", "caroline", and (especially) "rpostgis".
+  #   (excellent: but pg* functions require the "PostGIS extension")
+
+  # Influenced by the github/gitlab R packages
+  # https://github.com/jangorecki/pg   (https://gitlab.com/jangorecki/pg)
+  # https://github.com/jangorecki/logR (https://gitlab.com/jangorecki/logR)
+  #
+
+  # Note: Please also read
+  #
+  # dbWriteTable assumes creation (but caroline:dbWriteTable2 assumes "append").
+  # Behavior may have changed over time from (original default) "append" to (now) "create"
+  #
+  # overwrite = TRUE # destroy and re-create
+  # append = TRUE (do not "destroy and re-create") # append data
+  #
+  # DEC 2020
+  # RPostgreSQL/html/dbReadTable-methods.html
+  # DBI/html/dbWriteTable.html
+
+  Dots <- list(...)
+
+  if(lowerDfName) {
+    DfName       <- tolower(DfName)
+  }
+  if(lowerColNames) {
+    colnames(Df) <- tolower(colnames(Df))
+  }
+  if(replaceDotUsingUnderscore) {
+    colnames(Df) <- gsub("[.]", "_", colnames(Df))
+  }
+
+  # Because caroline dbWriteTable2 requires the table to pre-exist.
+  if(!DBI::dbExistsTable(conn, name = DfName)) {
+    # just need the structure (not the data)
+    DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
+  }
+
+  # expect the table to already be there
+  WriteTable <- DescTools::DoCall(
+    "caroline__dbWriteTable2", c(list(),
+                                 list(conn), list(table.name = DfName), list(df = Df), list(fill.null = FillNull),
+                                 list(row.names = RowNames),
+                                 list(display = display), list(exec = exec),
+                                 Dots
+    )
+  )
+
+  return(WriteTable)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 

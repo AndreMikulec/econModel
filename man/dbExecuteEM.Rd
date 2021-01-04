@@ -27,6 +27,6 @@ The function will just do one or the other, but not both.  Does NOT remove the p
 }
 \examples{
 \dontrun{
-dbExecuteEM(get("connEM"), "CREATE TABLE xyz();")
+dbExecuteEM(get("connEM"), Statement = "CREATE TABLE xyz();")
 }
 }

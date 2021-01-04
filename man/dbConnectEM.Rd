@@ -16,6 +16,8 @@ dbConnectEM(
   forceISOdate,
   connName,
   env,
+  display = TRUE,
+  exec = TRUE,
   ...
 )
 }
@@ -41,6 +43,10 @@ dbConnectEM(
 \item{connName}{String.  Name of the database connection object.  The default is "connEM".}
 
 \item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 
 \item{...}{Dots passed.}
 }

@@ -2,19 +2,19 @@
 % Please edit documentation in R/AmerAssocIndividInvestorsAAII.R
 \name{dbWriteTableEM}
 \alias{dbWriteTableEM}
-\title{Results column names are always in UPPERCASE.}
+\title{Insert a new table into the PostgreSQL database or append data.}
 \usage{
 dbWriteTableEM(
   conn,
   DfName = substitute(Df),
   Df,
   FillNull = TRUE,
-  AddID = FALSE,
   RowNames = FALSE,
-  PgUpdateSeq = FALSE,
   lowerDfName = TRUE,
   lowerColNames = TRUE,
   replaceDotUsingUnderscore = TRUE,
+  display = TRUE,
+  exec = TRUE,
   ...
 )
 }
@@ -27,11 +27,7 @@ dbWriteTableEM(
 
 \item{FillNull}{Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?}
 
-\item{AddID}{Logical. Default is FALSE.  Should a new column should be added for the database id?}
-
 \item{RowNames}{Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).}
-
-\item{PgUpdateSeq}{Logical. Default is FALSE. Should the table primary key's sequence be updated to the highest id value +1? (Postgres specific)}
 
 \item{lowerDfName}{Logical. Default is TRUE. Make the target database table name to be in lowercase.}
 
@@ -39,10 +35,14 @@ dbWriteTableEM(
 
 \item{replaceDotUsingUnderscore}{Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).}
 
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).'}
+
 \item{...}{Dots. Other parameters passed to R CRAN package DBI dbWriteTable.}
 }
 \description{
-Thin wrapper over R CRAN package caroline function dbWriteTable2
+Thin wrapper over R CRAN package caroline function dbWriteTable2.
 }
 \examples{
 \dontrun{
@@ -57,12 +57,12 @@ rownames(mtcars2) <- NULL
 # Creates the table (with zero rows).
 # Appends data (with the Df having the same columns that the server).
 mtcars2s <- mtcars2[1:5,]
-dbWriteTableEM(get("connEM"), Df = mtcars2s)
+dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s)
 
 # Appends data (with the Df having less columns that the server database).
 # Those server columns, that are not found in the Df, are added to the Df.
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-dbWriteTableEM(get("connEM"), Df = mtcars2lDf)
+dbWriteTableEM(get("connEM"), DfName = "mtcars", Df = mtcars2lDf)
 
 # Appends data (with the server database having less columns that the Df).
 # Those Df columns, that are not found in the server, are added to the sever.
@@ -72,6 +72,6 @@ mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
                DfNew
               }; rm(DfNew)
-dbWriteTableEM(get("connEM"), Df = mtcars2lSv)
+dbWriteTableEM(get("connEM"), DfName = "mtcars", Df = mtcars2lSv)
 }
 }
