@@ -26,12 +26,122 @@ Along with the copied .DBF files also the ReadMe.txt and the si.chm help files i
 }
 \examples{
 \dontrun{
+# E.g. Installers location
+# C:\DATA\AAIIStockInvestorProInstallers
+
+# From installing one version to the next, older folders/files will remain
+# NOTE, Recommended Best Practice
+# Before each install, delete all of the folders and files in
+# C:\Program Files (x86)\Stock Investor\Professional
+
+# Note, the SETUP.DBF file date is always the "as of software distribution".
+
+#
+# First, the user must manually create the folder C:\DATA\AAIISIPRO\AUXILIARY
+#
+
+# # #
+# - Change to internal company identifier and new monthly Stock
+#   Investor News email (7/29/2011 Release)
+# ReadMe.txt
+# # #
+
+# Last good before the change of COMPANY_ID
+# proinstall_20110722.exe (15177)
+
 copyAAIISIProDBFs(
-    From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
-    To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE","\\\\", dateAAIISIPro()),
-    CaseChange = "UpperCase"
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+  To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\AUXILIARY","\\\\", dateAAIISIPro()),
+  CaseChange = "UpperCase"
+)
+
+# The change of of COMPANY_ID
+# proinstall_20110729.exe (15184)
+
+copyAAIISIProDBFs(
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+  To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\AUXILIARY","\\\\", dateAAIISIPro()),
+  CaseChange = "UpperCase"
+)
+
+# # #
+# - New sector and industry classifications (10/22/2018 release)
+# ReadMe.txt
+# # #
+
+# Last good before the change of Sectors and Industries
+# stockinvestorinstall_20181019.exe (17823)
+
+copyAAIISIProDBFs(
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+  To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\AUXILIARY","\\\\", dateAAIISIPro()),
+  CaseChange = "UpperCase"
+)
+
+# The change of Sectors and Industries
+# stockinvestorinstall_20181022.exe (17826)
+
+copyAAIISIProDBFs(
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+  To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\AUXILIARY","\\\\", dateAAIISIPro()),
+  CaseChange = "UpperCase"
+)
+
+# # #
+# Regular 'end of month' installs (from earliest to latest)
+# # #
+
+# e.g.
+# stockinvestorinstall_20201030.exe (18565)
+# stockinvestorinstall_20201130.exe (18596)
+# stockinvestorinstall_20201231.exe (18627)
+
+copyAAIISIProDBFs(
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+  To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE","\\\\", dateAAIISIPro()),
+  CaseChange = "UpperCase"
+)
+
+# e.g.
+
+copyAAIISIProDBFs(
+  From = "C:\\\\Program Files (x86)\\\\Stock Investor\\\\Professional",
+  To   = paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE","\\\\", dateAAIISIPro()),
+  CaseChange = "UpperCase"
 )
 
 dir(paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE", "\\\\", dateAAIISIPro()))
+
+# # #
+# create "cleaned up" FST files
+# # #
+
+formatDBFs(paste0("C:/DATA/AAIISIPRO/AUXILIARY","/", 15177))
+        # Note file SI_TRBCS.DBF does not exist
+# - Change to internal company identifier and new monthly Stock
+#   Investor News email (7/29/2011 Release)
+formatDBFs(paste0("C:/DATA/AAIISIPRO/AUXILIARY","/", 15184))
+
+formatDBFs(paste0("C:/DATA/AAIISIPRO/AUXILIARY","/", 17823))
+# - New sector and industry classifications (10/22/2018 release)
+formatDBFs(paste0("C:/DATA/AAIISIPRO/AUXILIARY","/", 17826))
+        # Note file SI_TRBCS.DBF appears
+
+formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565))
+formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18596))
+formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18627))
+
+# View some
+# e.g.
+# viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18565", Ext = "FST")
+
+# TO BE CONTINUED
+# Use dbWriteTableEM to load the FST files into the PostgreSQL database
+# # NEED
+# 0. Partition detection\creation db*x* functions.
+# 1. NEED dbWriteTableEM to read FST files into local "Df"s
+#         NEED "inital empty table" creation to be a paritioned table
+#         NEED ListPartitionCols = c()
+# 2. dbWriteTableEnMassEM
 }
 }
