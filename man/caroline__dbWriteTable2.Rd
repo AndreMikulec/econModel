@@ -42,21 +42,21 @@ https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R
 modifications
 
 1. add.id domain specific feature is removed
-2. check and restriction on "dropped" fields is removed
-3. pg.update.seq domain specific feature is removed
-4. "ORDER BY id DESC LIMIT 1" is replaced by " WHERE FALSE "
-5. function "names" upon "df" is replaced with the modern "colnames"
+2. pg.update.seq domain specific feature is removed
+3. "ORDER BY id DESC LIMIT 1" is replaced by " WHERE FALSE "
+4. function "names" upon "df" is replaced with the modern "colnames"
    where appropriate
-6. function "names" is replaced with the safer "Names"
-7. nv is replaced with caroline__nv
-8. Calls to DBI are called through "PACKAGE::".
+5. function "names" is replaced with the safer "Names"
+6. nv is replaced with caroline__nv
+7. Calls to DBI are called through "PACKAGE::".
    These are the (working) dbListFields, dbSendQuery, dbColumnInfo,
    dbClearResult, and dbWriteTable
-9. If a column exists in the local table.name(data.frame) but does not
+8. If a column exists in the local table.name(data.frame) but does not
    exist on the server
    then it is added to the server's table fields.
-10. Fix and Put back the type mismatch test.
-11. Added drop = F to prevent dropping to a vector.
-
+9. Fix and Put back the type mismatch test.
+10. Added drop = F to prevent dropping to a vector.
+11. Changed message - not in fields of '", table.name,"' table. Omiting
+                 To - not in fields of '", table.name,"' Adding.
 }
 }

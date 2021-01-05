@@ -20,6 +20,9 @@ TRUE(always).  Will attempt to drop each 'rtmp%' database (but not the current w
 In the cluster, logs on to the database "r_user_econmodel" as user "rtmp%" and (tries to) drop the "rtmp%" database.
 Does not drop the "current work database": "getOption("econmodel_db_dbname")".
 }
+\details{
+Note, is also attempt to drop the Old User.
+}
 \examples{
 \dontrun{
 clRemoveOldWorkDbasesEM()

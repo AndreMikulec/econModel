@@ -1044,12 +1044,12 @@ tryCatchLog::tryCatchLog({
 
   # windows LIMIT 2047
   # A good rule of thumb is to keep: work_mem*max_connections*2 < 1/4 of memory
-  # NOTE: WATCH OUT FOR 'R language: parallel, each process GETS 'work_mem' limit
+  # NOTE: WATCH OUT FOR 'R language: parallel. Each process GETS 'work_mem' limit
   dbExecuteEM(conn, Statement = "SET WORK_MEM TO '2047MB';")
 
   # maximum amount of memory to be used by maintenance operations, such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY
   # https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
-  dbExecuteEM(conn, Statement = "SET MAINTENANCE_WORK_MEM  TO '2047MB';")
+  dbExecuteEM(conn, Statement = "SET MAINTENANCE_WORK_MEM TO '2047MB';")
 
   # Controls the query planner's use of table constraints
   # to optimize queries.
@@ -1934,6 +1934,8 @@ tryCatchLog::tryCatchLog({
 #' In the cluster, logs on to the database "r_user_econmodel" as user "rtmp%" and (tries to) drop the "rtmp%" database.
 #' Does not drop the "current work database": "getOption("econmodel_db_dbname")".
 #'
+#' Note, is also attempt to drop the Old User.
+#'
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param Dots passed.
@@ -1967,6 +1969,7 @@ tryCatchLog::tryCatchLog({
     Databases   <- dbGetQueryEM(conn, Statement = tmp.query)
   }
   Databases   <- unlist(Databases)
+  dbDisconnectEM(conn)
 
   lapply(Databases, function(dbname) {
     try({
@@ -1992,6 +1995,29 @@ tryCatchLog::tryCatchLog({
     }, silent = TRUE)
     invisible()
   })
+
+  conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
+  lapply(Databases, function(dbname) {
+    try({
+      # trying to drop those users (with the same name as the database)
+      tmp.query <- paste0("DROP USER ", dbname, ";")
+      ## Display the query
+      if (display) {
+        message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+        message(tmp.query)
+      }
+      ## Execute the query
+      if(exec) {
+        Results <- dbExecuteEM(conn, Statement = tmp.query)
+        if(inherits(Results, "try-error")) {
+          message(paste0("Failed to drop user ", dbname, "."))
+        }
+      }
+
+    }, silent = TRUE)
+    invisible()
+  })
+  dbDisconnectEM(conn)
 
   options(ops)
   return(TRUE)
