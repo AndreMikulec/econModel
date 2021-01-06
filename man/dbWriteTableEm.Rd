@@ -8,6 +8,10 @@ dbWriteTableEM(
   conn,
   DfName = substitute(Df),
   Df,
+  PartitionedCols,
+  PartitionedColsValues,
+  PrimaryKeyCols,
+  IndexedCols,
   FillNull = TRUE,
   RowNames = FALSE,
   lowerDfName = TRUE,
@@ -24,6 +28,14 @@ dbWriteTableEM(
 \item{DfName}{String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.}
 
 \item{Df, }{data.frame. Required. To be loaded to the database.}
+
+\item{PartitionedCols}{Vector of Strings.  If present, then of the [to be] partitioned table, this is the vector column names (in order). NOT YET IMPLEMENTED.}
+
+\item{PartitionedColsValues}{List of Length One(1) R objects.  If present, then of the [to be] partitioned table partition values, this is the the list of column values (in order). NOT YET IMPLEMENTED.}
+
+\item{PrimaryKeyCols}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.}
+
+\item{IndexedCols}{List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.}
 
 \item{FillNull}{Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?}
 
@@ -42,7 +54,7 @@ dbWriteTableEM(
 \item{...}{Dots. Other parameters passed to R CRAN package DBI dbWriteTable.}
 }
 \description{
-Thin wrapper over R CRAN package caroline function dbWriteTable2.
+Thick wrapper over R CRAN package caroline function dbWriteTable2.
 }
 \examples{
 \dontrun{

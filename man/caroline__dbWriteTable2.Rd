@@ -8,6 +8,10 @@ caroline__dbWriteTable2(
   con,
   table.name,
   df,
+  PartitionedCols,
+  PartitionedColsValues,
+  PrimaryKeyCols,
+  IndexedCols,
   fill.null = TRUE,
   row.names = FALSE,
   display = TRUE,
@@ -21,6 +25,14 @@ caroline__dbWriteTable2(
 \item{table.name}{The name of the table to which the data frame is to be loaded.}
 
 \item{df}{A dataframe to be loaded to the database.}
+
+\item{PartitionedCols}{Vector of Strings.  If present, then of the [to be] partitioned table, this is the vector column names (in order). NOT YET IMPLEMENTED.}
+
+\item{PartitionedColsValues}{List of Length One(1) R objects.  If present, then of the [to be] partitioned table partition values, this is the the list of column values (in order). NOT YET IMPLEMENTED.}
+
+\item{PrimaryKeyCols}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.}
+
+\item{IndexedCols}{List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.}
 
 \item{fill.null}{Should new db present fields be added to the data.frame before it is loaded?}
 
@@ -58,5 +70,11 @@ modifications
 10. Added drop = F to prevent dropping to a vector.
 11. Changed message - not in fields of '", table.name,"' table. Omiting
                  To - not in fields of '", table.name,"' Adding.
+
+For consistency and understandability renamed db.col.info to fields.info.
+For consistency and understandability renamed db.precisions to fields.precisions.
+For consistency and understandability renamed db.sclasses to fields.sclasses.
+Since static, moved closer to the top calls to DBI::dbSendQuery, DBI::dbColumnInfo and DBI::dbClearResult
+Moved other non-changing code to near the top.
 }
 }
