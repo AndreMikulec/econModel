@@ -1154,7 +1154,7 @@ tryCatchLog::tryCatchLog({
 #' @returns PostgreSQL parameters are set
 #' @examples
 #' \dontrun{
-#' dbSetPerformance(get("connEM"))
+#' dbSetPerformanceEM(get("connEM"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1178,7 +1178,11 @@ tryCatchLog::tryCatchLog({
 
   # Controls the query planner's use of table constraints
   # to optimize queries.
-  dbExecuteEM(conn, Statement = "SET CONSTRAINT_EXCLUSION TO ON;")
+  dbExecuteEM(conn, Statement = "SET CONSTRAINT_EXCLUSION TO PARTITION;")
+
+  # excludes (prunes) the partition from the query plan
+  # can also be applied [not only to query planning and] during query execution
+  dbExecuteEM(conn, Statement = "SET ENABLE_PARTITION_PRUNING TO ON;")
 
   # Postgresql 9.6
   dbExecuteEM(conn, Statement = "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
@@ -1935,6 +1939,67 @@ tryCatchLog::tryCatchLog({
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
+
+
+#' Format input for database schema/table names.
+#'
+#' This is a near copy of the R CRAN package rpostgis function dbTableNameFix.
+#'
+#' Internal rpostgis function to return common (length = 2) schema
+#' and table name vector from various table and schema + table name
+#' inputs.
+#'
+#' @param conn A connection object. Must be provided but can be set NULL,
+#' where a dummy connection will be used.
+#' @param t.nm Table name string, length 1-2.
+#' @param as.identifier Boolean whether to return (schema,table) name as database
+#' sanitized identifiers (TRUE) or as regular character (FALSE)
+#' @return character vector of length 2. Each character element is in
+#'     (escaped) double-quotes when as.identifier = TRUE.
+#' @keywords internal
+#' @importFrom DBI dbQuoteIdentifier
+#' @importFrom DBI dbQuoteString
+#' @examples
+#' \dontrun{
+#' name<-c("schema","table")
+#' dbTableNameFix(conn,name)
+#'
+#' #current search path schema is added to single-length character object (if only table is given)
+#' name<-"table"
+#' dbTableNameFix(conn,name)
+#'
+#' #schema or table names with double quotes should be given exactly as they are
+#' (make sure to wrap in single quotes in R):
+#' name<-c('sch"ema','"table"')
+#' dbTableNameFix(conn,name)
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbGetQuery dbQuoteIdentifier ANSI
+rpostgis___dbTableNameFix <- function(conn = NULL, t.nm, as.identifier = TRUE) {
+tryCatchLog::tryCatchLog({
+  # case of no schema provided
+  if (length(t.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
+    schemalist <- DBI::dbGetQuery(conn,"SELECT nspname as s FROM pg_catalog.pg_namespace;")$s
+    user <- DBI::dbGetQuery(conn,"SELECT CURRENT_USER AS user;")$user
+    schema <- DBI::dbGetQuery(conn,"SHOW SEARCH_PATH;")$search_path
+    schema <- gsub(" ","",unlist(strsplit(schema,",",fixed=TRUE)),fixed=TRUE)
+    # use user schema if available
+    if ("\"$user\"" == schema[1] && user %in% schemalist) {
+      sch <- user
+    } else {
+      sch <- schema[!schema=="\"$user\""][1]
+    }
+    t.nm <- c(sch, t.nm)
+  }
+  if (length(t.nm) > 2) {
+    stop("Invalid PostgreSQL table/view name. Must be provided as one ('table') or two-length c('schema','table') character vector.")
+  }
+  if (is.null(conn)) {conn<-DBI::ANSI()}
+  if (!as.identifier) {return(t.nm)} else {
+    t.nm<-DBI::dbQuoteIdentifier(conn, t.nm)
+    return(t.nm)
+  }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 

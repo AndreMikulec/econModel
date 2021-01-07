@@ -17,6 +17,6 @@ Set PostgreSQL memory parameters.
 }
 \examples{
 \dontrun{
-dbSetPerformance(get("connEM"))
+dbSetPerformanceEM(get("connEM"))
 }
 }
