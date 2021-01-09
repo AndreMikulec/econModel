@@ -1313,6 +1313,7 @@ tryCatchLog::tryCatchLog({
 #' @param forceISOdate Logical. Default is getOption("econmodel_db_forceISOdate").
 #' @param connName String.  Name of the database connection object.  The default is "connEM".
 #' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
+#' @param auto.assign Logical. Should the results be loaded to "env" as variable "connEM" If FALSE, then results are returned from the function  normally.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
@@ -1324,8 +1325,8 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
 #' @export
-dbConnectEM <- function(driver, user, password = user, host, dbname = user, port,
-                        tty, options, forceISOdate, connName, env, display = TRUE, exec = TRUE, ...) {
+dbLoginEM <- function(driver, user, password = user, host, dbname = user, port,
+                        tty, options, forceISOdate, connName, env, auto.assign = TRUE, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   #correct for TZ
@@ -1445,8 +1446,12 @@ tryCatchLog::tryCatchLog({
 
       if(!dbExistsSchemaEM(conn, schema = user)) dbCreateSchemaEM(conn, schema = user)
       # creates a reference
-      assign(connName, conn, envir = env)
-      message(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
+      if(auto.assign) {
+        assign(connName, conn, envir = env)
+        message(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
+      } else {
+        return(conn)
+      }
       # "r_user_econmodel" in the "r_user_econmodel" database
       # tries to create the schema "r_user_econmodel"
       # do not Disconnect
@@ -1454,7 +1459,7 @@ tryCatchLog::tryCatchLog({
     else {
       # try another connection
       if(haveConnLocal) {
-        dbDisconnectEM(conn)
+        DBI::dbDisconnect(conn)
       }
       conn <- try({DBI::dbConnect(drv,
                                  user = "r_user_econmodel", password = "r_user_econmodel",
@@ -1483,7 +1488,7 @@ tryCatchLog::tryCatchLog({
 
         if(!dbExistsUserEM( conn, user   = user))    dbCreateUserEM(conn,   user   = user)
         if(!dbExistsDbaseEM(conn, dbname = dbname))  dbCreateDbaseEM(conn,  dbname = user)
-        dbDisconnectEM(conn)
+        DBI::dbDisconnect(conn)
         #
         # as "ruser"
         # login to the database "user" and and create the "user" schema
@@ -1510,7 +1515,7 @@ tryCatchLog::tryCatchLog({
 
           # tries to create the schema "user"
           if(!dbExistsSchemaEM(conn, schema = user)) dbCreateSchemaEM(conn, schema = user)
-          dbDisconnectEM(conn)
+          DBI::dbDisconnect(conn)
           # login as "user" to its own database "user"
           dbConnectEM(connName = connName, env = env)
         } else {
@@ -1541,7 +1546,7 @@ tryCatchLog::tryCatchLog({
 
           if(!dbExistsUserEM( conn, user   = "r_user_econmodel")) dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
           if(!dbExistsDbaseEM(conn, dbname = "r_user_econmodel")) dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
-          dbDisconnectEM(conn)
+          DBI::dbDisconnect(conn)
           dbConnectEM(driver, user = "r_user_econmodel", password = "r_user_econmodel", host = host, dbname = "r_user_econmodel", port = port,
                       tty = tty, options = dboptions, forceISOdate = forceISOdate, connName = connName, env = env)
         } else {
@@ -1639,6 +1644,7 @@ tryCatchLog::tryCatchLog({
 #' \dontrun{
 #' dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
 #' dbDisconnectEM(conn)
+#' dbDisconnectEM(connName = "connEM", env = .Globalenv)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1677,6 +1683,40 @@ tryCatchLog::tryCatchLog({
   # always returns TRUE
   TRUE
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+#' Disconnect from the econModel database
+#'
+#  Disconnect and remove the DBI connection object connName (default is "connEM") from the environment "env".
+#'
+#' @param connName String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".
+#' @param env Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".
+#' @param ... Dots passed.
+#' @returns Disconnects "connEM" from the database or disconnects "connName" from the database and removes it from the environment "env".
+#' @examples
+#' \dontrun{
+#' dbLogoutEM() # default is connection variable "connEM" in the .GlobalEnv
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dbLogoutEM <- function(connName, env, ...) {
+tryCatchLog::tryCatchLog({
+
+  Dots <- list(...)
+
+  if(missing(connName)) {
+    connName <- "connEM"
+  }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
+  dbDisconnectEM(connName = connName, env = env)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 
 
 
@@ -1975,7 +2015,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery dbQuoteIdentifier ANSI
-rpostgis___dbTableNameFix <- function(conn = NULL, t.nm, as.identifier = TRUE) {
+dbTableNameFix <- function(conn = NULL, t.nm, as.identifier = TRUE) {
 tryCatchLog::tryCatchLog({
   # case of no schema provided
   if (length(t.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
@@ -2235,7 +2275,7 @@ tryCatchLog::tryCatchLog({
 #' @param name	The column name you would like to pull out as a named vector. OR the names of the vector (if x is a vector)
 #' @returns a named vector or factor
 #' @importFrom tryCatchLog tryCatchLog
-caroline__nv <- function(x, name){
+nameVect <- function(x, name){
 tryCatchLog::tryCatchLog({
 
   if(class(x)=='data.frame'){
@@ -2271,7 +2311,7 @@ tryCatchLog::tryCatchLog({
 #' 4. function "names" upon "df" is replaced with the modern "colnames"
 #'    where appropriate
 #' 5. function "names" is replaced with the safer "Names"
-#' 6. nv is replaced with caroline__nv
+#' 6. "nv" is replaced with "nameVect".
 #' 7. Calls to DBI are called through "PACKAGE::".
 #'    These are the (working) dbListFields, dbSendQuery, dbColumnInfo,
 #'    dbClearResult, and dbWriteTable
@@ -2365,7 +2405,7 @@ tryCatchLog::tryCatchLog({
   fields.info <- DBI::dbColumnInfo(r); rownames(fields.info) <- fields.info$name
   DBI::dbClearResult(r)
 
-  fields.sclasses <- caroline__nv(fields.info,'Sclass')
+  fields.sclasses <- nameVect(fields.info,'Sclass')
   # BEGIN ANDRE ADDED (NEW fields.classes.df.compatible)
   fields.classes.df.compatible <- sapply(fields.sclasses, function(sdatatype) {
     if(sdatatype == "double") {sdatatype <- "numeric"}
@@ -2428,7 +2468,7 @@ tryCatchLog::tryCatchLog({
   # END ANDRE NOTE
 
   ## check for na's which might prevent a load
-  null.OK <- caroline__nv(fields.info,'nullOK')
+  null.OK <- nameVect(fields.info,'nullOK')
   reqd.fields <- Names(null.OK[!null.OK])
   na.cols <- sapply(df, function(x) any(is.na(x)) )
   req.miss <- na.cols[reqd.fields]
@@ -2436,7 +2476,7 @@ tryCatchLog::tryCatchLog({
     stop(paste("Didn't load df because required field(s)", paste(Names(req.miss)[req.miss],collapse=', '),"contained missing values"))
 
   ## check for length mismatches
-  fields.precisions <- caroline__nv(fields.info, 'precision')
+  fields.precisions <- nameVect(fields.info, 'precision')
   df.nchars <- sapply(df, function(c) max(nchar(c)))
   prec.reqd <- fields.precisions > 0
   too.long <- fields.precisions[prec.reqd] < df.nchars[prec.reqd]

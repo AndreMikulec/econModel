@@ -59,7 +59,7 @@ modifications
 4. function "names" upon "df" is replaced with the modern "colnames"
    where appropriate
 5. function "names" is replaced with the safer "Names"
-6. nv is replaced with caroline__nv
+6. "nv" is replaced with "nameVect".
 7. Calls to DBI are called through "PACKAGE::".
    These are the (working) dbListFields, dbSendQuery, dbColumnInfo,
    dbClearResult, and dbWriteTable

@@ -27,5 +27,6 @@ The function will just do one or the other, but not both.  Does NOT remove the p
 \dontrun{
 dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
 dbDisconnectEM(conn)
+dbDisconnectEM(connName = "connEM", env = .Globalenv)
 }
 }
