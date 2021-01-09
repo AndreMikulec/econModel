@@ -2,16 +2,16 @@
 % Please edit documentation in R/AmerAssocIndividInvestorsAAII.R
 \name{dbWriteTableEM}
 \alias{dbWriteTableEM}
-\title{Insert a new table into the PostgreSQL database or append data.}
+\title{Insert or Append to a New or Current Table or Table partition.}
 \usage{
 dbWriteTableEM(
   conn,
   DfName = substitute(Df),
   Df,
-  PartitionedCols,
-  PartitionedColsValues,
-  PrimaryKeyCols,
-  IndexedCols,
+  PartKeyDef,
+  PartBound,
+  PrimaryKey,
+  Indexes,
   FillNull = TRUE,
   RowNames = FALSE,
   lowerDfName = TRUE,
@@ -29,13 +29,13 @@ dbWriteTableEM(
 
 \item{Df, }{data.frame. Required. To be loaded to the database.}
 
-\item{PartitionedCols}{Vector of Strings.  If present, then of the [to be] partitioned table, this is the vector column names (in order). NOT YET IMPLEMENTED.}
+\item{PartKeyDef}{String.  If the table is (or to be is) a Partitioned table is the parition key definition.  NOT YET IMPLEMENTED}
 
-\item{PartitionedColsValues}{List of Length One(1) R objects.  If present, then of the [to be] partitioned table partition values, this is the the list of column values (in order). NOT YET IMPLEMENTED.}
+\item{PartBound}{String. If the table is (or to be) a particpant as a Partition, then this is a partition bound.  NOT YET IMPLEMENTED}
 
-\item{PrimaryKeyCols}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.}
+\item{PrimaryKey}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.}
 
-\item{IndexedCols}{List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.}
+\item{Indexes}{List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.}
 
 \item{FillNull}{Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?}
 
@@ -54,7 +54,40 @@ dbWriteTableEM(
 \item{...}{Dots. Other parameters passed to R CRAN package DBI dbWriteTable.}
 }
 \description{
+\preformatted{
 Thick wrapper over R CRAN package caroline function dbWriteTable2.
+
+This is R cran package "caroline" function "dbWriteTable2" with modifications
+JAN 2021
+https://github.com/cran/caroline/blob
+/af201137e4a31d675849291a1c9c07a0933b85de/R/database.R
+
+modifications
+
+1. add.id domain specific feature is removed
+2. pg.update.seq domain specific feature is removed
+3. "ORDER BY id DESC LIMIT 1" is replaced by " WHERE FALSE "
+4. function "names" upon "df" is replaced with the modern "colnames"
+   where appropriate
+5. function "names" is replaced with the safer "Names"
+6. "nv" is replaced with "nameVect".
+7. Calls to DBI are called through "PACKAGE::".
+   These are the (working) dbListFields, dbSendQuery, dbColumnInfo,
+   dbClearResult, and dbWriteTable
+8. If a column exists in the local table.name(data.frame) but does not
+   exist on the server
+   then it is added to the server's table fields.
+9. Fix and Put back the type mismatch test.
+10. Added drop = F to prevent dropping to a vector.
+11. Changed message - not in fields of '", table.name,"' table. Omiting
+                 To - not in fields of '", table.name,"' Adding.
+
+For consistency and understandability renamed db.col.info to fields.info.
+For consistency and understandability renamed db.precisions to fields.precisions.
+For consistency and understandability renamed db.sclasses to fields.sclasses.
+Since static, moved closer to the top calls to DBI::dbSendQuery, DBI::dbColumnInfo and DBI::dbClearResult
+Moved other non-changing code to near the top.
+}
 }
 \examples{
 \dontrun{

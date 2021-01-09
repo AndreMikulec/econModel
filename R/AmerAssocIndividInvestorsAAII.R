@@ -1165,27 +1165,27 @@ tryCatchLog::tryCatchLog({
   # HAS 16GB of RAM AND 4 CORES
 
   # EXPERIMENT ( memory for disk caching ) -- 2048(GUESSING) + 4096(shared buffers)
-  dbExecuteEM(conn, Statement = "SET EFFECTIVE_CACHE_SIZE  TO '6144MB';")
+  dbExecuteEM(conn, Statement = "SET effective_cache_size  TO '6144MB';")
 
   # windows LIMIT 2047
   # A good rule of thumb is to keep: work_mem*max_connections*2 < 1/4 of memory
   # NOTE: WATCH OUT FOR 'R language: parallel. Each process GETS 'work_mem' limit
-  dbExecuteEM(conn, Statement = "SET WORK_MEM TO '2047MB';")
+  dbExecuteEM(conn, Statement = "SET work_mem TO '2047MB';")
 
   # maximum amount of memory to be used by maintenance operations, such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY
   # https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
-  dbExecuteEM(conn, Statement = "SET MAINTENANCE_WORK_MEM TO '2047MB';")
+  dbExecuteEM(conn, Statement = "SET maintenance_work_mem TO '2047MB';")
 
   # Controls the query planner's use of table constraints
   # to optimize queries.
-  dbExecuteEM(conn, Statement = "SET CONSTRAINT_EXCLUSION TO PARTITION;")
+  dbExecuteEM(conn, Statement = "SET constraint_exclusion TO partition;")
 
   # excludes (prunes) the partition from the query plan
   # can also be applied [not only to query planning and] during query execution
-  dbExecuteEM(conn, Statement = "SET ENABLE_PARTITION_PRUNING TO ON;")
+  dbExecuteEM(conn, Statement = "SET enable_partition_pruning TO on;")
 
   # Postgresql 9.6
-  dbExecuteEM(conn, Statement = "SET MAX_PARALLEL_WORKERS_PER_GATHER TO 4;")
+  dbExecuteEM(conn, Statement = "SET max_parallel_workers_per_gather TO 4;")
 
   return(TRUE)
 
@@ -1273,7 +1273,7 @@ tryCatchLog::tryCatchLog({
        Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
     }
 
-    Results["client_encoding"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW CLIENT_ENCODING;")))
+    Results["client_encoding"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW client_encoding;")))
     Results["time_zone"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW TIMEZONE;")))
   }
 
@@ -1401,7 +1401,7 @@ tryCatchLog::tryCatchLog({
     if(!inherits(conn, "try-error")) {
       haveConnLocal <- TRUE
 
-      tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+      tmp.query <- "SET client_encoding TO 'UTF8';"
       ## Display the query
       if (display) {
         message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1432,7 +1432,7 @@ tryCatchLog::tryCatchLog({
     if(!inherits(conn, "try-error") && dbGetInfo(conn)$user == user) {
       message(paste0("Successfully connected to user \"", user, "\"."))
 
-      tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+      tmp.query <- "SET client_encoding TO 'UTF8';"
       ## Display the query
       if (display) {
         message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1471,7 +1471,7 @@ tryCatchLog::tryCatchLog({
 
         message(paste0("Successfully connected to user \"", "r_user_econmodel", "."))
 
-        tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+        tmp.query <- "SET client_encoding TO 'UTF8';"
         ## Display the query
         if (display) {
           message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1501,7 +1501,7 @@ tryCatchLog::tryCatchLog({
         if(!inherits(conn, "try-error")) {
           # "user" in the "user" database
 
-          tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+          tmp.query <- "SET client_encoding TO 'UTF8';"
           ## Display the query
           if (display) {
             message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1532,7 +1532,7 @@ tryCatchLog::tryCatchLog({
         if(!inherits(conn, "try-error")) {
           message(paste0("Successfully connected to user \"", "postgres", "\"."))
 
-          tmp.query <- "SET CLIENT_ENCODING TO 'UTF8';"
+          tmp.query <- "SET client_encoding TO 'UTF8';"
           ## Display the query
           if (display) {
             message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -2295,13 +2295,22 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Using a Local data.frame Update a Currenly Existing PostgreSQL server table
+
+
+
+
+
+
+#' Insert or Append to a New or Current Table or Table partition.
 #'
 #' @description
 #' \preformatted{
+#' Thick wrapper over R CRAN package caroline function dbWriteTable2.
+#'
 #' This is R cran package "caroline" function "dbWriteTable2" with modifications
 #' JAN 2021
-#' https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R/database.R
+#' https://github.com/cran/caroline/blob
+#' /af201137e4a31d675849291a1c9c07a0933b85de/R/database.R
 #'
 #' modifications
 #'
@@ -2329,213 +2338,13 @@ tryCatchLog::tryCatchLog({
 #' Since static, moved closer to the top calls to DBI::dbSendQuery, DBI::dbColumnInfo and DBI::dbClearResult
 #' Moved other non-changing code to near the top.
 #' }
-#'
-#' @param con connection.
-#' @param table.name The name of the table to which the data frame is to be loaded.
-#' @param df A dataframe to be loaded to the database.
-#' @param PartitionedCols Vector of Strings.  If present, then of the [to be] partitioned table, this is the vector column names (in order). NOT YET IMPLEMENTED.
-#' @param PartitionedColsValues List of Length One(1) R objects.  If present, then of the [to be] partitioned table partition values, this is the the list of column values (in order). NOT YET IMPLEMENTED.
-#' @param PrimaryKeyCols Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.
-#' @param IndexedCols List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.
-#' @param fill.null Should new db present fields be added to the data.frame before it is loaded?
-#' @param row.names Should the row names be loaded as a seperate column? (unlike the original dbWriteTable, default is FALSE)
-#' @param display Logical. Whether to display the query ALTER TABLE ADD (defaults to \code{TRUE}).
-#' @param exec Logical. Whether to execute the query ALTER TABLE ADD (defaults to \code{TRUE}).
-#' @returns results of DBI::dbWriteTable
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DBI dbListFields dbDataType dbSendQuery dbColumnInfo dbClearResult dbWriteTable
-#' @importFrom rpostgis dbColumn
-caroline__dbWriteTable2 <- function(con, table.name, df,
-                                    PartitionedCols, PartitionedColsValues, PrimaryKeyCols, IndexedCols,
-                                    fill.null = TRUE,
-                                    # add.id=TRUE,           # domain specific feature removed
-                                    row.names=FALSE,
-                                    # pg.update.seq=FALSE,  # domain specific feature removed
-                                    display = TRUE, exec = TRUE,
-                                    ...){
-tryCatchLog::tryCatchLog({
-
-  fields <- DBI::dbListFields(con, name = table.name)
-  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
-
-  #
-  # add.id feature domain specific removed
-  #
-
-  ## look for unloadable columns in the df
-  colnames(df) <- tolower(colnames(df))
-  colnames(df) <- gsub("\\.",'_',colnames(df))
-
-  # ORIGINAL CODE
-  # clmn.match <- match(colnames(df), fields)
-  # if(any(is.na(clmn.match))) {
-  #    warning(paste("Found '",names(df)[is.na(clmn.match)], "' not in fields of '", table.name,"' table. Omiting.\n", sep=''))
-  # }
-
-  # ANDRE REPLACEMENT (JUST WORDS)
-  clmn.match <- match(colnames(df), fields)
-  if(any(is.na(clmn.match))) {
-    message(paste0("Found '", colnames(df)[is.na(clmn.match)], "' not in columns of '", table.name,"' table. So Adding.\n"))
-  }
-
-  # NEW CODE (BY ANDRE MIKULEC) (NEW clmns.add.to.fields, df.classes.fields.compatible
-  # From the "df" columns, that do not exist in the fields(server)
-  # Add these columns to the server
-  # recalculate the variable "fields" and "clmn.match"
-  clmns.add.to.fields <- which(is.na(clmn.match))
-  if(length(clmns.add.to.fields)) {
-    # fields.classes.new <- sapply(df[clmns.add.to.fields], class)
-    #  SQL type of an R object according to the SQL 92 specification
-    df.classes.fields.compatible <- sapply(df[clmns.add.to.fields], function(clmn) DBI::dbDataType(con, clmn))
-    mapply(function(colname, coltype) {
-      rpostgis::dbColumn(con, name = table.name, colname = colname, coltype = coltype, display = display, exec = exec)
-      invisible()
-    }, Names(df.classes.fields.compatible), df.classes.fields.compatible, SIMPLIFY = FALSE)
-    # cleanup
-    rm(df.classes.fields.compatible)
-  }
-  # cleanup
-  rm(clmns.add.to.fields)
-  # recalculate
-  fields <- DBI::dbListFields(con, name = table.name)
-  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
-  clmn.match <- match(colnames(df), fields)
-
-  r <- DBI::dbSendQuery(con, statement = paste("SELECT * FROM ", table.name, " WHERE FALSE "))
-  fields.info <- DBI::dbColumnInfo(r); rownames(fields.info) <- fields.info$name
-  DBI::dbClearResult(r)
-
-  fields.sclasses <- nameVect(fields.info,'Sclass')
-  # BEGIN ANDRE ADDED (NEW fields.classes.df.compatible)
-  fields.classes.df.compatible <- sapply(fields.sclasses, function(sdatatype) {
-    if(sdatatype == "double") {sdatatype <- "numeric"}
-    return(sdatatype)
-  })
-  # END ANDRE ADDED
-
-  # ANDRE COMMENTED OUT (SEE THE RE-WRITE BELOW)
-  # ## add missing fields to df
-  # field.match <- match(fields, colnames(df))
-  # if(sum(is.na(field.match))>0 & fill.null == TRUE){
-  #   message("creating NAs/NULLs for for fields of table that are missing in your df")
-  #   nl <- as.list(rep(NA, sum(is.na(field.match))))
-  #   df.nms.orgnl <- colnames(df)
-  #   df <- cbind(df, nl)
-  #   colnames(df) <- c(df.nms.orgnl, fields[is.na(field.match)])
-  # }
-
-  # ANDRE RE-WROTE (I WANT THE CORRECT CLASSES)
-  ## add missing fields to df
-  df.classes.new <- fields.classes.df.compatible[match(setdiff(fields, colnames(df)), Names(fields.classes.df.compatible))]
-  if(length(df.classes.new)) {
-    mapply(function(colname, coltype) {
-      if(coltype == "character") {
-        df[[colname]] <<- rep(NA_character_, NROW(df))
-      }
-      if(coltype %in% c("integer", "Date")) {
-        df[[colname]] <<- rep(NA_integer_, NROW(df))
-        if(coltype == "Date") {
-          df[[colname]] <- zoo::as.Date(df[[colname]])
-        }
-      }
-      if(coltype == "numeric") {
-        df[[colname]] <<- rep(NA_real_, NROW(df))
-      }
-      if(coltype == "logical") {
-        df[[colname]] <<- rep(NA, NROW(df))
-      }
-      invisible()
-    }, Names(df.classes.new), df.classes.new, SIMPLIFY = FALSE)
-  }
-  rm(df.classes.new)
-
-  ## reorder df columns as per field order
-  reordered.names <- colnames(df)[match(fields, colnames(df))]
-  if(any(is.na(reordered.names)))
-    stop('Too many unmatched columns to database column list. Stopping')
-  df <- df[ ,reordered.names, drop = F]
-
-  df.classes <- sapply(df, class)
-
-  ## BEGIN ERROR CHECKING
-
-  # BEGIN ANDRE NOTE
-  # tolower(db.colinfo$type)
-  # is the same as
-  # sapply(df, function(x) DBI::dbDataType(con, x))
-  # typical results
-  # "text"  "float8" "bool"  "integer"    "date"
-  # END ANDRE NOTE
-
-  ## check for na's which might prevent a load
-  null.OK <- nameVect(fields.info,'nullOK')
-  reqd.fields <- Names(null.OK[!null.OK])
-  na.cols <- sapply(df, function(x) any(is.na(x)) )
-  req.miss <- na.cols[reqd.fields]
-  if(any(req.miss))
-    stop(paste("Didn't load df because required field(s)", paste(Names(req.miss)[req.miss],collapse=', '),"contained missing values"))
-
-  ## check for length mismatches
-  fields.precisions <- nameVect(fields.info, 'precision')
-  df.nchars <- sapply(df, function(c) max(nchar(c)))
-  prec.reqd <- fields.precisions > 0
-  too.long <- fields.precisions[prec.reqd] < df.nchars[prec.reqd]
-  if(any(too.long))
-    stop(paste("Didn't load df because fields", paste(Names(df.nchars)[prec.reqd][too.long],collapse=', '),'were too long'))
-
-  ## check for type mismatches
-
-
-  # BELOW: ANDRE MADE THIS VARIABLE VALUE IS NOT USED
-  # type.mismatches <- Names(df.classes)[fields.sclasses != df.classes & !na.cols]
-  #if(length(type.mismatches)>0)
-  #  warning(paste('The dataframe columns:',paste(type.mismatches, collapse=','),'may have type mismatches from their sclass mappings to the database table fields.'))
-
-  # ANDRE ADDED (USES NEW fields.classes.df.compatible)
-  type.mismatches <- Names(df.classes)[df.classes != fields.classes.df.compatible & !na.cols]
-  if(length(type.mismatches) > 0) {
-    message(paste('The dataframe columns:',paste(type.mismatches, collapse=','),'may have type mismatches from their sclass mappings to the database table fields.'))
-  }
-  # END ANDRE ADDED
-
-
-
-
-  ## check unique constrains
-  #r <- DBI::dbGetQuery(con, statement = paste("SELECT constraint_name FROM information_schema.table_constraints WHERE table_name = '",table.name,"'", sep=''))
-  #if(nrow(df) != length(unique(apply(df[,c('day','file')],1, paste, collapse='.')))
-  #stop
-
-  ## load table (appending only)
-  message(paste0("Loading ", table.name, " table to database."))
-  db.write <- DBI::dbWriteTable(con, name = table.name, value = df, row.names = row.names, append = TRUE, ...)
-
-  #
-  # pg.update.seq domain specific feature removed
-  #
-
-  #
-  # add.id domain specific feature removed
-  #
-
-  return(db.write)
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
-
-
-
-
-
-#' Insert a new table into the PostgreSQL database or append data.
-#'
-#' Thick wrapper over R CRAN package caroline function dbWriteTable2.
-#'
 #' @param conn A DBIConnection object, as returned by dbConnect().
 #' @param DfName  String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.
 #' @param Df, data.frame. Required. To be loaded to the database.
-#' @param PartitionedCols Vector of Strings.  If present, then of the [to be] partitioned table, this is the vector column names (in order). NOT YET IMPLEMENTED.
-#' @param PartitionedColsValues List of Length One(1) R objects.  If present, then of the [to be] partitioned table partition values, this is the the list of column values (in order). NOT YET IMPLEMENTED.
-#' @param PrimaryKeyCols Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.
-#' @param IndexedCols List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.
+#' @param PartKeyDef String.  If the table is (or to be is) a Partitioned table is the parition key definition.  NOT YET IMPLEMENTED
+#' @param PartBound String. If the table is (or to be) a particpant as a Partition, then this is a partition bound.  NOT YET IMPLEMENTED
+#' @param PrimaryKey Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.
+#' @param Indexes List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.
 #' @param FillNull Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?
 #' @param RowNames Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).
 #' @param lowerDfName Logical. Default is TRUE. Make the target database table name to be in lowercase.
@@ -2579,7 +2388,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
 #' @export
 dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
-                           PartitionedCols, PartitionedColsValues, PrimaryKeyCols, IndexedCols,
+                           PartKeyDef, PartBound, PrimaryKey, Indexes,
                            FillNull = TRUE,
                            RowNames = FALSE,
                            lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
@@ -2615,18 +2424,20 @@ tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
 
-  if(
-    !missing(PartitionedCols) &&  missing(PartitionedColsValues)
-    ||
-     missing(PartitionedCols) && !missing(PartitionedColsValues)
-  ) {
-    stop("Paramters \"PartitionedCols\" and \"PartitionedColsValues\ must be both provided or neigther provided at all.")
+  if(missing(PartKeyDef)) {
+    PartKeyDef <- character()
   }
 
-  if(!missing(PartitionedCols) && !missing(PartitionedColsValues)) {
-    if(length(PartitionedCols) != length(PartitionedColsValues)) {
-      stop("Paramters \"PartitionedCols\" and \"PartitionedColsValues\ if provided must be of the same count.")
-    }
+  if(missing(PartBound)) {
+    PartBound <- character()
+  }
+
+  if(missing(PrimaryKey)) {
+    PrimaryKey <- character()
+  }
+
+  if(missing(Indexes)) {
+    Indexes <- character()
   }
 
   if(lowerDfName) {
@@ -2639,6 +2450,9 @@ tryCatchLog::tryCatchLog({
     colnames(Df) <- gsub("[.]", "_", colnames(Df))
   }
 
+  # table does not exist
+  # 1. create partitioned table ("p" - partitioned table) (c1)
+
   # Because caroline dbWriteTable2 requires the table to pre-exist.
   if(!DBI::dbExistsTable(conn, name = DfName)) {
     PreCallTableDfNameExisted <- FALSE
@@ -2647,57 +2461,221 @@ tryCatchLog::tryCatchLog({
   } else {
     PreCallTableDfNameExisted <- TRUE
   }
+  # 2. create partitioned index on paritioned table ONLY primary key (index) c1,c3,c4,c2) pkey
 
-  DetectedPartitionedCols <- character()
-  if(PreCallTableDfNameExisted) {
-    # DetectedPartitionedCols <- <detected>
-  }
 
-  if((!missing(PartitionedCols))) {
-    if(length(PartitionedCols) != length(DetectedPartitionedCols)) {
-      stop("Paramters \"PartitionedCols\" and internally detected 'partitioned columns' do not match.  They must be the same (and in the correct order).")
-    }
-  }
-
-  if((!missing(PartitionedCols)) && !PreCallTableDfNameExisted && !length(DetectedPartitionedCols)) {
+  # new table: build the CREATE TABLE string
+  if((!missing(PartKeyDef)) && !PreCallTableDfNameExisted) {
     # NOT IMPLEMENTED YET
-    # Once Only create the parent partitioned table
-    # dbExecuteEM(con, Statement = ___ , exec = exec, display = display)
-    # FUTURE
-    # CREATE TEMP TABLE DfName (LIKE DfName INCLUDING DEFAULTS INCLUDING CONSTRAINTS)
-    # DROP        TABLE DfName
-    # CREATE      TABLE DfName (LIKE DfName INCLUDING DEFAULTS INCLUDING CONSTRAINTS) PARTITION BY LIST (PartitionedCols)
+  }
+  # new table: build the CREATE TABLE string
+  if((!missing(PartBound)) && !PreCallTableDfNameExisted) {
+    # NOT IMPLEMENTED YET
   }
 
-  if(missing(PartitionedCols)) {
-    PartitionedCols <- character()
+  if(!PreCallTableDfNameExisted) {
+    # NOT IMPLMENTED - CREATE TABLE
   }
-  if(missing(PartitionedColsValues)) {
-    PartitionedColsValues <- list()
+
+  # table already exists
+  # 3. create partition ("r" - regular table)
+
+  DetectedPartKeyDef <- character()
+  if(PreCallTableDfNameExisted) {
+    # DetectedPartKeyDef <- <detected>
   }
-  if(missing(PrimaryKeyCols)) {
-    PrimaryKeyCols <- character()
+
+  DetectedPartBound <- character()
+  if(PreCallTableDfNameExisted) {
+    # DetectedPartBound <- <detected>
   }
-  if(missing(IndexedCols)) {
-    IndexedCols <- list()
-  }
+
+  # Begin R CRAN package caroline function dbWriteTable2 area
+  #
 
   # expect the table to already be there
-  WriteTable <- DescTools::DoCall(
-    "caroline__dbWriteTable2", c(list(),
-       list(conn), list(table.name = DfName), list(df = Df),
-       list(PartitionedCols = PartitionedCols),
-       list(PartitionedColsValues = PartitionedColsValues),
-       list(PrimaryKeyCols = PrimaryKeyCols),
-       list(IndexedCols = IndexedCols),
-       list(fill.null = FillNull),
-       list(row.names = RowNames),
-       list(display = display), list(exec = exec),
-       Dots
-    )
-  )
+
+  fields <- DBI::dbListFields(conn, name = DfName)
+  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
+
+  #
+  # add.id feature domain specific removed
+  #
+
+  ## look for unloadable columns in the df
+  colnames(Df) <- tolower(colnames(Df))
+  colnames(Df) <- gsub("[.]",'_',colnames(Df))
+
+  # ORIGINAL CODE
+  # clmn.match <- match(colnames(df), fields)
+  # if(any(is.na(clmn.match))) {
+  #    warning(paste("Found '",names(df)[is.na(clmn.match)], "' not in fields of '", table.name,"' table. Omiting.\n", sep=''))
+  # }
+
+  # ANDRE REPLACEMENT (JUST WORDS)
+  clmn.match <- match(colnames(Df), fields)
+  if(any(is.na(clmn.match))) {
+    message(paste0("Found '", colnames(Df)[is.na(clmn.match)], "' not in columns of '", table.name,"' table. So Adding.\n"))
+  }
+
+  # NEW CODE (BY ANDRE MIKULEC) (NEW clmns.add.to.fields, df.classes.fields.compatible
+  # From the "df" columns, that do not exist in the fields(server)
+  # Add these columns to the server
+  # recalculate the variable "fields" and "clmn.match"
+  clmns.add.to.fields <- which(is.na(clmn.match))
+  if(length(clmns.add.to.fields)) {
+    # fields.classes.new <- sapply(df[clmns.add.to.fields], class)
+    #  SQL type of an R object according to the SQL 92 specification
+    df.classes.fields.compatible <- sapply(Df[clmns.add.to.fields], function(clmn) DBI::dbDataType(conn, clmn))
+    mapply(function(colname, coltype) {
+      rpostgis::dbColumn(conn, name = DfName, colname = colname, coltype = coltype, display = display, exec = exec)
+      invisible()
+    }, Names(df.classes.fields.compatible), df.classes.fields.compatible, SIMPLIFY = FALSE)
+    # cleanup
+    rm(df.classes.fields.compatible)
+  }
+  # cleanup
+  rm(clmns.add.to.fields)
+  # recalculate
+  fields <- DBI::dbListFields(conn, name = DfName)
+  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
+  clmn.match <- match(colnames(Df), fields)
+
+  r <- DBI::dbSendQuery(conn, statement = paste("SELECT * FROM ", DfName, " WHERE FALSE;"))
+  fields.info <- DBI::dbColumnInfo(r); rownames(fields.info) <- fields.info$name
+  DBI::dbClearResult(r)
+
+  fields.sclasses <- nameVect(fields.info,'Sclass')
+  # BEGIN ANDRE ADDED (NEW fields.classes.df.compatible)
+  fields.classes.df.compatible <- sapply(fields.sclasses, function(sdatatype) {
+    if(sdatatype == "double") {sdatatype <- "numeric"}
+    return(sdatatype)
+  })
+  # END ANDRE ADDED
+
+  # ANDRE COMMENTED OUT (SEE THE RE-WRITE BELOW)
+  # ## add missing fields to df
+  # field.match <- match(fields, colnames(df))
+  # if(sum(is.na(field.match))>0 & fill.null == TRUE){
+  #   message("creating NAs/NULLs for for fields of table that are missing in your df")
+  #   nl <- as.list(rep(NA, sum(is.na(field.match))))
+  #   df.nms.orgnl <- colnames(df)
+  #   df <- cbind(df, nl)
+  #   colnames(df) <- c(df.nms.orgnl, fields[is.na(field.match)])
+  # }
+
+  # ANDRE RE-WROTE (I WANT THE CORRECT CLASSES)
+  ## add missing fields to df
+  df.classes.new <- fields.classes.df.compatible[match(setdiff(fields, colnames(df)), Names(fields.classes.df.compatible))]
+  if(length(df.classes.new)) {
+    mapply(function(colname, coltype) {
+      if(coltype == "character") {
+        Df[[colname]] <<- rep(NA_character_, NROW(Df))
+      }
+      if(coltype %in% c("integer", "Date")) {
+        Df[[colname]] <<- rep(NA_integer_, NROW(Df))
+        if(coltype == "Date") {
+          Df[[colname]] <- zoo::as.Date(df[[colname]])
+        }
+      }
+      if(coltype == "numeric") {
+        Df[[colname]] <<- rep(NA_real_, NROW(Df))
+      }
+      if(coltype == "logical") {
+        Df[[colname]] <<- rep(NA, NROW(Df))
+      }
+      invisible()
+    }, Names(df.classes.new), df.classes.new, SIMPLIFY = FALSE)
+  }
+  rm(df.classes.new)
+
+  ## reorder df columns as per field order
+  reordered.names <- colnames(Df)[match(fields, colnames(Df))]
+  if(any(is.na(reordered.names)))
+    stop('Too many unmatched columns to database column list. Stopping')
+  Df <- Df[ ,reordered.names, drop = F]
+
+  df.classes <- sapply(Df, class)
+
+  ## BEGIN ERROR CHECKING
+
+  # BEGIN ANDRE NOTE
+  # tolower(db.colinfo$type)
+  # is the same as
+  # sapply(df, function(x) DBI::dbDataType(con, x))
+  # typical results
+  # "text"  "float8" "bool"  "integer"    "date"
+  # END ANDRE NOTE
+
+  ## check for na's which might prevent a load
+  null.OK <- nameVect(fields.info,'nullOK')
+  reqd.fields <- Names(null.OK[!null.OK])
+  na.cols <- sapply(Df, function(x) any(is.na(x)) )
+  req.miss <- na.cols[reqd.fields]
+  if(any(req.miss)) {
+    stop(paste("Did not load df because required field(s) ", paste(Names(req.miss)[req.miss],collapse=', ')," contained missing values."))
+  }
+
+  ## check for length mismatches
+  fields.precisions <- nameVect(fields.info, 'precision')
+  df.nchars <- sapply(Df, function(c) max(nchar(c)))
+  prec.reqd <- fields.precisions > 0
+  too.long <- fields.precisions[prec.reqd] < df.nchars[prec.reqd]
+  if(any(too.long)) {
+    stop(paste("Did not load df because fields", paste(Names(df.nchars)[prec.reqd][too.long],collapse=', '),' were too long.'))
+  }
+
+
+  # check for type mismatches
+  #
+  # BELOW: ANDRE MADE THIS VARIABLE VALUE IS NOT USED
+  # type.mismatches <- Names(df.classes)[fields.sclasses != df.classes & !na.cols]
+  #if(length(type.mismatches)>0)
+  #  warning(paste('The dataframe columns:',paste(type.mismatches, collapse=','),'may have type mismatches from their sclass mappings to the database table fields.'))
+
+  # ANDRE ADDED (USES NEW fields.classes.df.compatible)
+  type.mismatches <- Names(df.classes)[df.classes != fields.classes.df.compatible & !na.cols]
+  if(length(type.mismatches) > 0) {
+    message(paste('The dataframe columns: ',paste(type.mismatches, collapse=','),' may have type mismatches from their sclass mappings to the database table fields.'))
+  }
+  # END ANDRE ADDED
+
+  ## check unique constrains
+  #r <- DBI::dbGetQuery(con, statement = paste("SELECT constraint_name FROM information_schema.table_constraints WHERE table_name = '",table.name,"'", sep=''))
+  #if(nrow(df) != length(unique(apply(df[,c('day','file')],1, paste, collapse='.')))
+  #stop
+
+  # 4. create partition check constraint of "partition bound" (c1)
+
+  # 5. create partition primary key (index) (c1,c3,c4,c2) pkey
+
+  ## load partitioned table (definition only)
+  message(paste0("Loading ", table.name, " table to database."))
+  WriteTable <- DBI::dbWriteTable(con, name = table.name, value = df[FALSE, , drop = F], row.names = row.names, append = TRUE, ...)
+
+  # 6. load the  data
+
+  ## load partitioned table (data (appending) only)
+  message(paste0("Loading ", table.name, " table to database."))
+  WriteTable <- DBI::dbWriteTable(con, name = table.name, value = df[FALSE, , drop = F], row.names = row.names, append = TRUE, ...)
+
+  # 7. alter partition table attach [partition] for values in (c1);
+
+  # 8. alter partition index attach [partition] pkey;
+
+  #
+  # pg.update.seq domain specific feature removed
+  #
+
+  #
+  # add.id domain specific feature removed
+  #
 
   return(WriteTable)
+
+
+  # End R CRAN package caroline function dbWriteTable2 area
+  #
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
