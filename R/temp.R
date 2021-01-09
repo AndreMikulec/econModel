@@ -1,23 +1,26 @@
 
 
-#' Of a PostgreSQL Partioned Table Get Partitions
+#' Of a PostgreSQLTable Get Inherited Tables
 #'
-#' Of the PostgreSQL (r)egular table or (p)artitioned table get the information of "partition child tables" (if any) (with schema name).
+#' Of the PostgreSQL table get the child tables" (if any) (with schema name).
 #'
 #' @param conn PostgreSQLConnection . Required.
 #' @param name String. Required. Name of the table.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @param ... Dots passed.
-#' @returns Dataframe of information of "partition child tables" (if any) (with schema name).
+#' @returns Dataframe of inherited "child tables" (if any) (with schema name).
+#' @references
+#' \cite {Get number of partitions in PostgreSQL database
+#' url{ https://stackoverflow.com/questions/8634144/get-number-of-partitions-in-postgresql-database }
+#' }
 #' @examples
 #' \dontrun{
-#' dbListPartitionsEM(conn, name = "sample")
+#' dbListInheritsEM(conn, name = "sample")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DataCombine FillDown
-#' @export hierarchy
-dbListPartitionsEM <- function(conn, name, display = TRUE, exec = TRUE, ...) {
+#' @export
+dbListInheritsEM <- function(conn, name, display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
@@ -36,8 +39,8 @@ tryCatchLog::tryCatchLog({
   SELECT
       -- nmsp_parent.nspname AS parent_schema,
       -- parent.relname      AS parent,
-      nmsp_child.nspname  AS part_schema,
-      child.relname       AS part_table
+      nmsp_child.nspname  AS child_schema,
+      child.relname       AS child_table
   FROM pg_inherits
       JOIN pg_class parent        ON pg_inherits.inhparent = parent.oid
       JOIN pg_class child         ON pg_inherits.inhrelid = child.oid
@@ -52,7 +55,7 @@ tryCatchLog::tryCatchLog({
   if(NROW(Results)) {
     return(Results[, , drop = FALSE])
   } else {
-    return(data.frame(list(PART_SCHEMA = "", PART_TABLE = ""))[FALSE, , drop = F])
+    return(data.frame(list(CHILD_SCHEMA = "", CHILD_TABLE = ""))[FALSE, , drop = F])
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
