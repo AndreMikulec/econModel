@@ -4,7 +4,7 @@
 \alias{dbTableNameFix}
 \title{Format input for database schema/table names.}
 \usage{
-dbTableNameFix(conn = NULL, t.nm, as.identifier = TRUE)
+dbTableNameFix(conn = NULL, t.nm, as.identifier = TRUE, dbQuote = "Identifier")
 }
 \arguments{
 \item{conn}{A connection object. Must be provided but can be set NULL,
@@ -14,6 +14,8 @@ where a dummy connection will be used.}
 
 \item{as.identifier}{Boolean whether to return (schema,table) name as database
 sanitized identifiers (TRUE) or as regular character (FALSE)}
+
+\item{dbQuote}{String. Only used when "as.identifier = TRUE". Default is "Identifier". Alternately, this value can be "Literal."}
 }
 \value{
 character vector of length 2. Each character element is in

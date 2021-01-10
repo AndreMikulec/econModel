@@ -1994,10 +1994,11 @@ tryCatchLog::tryCatchLog({
 #' @param t.nm Table name string, length 1-2.
 #' @param as.identifier Boolean whether to return (schema,table) name as database
 #' sanitized identifiers (TRUE) or as regular character (FALSE)
+#' @param dbQuote String. Only used when "as.identifier = TRUE". Default is "Identifier". Alternately, this value can be "Literal."
 #' @return character vector of length 2. Each character element is in
 #'     (escaped) double-quotes when as.identifier = TRUE.
 #' @keywords internal
-#' @importFrom DBI dbQuoteIdentifier
+#' @importFrom DBI dbQuoteIdentifier dbQuoteLiteral
 #' @importFrom DBI dbQuoteString
 #' @examples
 #' \dontrun{
@@ -2015,7 +2016,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery dbQuoteIdentifier ANSI
-dbTableNameFix <- function(conn = NULL, t.nm, as.identifier = TRUE) {
+dbTableNameFix <- function(conn = NULL, t.nm, as.identifier = TRUE, dbQuote = "Identifier") {
 tryCatchLog::tryCatchLog({
   # case of no schema provided
   if (length(t.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
@@ -2036,7 +2037,12 @@ tryCatchLog::tryCatchLog({
   }
   if (is.null(conn)) {conn<-DBI::ANSI()}
   if (!as.identifier) {return(t.nm)} else {
-    t.nm<-DBI::dbQuoteIdentifier(conn, t.nm)
+    if (dbQuote == "Identifier") {
+      t.nm<-DBI::dbQuoteIdentifier(conn, t.nm)
+    }
+    if (dbQuote == "Literal") {
+      t.nm<-DBI::dbQuoteLiteral(conn, t.nm)
+    }
     return(t.nm)
   }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
