@@ -1,5 +1,16 @@
 
 
+
+# idea
+#
+# multi sort
+# ---------
+#
+# Reduce
+#   Sort -> ORDER\cSort  -> upon (if rle > 1), split -> Sort
+
+
+
 #' Custom Sorting a Vector
 #'
 #' @description

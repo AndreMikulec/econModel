@@ -145,12 +145,9 @@ tryCatchLog::tryCatchLog({
 
 #' .onLoad getOption package settings
 #'
-#' @param libname defunct
-#' @param pkgname defunct
+#' @param libpath defunct
 #' @return invisible()
 #' @rdname onLoad
-#' @examples
-#' getOption("econModel.name")
 #' @importFrom tryCatchLog tryCatchLog
 .onUnload <- function(libpath) {
 tryCatchLog::tryCatchLog({
