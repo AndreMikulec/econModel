@@ -13,6 +13,8 @@
 \item{libname}{defunct}
 
 \item{pkgname}{defunct}
+
+\item{libpath}{defunct}
 }
 \value{
 invisible()
@@ -39,5 +41,4 @@ MyWorkingFolder <- normalizePath(MyWorkingFolder, winslash = "/")
 options(econModel.tryCatchLog.write.error.dump.folder = MyWorkingFolder)
 getOption("econModel.tryCatchLog.write.error.dump.folder"))
 }
-getOption("econModel.name")
 }

@@ -801,7 +801,7 @@ tryCatchLog::tryCatchLog({
 #' @description
 #' A function to return the rows of a vector or two-dimensional data object.
 #' This is a wrapper over the R CRAN package econModel first and last.
-#' Different here is that if n elements can not be returned, then instead, zero elements are returned.
+#' Different here is that if n elements can not be returned, then instead, stop() happens.
 #'
 #' @param x 1 or 2 dimensional data object.
 #' @param ... Dots passed.
@@ -824,7 +824,7 @@ tryCatchLog::tryCatchLog({
     # call first(x, n = 2L) # correct way to call (not the default)
     ("n" %in% Names(Dots)) && (NROW(x) < Dots[["n"]])
   ){
-    return(x[0])
+    stop(paste0("Function relativeRows can not return exactly ", Dots[["n"]], " elements."))
   } else {
     return(x)
   }

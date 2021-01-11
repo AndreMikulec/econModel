@@ -17,5 +17,5 @@ first elements or zero length element
 \description{
 A function to return the rows of a vector or two-dimensional data object.
 This is a wrapper over the R CRAN package econModel first and last.
-Different here is that if n elements can not be returned, then instead, zero elements are returned.
+Different here is that if n elements can not be returned, then instead, stop() happens.
 }
