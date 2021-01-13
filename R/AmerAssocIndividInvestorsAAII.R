@@ -2776,9 +2776,51 @@ tryCatchLog::tryCatchLog({
     message("--")
   }
   if (exec) {
-    dbExecuteEM(conn, Statement = tmp.query)
+    dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
     return(TRUE)
   }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+
+#' Add or Remove a Column
+#'
+#' Add or remove a column to/from a table.
+#'
+#' @param conn A connection object.
+#' @param name A character string specifying a PostgreSQL table name.
+#' @param colname A character string specifying the name of the column
+#' @param action A character string specifying if the column is to be added ("add", default) or removed ("drop").
+#' @param coltype A character string indicating the type of the column, if action = "add".
+#' @param cascade Logical. Whether to drop foreign key constraints of other tables, if action = "drop".
+#' @param display Logical. Whether to display the query (defaults to TRUE).
+#' @param exec Logical. Whether to execute the query (defaults to TRUE).
+#' @returns TRUE if the column was successfully added or removed.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbQuoteIdentifier
+#' @export
+dbColumnEM <- function (conn, name, colname, action = c("add", "drop"), coltype = "integer",
+                        cascade = FALSE, display = TRUE, exec = TRUE) {
+tryCatchLog::tryCatchLog({
+
+  name <- dbObjectNameFix(conn, o.nm = name)
+  nameque <- paste(name, collapse = ".")
+  colname <- DBI::dbQuoteIdentifier(conn, colname)
+  action <- toupper(match.arg(action))
+  args <- ifelse(action == "ADD", coltype, ifelse(cascade,
+                                                  "CASCADE", ""))
+  tmp.query <- paste0("ALTER TABLE ", nameque, " ", action,
+                      " COLUMN ", colname, " ", args, ";")
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+  if (exec) {
+    dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+  }
+  if (exec)
+    return(TRUE)
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2972,7 +3014,7 @@ tryCatchLog::tryCatchLog({
     #  SQL type of an R object according to the SQL 92 specification
     df.classes.fields.compatible <- sapply(Df[clmns.add.to.fields], function(clmn) DBI::dbDataType(conn, clmn))
     mapply(function(colname, coltype) {
-      rpostgis::dbColumn(conn, name = DfName, colname = colname, coltype = coltype, display = display, exec = exec)
+      dbColumnEM(conn, name = DfName, colname = colname, coltype = coltype, display = display, exec = exec)
       invisible()
     }, Names(df.classes.fields.compatible), df.classes.fields.compatible, SIMPLIFY = FALSE)
     # cleanup

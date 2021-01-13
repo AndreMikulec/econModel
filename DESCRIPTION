@@ -16,7 +16,6 @@ Imports:
     TSrepr,
     reshape2,
     DBI,
-    rpostgis,
     data.table,
     fst,
     R.oo,
