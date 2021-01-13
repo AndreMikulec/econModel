@@ -1981,7 +1981,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Format input for database schema/table names.
+#' Format input for database schema/object names.
 #'
 #' This is a near copy of the R CRAN package rpostgis function dbTableNameFix.
 #'
@@ -1991,7 +1991,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn A connection object. Must be provided but can be set NULL,
 #' where a dummy connection will be used.
-#' @param t.nm Table name string, length 1-2.
+#' @param o.nm Object name string, length 1-2.
 #' @param as.identifier Boolean whether to return (schema,table) name as database
 #' sanitized identifiers (TRUE) or as regular character (FALSE)
 #' @param dbQuote String. Only used when "as.identifier = TRUE". Default is "Identifier". Alternately, this value can be "Literal."
@@ -2002,25 +2002,25 @@ tryCatchLog::tryCatchLog({
 #' @importFrom DBI dbQuoteString
 #' @examples
 #' \dontrun{
-#' name<-c("schema","table")
-#' dbTableNameFix(conn,name)
+#' name <- c("schema","table")
+#' dbObjectNameFix(conn,name)
 #'
 #' #current search path schema is added to single-length character object (if only table is given)
 #' name<-"table"
-#' dbTableNameFix(conn,name)
+#' dbObjectNameFix(conn,name)
 #'
 #' #schema or table names with double quotes should be given exactly as they are
 #' (make sure to wrap in single quotes in R):
-#' name<-c('sch"ema','"table"')
-#' dbTableNameFix(conn,name)
+#' name <- c('sch"ema','"table"')
+#' dbObjectNameFix(conn,name)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery dbQuoteIdentifier ANSI
-dbTableNameFix <- function(conn = NULL, t.nm, as.identifier = TRUE, dbQuote = "Identifier") {
+dbObjectNameFix <- function(conn = NULL, o.nm, as.identifier = TRUE, dbQuote = "Identifier") {
 tryCatchLog::tryCatchLog({
   # case of no schema provided
-  if (length(t.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
-    schemalist <- DBI::dbGetQuery(conn,"SELECT nspname as s FROM pg_catalog.pg_namespace;")$s
+  if (length(o.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
+    schemalist <- DBI::dbGetQuery(conn,"SELECT nspname AS s FROM pg_catalog.pg_namespace;")$s
     user <- DBI::dbGetQuery(conn,"SELECT CURRENT_USER AS user;")$user
     schema <- DBI::dbGetQuery(conn,"SHOW SEARCH_PATH;")$search_path
     schema <- gsub(" ","",unlist(strsplit(schema,",",fixed=TRUE)),fixed=TRUE)
@@ -2030,20 +2030,20 @@ tryCatchLog::tryCatchLog({
     } else {
       sch <- schema[!schema=="\"$user\""][1]
     }
-    t.nm <- c(sch, t.nm)
+    o.nm <- c(sch, o.nm)
   }
-  if (length(t.nm) > 2) {
+  if (length(o.nm) > 2) {
     stop("Invalid PostgreSQL table/view name. Must be provided as one ('table') or two-length c('schema','table') character vector.")
   }
   if (is.null(conn)) {conn<-DBI::ANSI()}
-  if (!as.identifier) {return(t.nm)} else {
+  if (!as.identifier) {return(o.nm)} else {
     if (dbQuote == "Identifier") {
-      t.nm<-DBI::dbQuoteIdentifier(conn, t.nm)
+      o.nm <- DBI::dbQuoteIdentifier(conn, o.nm)
     }
     if (dbQuote == "Literal") {
-      t.nm<-DBI::dbQuoteLiteral(conn, t.nm)
+      o.nm <- DBI::dbQuoteLiteral(conn, o.nm)
     }
-    return(t.nm)
+    return(o.nm)
   }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2308,7 +2308,7 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"name\" is required.")
   }
 
-  SchemaAndName <- dbTableNameFix(conn, t.nm = name, as.identifier = TRUE, dbQuote = "Literal")
+  SchemaAndName <- dbObjectNameFix(conn, o.nm = name, as.identifier = TRUE, dbQuote = "Literal")
 
   if(side == "parent") {
     Restriction <-
@@ -2331,14 +2331,14 @@ SELECT q.* FROM (
       nmsp_parent.nspname::text AS parent_schema,
       parent.relname::text      AS parent,
       parent.relkind::text      AS parent_relkind,
+            pg_catalog.pg_get_expr(parent.relpartbound, parent.oid) AS parent_part_bound,
       pg_catalog.pg_get_partkeydef(parent.oid) AS parent_part_key_def,
-      pg_catalog.pg_get_expr(parent.relpartbound, parent.oid) AS parent_part_bound,
       pg_inherits.inhseqno,
       nmsp_child.nspname::text  AS child_schema,
       child.relname::text       AS child,
       child.relkind::text       AS child_relkind,
-      pg_catalog.pg_get_partkeydef(child.oid) AS child_part_key_def,
-      pg_catalog.pg_get_expr(child.relpartbound, child.oid) AS child_part_bound
+      pg_catalog.pg_get_expr(child.relpartbound, child.oid) AS child_part_bound,
+      pg_catalog.pg_get_partkeydef(child.oid) AS child_part_key_def
   FROM pg_inherits
   FULL JOIN pg_class parent        ON pg_inherits.inhparent = parent.oid
   FULL JOIN pg_class child         ON pg_inherits.inhrelid = child.oid
@@ -2401,7 +2401,72 @@ tryCatchLog::tryCatchLog({
 
 
 
+#' Create a PostgreSQL Partitioned and/or Bounded Table
+#'
+#' Exposes an interface to simple PostgreSQL
+#' `CREATE TABLE . . . PARTITION BY . . . PARTITION OF . . . FOR VALUES . . . ` commands.
+#'
+#' This code is partially inspired by R CRAN package DBI S4 methods sqlCreateTable and dbCreateTable.
+#'
+#' NOTE: In PostgreSQL, one can not convert a table to a partitioned table and vice-versa.
+#'
+#' @param conn A PostgreSQL database connection.
+#' @param table Name of the table. Escaped with
+#'   [DBI::dbQuoteIdentifier()].
+#' @param fields Either a character vector or a data frame.
+#'
+#'   A named character vector: Names are column names, values are types.
+#'   Names are escaped with [DBI::dbQuoteIdentifier()].
+#'   Field types are unescaped.
+#'
+#'   A data frame: field types are generated using
+#'   [DBI::dbDataType()].
+#'
+#' @param temporary If `TRUE`, will generate a temporary table statement.
+#' @param part.bound String. `PARTITION OF parent_table [ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.
+#' @param part.key.def String. `[ PARTITION BY { RANGE | LIST | HASH } ( { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [, ... ] ) ]`.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @param ... Dots passed.
+#' @examples
+#' \dontrun{
+#' conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user="postgres", password="postgres", dbname="postgres")
+#' dbCreatePartBoundTableEM(conn, "mtcars", mtcars, part.key.def = "LIST(CAST(gear AS INTEGER))")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbDataType dbQuoteIdentifier
+#' @export
+dbCreatePartBoundTableEM <- function(conn, name, fields, temporary = FALSE, part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE, ...) {
+tryCatchLog::tryCatchLog({
 
+  table <- dbObjectNameFix(conn, o.nm = name)
+  tableque <- paste(table, collapse = ".")
+
+  if(is.data.frame(fields)) {
+    fields <- vapply(fields, function(x) DBI::dbDataType(conn, x), character(1))
+  }
+
+  field_names <- DBI::dbQuoteIdentifier(conn, names(fields))
+  field_types <- unname(fields)
+  fields <- paste0(field_names, " ", field_types)
+
+  if(length(part.bound)) {
+    part.bound <- paste0(" PARTITION OF ", part.key.def)
+  }
+
+  if(length(part.key.def)) {
+    part.key.def <- paste0(" PARTITION BY ", part.key.def)
+  }
+
+  query <- paste0(
+    "CREATE ", if (temporary) "TEMPORARY ", "TABLE ", tableque, " (\n",
+    "  ", paste(fields, collapse = ",\n  "), " \n)", part.bound, part.key.def, "\n"
+  )
+
+  dbExecuteEM(conn, Statement = query, display = display, exec = exec, ...)
+  invisible(TRUE)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -2562,7 +2627,14 @@ tryCatchLog::tryCatchLog({
   if(!DBI::dbExistsTable(conn, name = DfName)) {
     PreCallTableDfNameExisted <- FALSE
     # just need the structure (not the data)
-    DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
+    if(length(PartKeyDef)) {
+      # p -paritioned table
+
+    } else {
+      # r - regular table
+      DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
+    }
+
   } else {
     PreCallTableDfNameExisted <- TRUE
   }
