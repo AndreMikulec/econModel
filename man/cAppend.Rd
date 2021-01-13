@@ -27,7 +27,7 @@ This is a generalization of the R base package function "append".
 }
 \details{
 Insert/append elements. If the elements are part of a collection, then the length of all elements of the list must be the same.
-Currently, (at this time), supported, are R objects: "list" and "data.frame".
+Currently, (at this time), supported, are R objects: "list", "vector" and class "data.frame".
 "values" should be passed as a list. The new collection item names are taken from the List item names.
 
 The type conversion function "ValuesFunction" can (if supported by the S3 method), transform the data:
@@ -35,6 +35,9 @@ ValueFunction = "Rfunction(value)".
 }
 \examples{
 \dontrun{
+cAppend(letters, list(c("zz","yy")),
+  ValueFunction = "toupper(value)"
+)
 cAppend(iris[1:2,],
   list(END = c("zz","yy"), BEGIN = c("aa","bb")),
   ValueFunction = "toupper(value)", after = 3

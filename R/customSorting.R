@@ -425,7 +425,7 @@ tryCatchLog::tryCatchLog({
 #' This is a generalization of the R base package function "append".
 #'
 #' Insert/append elements. If the elements are part of a collection, then the length of all elements of the list must be the same.
-#' Currently, (at this time), supported, are R objects: "list" and "data.frame".
+#' Currently, (at this time), supported, are R objects: "list", "vector" and class "data.frame".
 #' "values" should be passed as a list. The new collection item names are taken from the List item names.
 #'
 #' The type conversion function "ValuesFunction" can (if supported by the S3 method), transform the data:
@@ -454,6 +454,7 @@ tryCatchLog::tryCatchLog({
   Dots <- list(...)
 
   IsListx <- is.list(x)
+  IsVectorx <- is.vector(x)
 
   if(!is.list(values)) {
     values <- list(values)
@@ -473,7 +474,7 @@ tryCatchLog::tryCatchLog({
     ValueFunction <- Dots[["ValueFunction"]]
   }
 
-  if(IsListx) {
+  if(IsListx || IsVectorx) {
     if(exists("ValueFunction", inherits = FALSE)) {
       Values <- lapply(values, function(value) {eval(parse(text=ValueFunction))})
     } else {
@@ -491,7 +492,9 @@ tryCatchLog::tryCatchLog({
   }
 
   # catch-all (currently, this should never happen)
-  if(!IsListx && is.list(x)){
+  if(!IsListx && is.list(x) ||
+     !IsListx && is.vector(x)
+  ){
     # return to non-list
     x <- DescTools::DoCall(c, c(list(), x))
   }
@@ -506,6 +509,9 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @examples
 #' \dontrun{
+#' cAppend(letters, list(c("zz","yy")),
+#'   ValueFunction = "toupper(value)"
+#' )
 #' cAppend(iris[1:2,],
 #'   list(END = c("zz","yy"), BEGIN = c("aa","bb")),
 #'   ValueFunction = "toupper(value)", after = 3
@@ -531,3 +537,4 @@ tryCatchLog::tryCatchLog({
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
