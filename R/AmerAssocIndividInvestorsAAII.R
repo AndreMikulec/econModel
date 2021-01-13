@@ -2450,7 +2450,6 @@ tryCatchLog::tryCatchLog({
     tableque <- paste(table, collapse = ".")
   }
 
-
   if(is.data.frame(fields)) {
     fields <- vapply(fields, function(x) DBI::dbDataType(conn, x), character(1))
   }
@@ -2477,6 +2476,76 @@ tryCatchLog::tryCatchLog({
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
+
+
+#' From a PostgreSQL Object Get Its Partition Key Definition
+#'
+#' Of a PostgreSQL  partition table, detect its partition key definition.
+#' If not a "partition table", an empty character vector is returned.
+#'
+#' This is only designed to work on List partitioned tables with the non-expression key.
+#'
+#' @param conn PostgreSQLConnection.
+#' @param DfName String. Name of the PostgreSQL object.
+#' @returns vector of size 1 of the partition key definition.
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+partKeyDefEM <- function(conn, DfName) {
+tryCatchLog::tryCatchLog({
+  DetectedPartKeyDef <- character()
+  Results <- dbListInheritEM(conn, DfName)
+  if(!NROW(Results)) {
+    stop(paste0("Object ", DfName, " is missing from the database."))
+  }
+  SubResults <- dbListInheritEM(conn, name = DfName)$PARENT_PART_KEY_DEF
+  if(is.na(SubResults)) {
+    # not a "p" - partitioned table (is "r" - regular table)
+    DetectedPartKeyDef <- character()
+  } else {
+    # "p" - partitioned table
+    # SIMPLE COLUMN NAMES ONLY (a)
+    # NOT TOO CLEVER - WILL NOT CORRECTLY EXTRACT EXPRESSIONS
+    DetectedPartKeyDef <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
+  }
+  return(DetectedPartKeyDef)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' From a PostgreSQL Object Get Its Partition Bounds
+#'
+#' Of a PostgreSQL inheriting partition, detect its partition bounds.
+#' If not a "inheriting partition", an empty character vector is returned.
+#'
+#' This is only designed to work on List paritions the non-expression partition bounds.
+#'
+#' @param conn PostgreSQLConnection.
+#' @param DfName String. Name of the PostgreSQL object.
+#' @returns vector of partiton bound list values.
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+partBoundEM <- function(conn, DfName) {
+tryCatchLog::tryCatchLog({
+  DetectedPartBound <- character()
+  Results <- dbListInheritEM(conn, DfName)
+  if(!NROW(Results)) {
+    stop(paste0("Object ", DfName, " is missing from the database."))
+  }
+  SubResults <- dbListInheritEM(conn, name = DfName)$PARENT_PART_BOUND
+  if(is.na(SubResults)) {
+    # does not have a parent
+    DetectedPartBound <- character()
+  } else {
+    # does have a parent
+    # SIMPLE COLUMN VALUES ONLY (a,b)
+    # NOT TOO CLEVER - WILL NOT CORRECTLY EXTRACT EXPRESSIONS
+    PartBound <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
+    PartBound <- gsub(" ", "", PartBound)
+    PartBound <- unlist(strsplit(PartBound, ","))
+    DetectedPartBound <- PartBound
+  }
+  return(DetectedPartBound)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -2633,7 +2702,6 @@ tryCatchLog::tryCatchLog({
   # table does not exist
   # 1. create partitioned table ("p" - partitioned table) (c1)
   #
-  # Because caroline dbWriteTable2 requires the table to pre-exist.
   if(!DBI::dbExistsTable(conn, name = DfName)) {
     PreCallTableDfNameExisted <- FALSE
     # just need the structure (not the data)
@@ -2642,16 +2710,10 @@ tryCatchLog::tryCatchLog({
     PreCallTableDfNameExisted <- TRUE
   }
 
-  DetectedPartKeyDef <- character()
-  if(PreCallTableDfNameExisted) {
-    # DetectedPartKeyDef <- <detected>
-  }
-
-  DetectedPartBound <- character()
-  if(PreCallTableDfNameExisted) {
-    # DetectedPartBound <- <detected>
-  }
-
+  # paritioned table (if any)
+  DetectedPartKeyDef <- partKeyDefEM(conn, DfName = DfName)
+  # paritition (if any)
+  DetectedPartBound  <- partBoundEM(conn, DfName = DfName)
 
 
   # 2. create partitioned index on partitioned table ONLY primary key (index) c1,c3,c4,c2) pkey
