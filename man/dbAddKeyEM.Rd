@@ -9,6 +9,7 @@ dbAddKeyEM(
   name,
   colname,
   only = FALSE,
+  const.name = characater(),
   type = c("primary", "foreign"),
   reference,
   colref,
@@ -24,6 +25,8 @@ dbAddKeyEM(
 \item{colname}{A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.}
 
 \item{only}{Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this contraint to inherited tables(FALSE).}
+
+\item{const.name}{String. Name of the constraint.}
 
 \item{type}{The type of the key, either "primary" or "foreign"}
 
