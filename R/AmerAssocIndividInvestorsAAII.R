@@ -2490,7 +2490,7 @@ tryCatchLog::tryCatchLog({
 #' @returns vector of size 1 of the partition key definition.
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-partKeyDefEM <- function(conn, DfName) {
+dbPartKeyDefEM <- function(conn, DfName) {
 tryCatchLog::tryCatchLog({
   DetectedPartKeyDef <- character()
   Results <- dbListInheritEM(conn, DfName)
@@ -2524,7 +2524,7 @@ tryCatchLog::tryCatchLog({
 #' @returns vector of partiton bound list values.
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-partBoundEM <- function(conn, DfName) {
+dbPartBoundEM <- function(conn, DfName) {
 tryCatchLog::tryCatchLog({
   DetectedPartBound <- character()
   Results <- dbListInheritEM(conn, DfName)
@@ -2711,9 +2711,9 @@ tryCatchLog::tryCatchLog({
   }
 
   # paritioned table (if any)
-  DetectedPartKeyDef <- partKeyDefEM(conn, DfName = DfName)
+  DetectedPartKeyDef <- dbPartKeyDefEM(conn, DfName = DfName)
   # paritition (if any)
-  DetectedPartBound  <- partBoundEM(conn, DfName = DfName)
+  DetectedPartBound  <- dbPartBoundEM(conn, DfName = DfName)
 
 
   # 2. create partitioned index on partitioned table ONLY primary key (index) c1,c3,c4,c2) pkey
