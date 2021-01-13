@@ -419,3 +419,115 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
+
+#' Custom Inserting/Appending Into R Objects
+#'
+#' This is a generalization of the R base package function "append".
+#'
+#' Insert/append elements. If the elements are part of a collection, then the length of all elements of the list must be the same.
+#' Currently, (at this time), supported, are R objects: "list" and "data.frame".
+#' "values" should be passed as a list. The new collection item names are taken from the List item names.
+#'
+#' The type conversion function "ValuesFunction" can (if supported by the S3 method), transform the data:
+#' ValueFunction = "Rfunction(value)".
+#'
+#' @param x The R object, such that the values are to be inserted/appended to.
+#' @param values List. The values to be included in the modified R object.
+#' @param ... Dots passed.
+#' @returns Modified R Object.
+#' @rdname cAppend
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+cAppend <- function(x, values, ...) {
+  UseMethod("cAppend")
+}
+
+
+
+#' @rdname cAppend
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DescTools DoCall
+#' @export
+cAppend.default <- function(x, values, ...) {
+tryCatchLog::tryCatchLog({
+
+  Dots <- list(...)
+
+  IsListx <- is.list(x)
+
+  if(!is.list(values)) {
+    values <- list(values)
+  }
+
+  if("after" %in% Names(Dots)) {
+    after <- Dots[["after"]]
+  } else {
+    after = length(x)
+  }
+
+  if("ReturnClass" %in% Names(Dots)) {
+    ReturnClass <- Dots[["ReturnClass"]]
+  }
+
+  if("ValueFunction" %in% Names(Dots)) {
+    ValueFunction <- Dots[["ValueFunction"]]
+  }
+
+  if(IsListx) {
+    if(exists("ValueFunction", inherits = FALSE)) {
+      Values <- lapply(values, function(value) {eval(parse(text=ValueFunction))})
+    } else {
+      Values <- values
+    }
+    # append(iris[1:2,], list(END = c("zz","yy"), BEGIN = c("aa","bb")), after = 3)
+    x <- append(x, values = Values, after= after)
+    if(exists("ReturnClass", inherits = FALSE)) {
+      if(ReturnClass == "data.frame") {
+        x <- data.frame(x)
+      }
+    }
+  } else {
+    stop("No cAppend S3 method found")
+  }
+
+  # catch-all (currently, this should never happen)
+  if(!IsListx && is.list(x)){
+    # return to non-list
+    x <- DescTools::DoCall(c, c(list(), x))
+  }
+
+  return(x)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' @rdname cAppend
+#' @importFrom tryCatchLog tryCatchLog
+#' @examples
+#' \dontrun{
+#' cAppend(iris[1:2,],
+#'   list(END = c("zz","yy"), BEGIN = c("aa","bb")),
+#'   ValueFunction = "toupper(value)", after = 3
+#'   )
+#' cAppend(as.list(iris[1:2,]),
+#'   list(END = c("zz","yy"), BEGIN = c("aa","bb")),
+#'   ValueFunction = "toupper(value)", after = 3
+#'   )
+#' }
+#' @export
+cAppend.data.frame <- function(x, values, ...) {
+tryCatchLog::tryCatchLog({
+
+  Dots <- list(...)
+  if("ValueFunction" %in% Names(Dots)) {
+    ValueFunction <- Dots[["ValueFunction"]]
+  }
+
+  if(exists("ValueFunction", inherits = FALSE)) {
+    cAppend(as.list(x), values = values, ValueFunction = ValueFunction, ReturnClass = "data.frame", ...)
+  } else {
+    cAppend(as.list(x), values = values, ReturnClass = "data.frame", ...)
+  }
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
