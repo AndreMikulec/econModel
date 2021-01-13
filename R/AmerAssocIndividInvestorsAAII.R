@@ -1513,6 +1513,18 @@ tryCatchLog::tryCatchLog({
             try({DBI::dbExecute(conn, statement = tmp.query, ...)})
           }
 
+          tmp.query <- "SET timezone TO 'UTC';"
+          ## Display the query
+          if (display) {
+            message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+            message(tmp.query)
+          }
+
+          ## Execute the query and return TRUE
+          if (exec) {
+            try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+          }
+
           # tries to create the schema "user"
           if(!dbExistsSchemaEM(conn, schema = user)) dbCreateSchemaEM(conn, schema = user)
           DBI::dbDisconnect(conn)
@@ -1543,6 +1555,19 @@ tryCatchLog::tryCatchLog({
           if (exec) {
             try({DBI::dbExecute(conn, statement = tmp.query, ...)})
           }
+
+          tmp.query <- "SET timezone TO 'UTC';"
+          ## Display the query
+          if (display) {
+            message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+            message(tmp.query)
+          }
+
+          ## Execute the query and return TRUE
+          if (exec) {
+            try({DBI::dbExecute(conn, statement = tmp.query, ...)})
+          }
+
 
           if(!dbExistsUserEM( conn, user   = "r_user_econmodel")) dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
           if(!dbExistsDbaseEM(conn, dbname = "r_user_econmodel")) dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
@@ -2985,9 +3010,6 @@ tryCatchLog::tryCatchLog({
   # table already exists
   # 3. create partition ("r" - regular table)
 
-
-
-  # From R CRAN package caroline function dbWriteTable2 . . .
   #
 
   # expect the table to already be there
@@ -2995,19 +3017,10 @@ tryCatchLog::tryCatchLog({
   fields <- DBI::dbListFields(conn, name = DfName)
   fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
 
-  #
-  # add.id feature domain specific removed
-  #
-
   ## look for unloadable columns in the df
   colnames(Df) <- tolower(colnames(Df))
   colnames(Df) <- gsub("[.]",'_',colnames(Df))
 
-  # ORIGINAL CODE
-  # clmn.match <- match(colnames(df), fields)
-  # if(any(is.na(clmn.match))) {
-  #    warning(paste("Found '",names(df)[is.na(clmn.match)], "' not in fields of '", table.name,"' table. Omiting.\n", sep=''))
-  # }
 
   # ANDRE REPLACEMENT (JUST WORDS)
   clmn.match <- match(colnames(Df), fields)
@@ -3050,17 +3063,6 @@ tryCatchLog::tryCatchLog({
   })
   # END ANDRE ADDED
 
-  # ANDRE COMMENTED OUT (SEE THE RE-WRITE BELOW)
-  # ## add missing fields to df
-  # field.match <- match(fields, colnames(df))
-  # if(sum(is.na(field.match))>0 & fill.null == TRUE){
-  #   message("creating NAs/NULLs for for fields of table that are missing in your df")
-  #   nl <- as.list(rep(NA, sum(is.na(field.match))))
-  #   df.nms.orgnl <- colnames(df)
-  #   df <- cbind(df, nl)
-  #   colnames(df) <- c(df.nms.orgnl, fields[is.na(field.match)])
-  # }
-
   # ANDRE RE-WROTE (I WANT THE CORRECT CLASSES)
   ## add missing fields to df
   df.classes.new <- fields.classes.df.compatible[match(setdiff(fields, colnames(df)), Names(fields.classes.df.compatible))]
@@ -3092,55 +3094,7 @@ tryCatchLog::tryCatchLog({
     stop('Too many unmatched columns to database column list. Stopping')
   Df <- Df[ ,reordered.names, drop = F]
 
-  df.classes <- sapply(Df, class)
-
   ## BEGIN ERROR CHECKING
-
-  # BEGIN ANDRE NOTE
-  # tolower(db.colinfo$type)
-  # is the same as
-  # sapply(df, function(x) DBI::dbDataType(con, x))
-  # typical results
-  # "text"  "float8" "bool"  "integer"    "date"
-  # END ANDRE NOTE
-
-  ## check for na's which might prevent a load
-  null.OK <- nameVect(fields.info,'nullOK')
-  reqd.fields <- Names(null.OK[!null.OK])
-  na.cols <- sapply(Df, function(x) any(is.na(x)) )
-  req.miss <- na.cols[reqd.fields]
-  if(any(req.miss)) {
-    stop(paste("Did not load df because required field(s) ", paste(Names(req.miss)[req.miss],collapse=', ')," contained missing values."))
-  }
-
-  ## check for length mismatches
-  fields.precisions <- nameVect(fields.info, 'precision')
-  df.nchars <- sapply(Df, function(c) max(nchar(c)))
-  prec.reqd <- fields.precisions > 0
-  too.long <- fields.precisions[prec.reqd] < df.nchars[prec.reqd]
-  if(any(too.long)) {
-    stop(paste("Did not load df because fields", paste(Names(df.nchars)[prec.reqd][too.long],collapse=', '),' were too long.'))
-  }
-
-
-  # check for type mismatches
-  #
-  # BELOW: ANDRE MADE THIS VARIABLE VALUE IS NOT USED
-  # type.mismatches <- Names(df.classes)[fields.sclasses != df.classes & !na.cols]
-  #if(length(type.mismatches)>0)
-  #  warning(paste('The dataframe columns:',paste(type.mismatches, collapse=','),'may have type mismatches from their sclass mappings to the database table fields.'))
-
-  # ANDRE ADDED (USES NEW fields.classes.df.compatible)
-  type.mismatches <- Names(df.classes)[df.classes != fields.classes.df.compatible & !na.cols]
-  if(length(type.mismatches) > 0) {
-    message(paste('The dataframe columns: ',paste(type.mismatches, collapse=','),' may have type mismatches from their sclass mappings to the database table fields.'))
-  }
-  # END ANDRE ADDED
-
-  ## check unique constrains
-  #r <- DBI::dbGetQuery(con, statement = paste("SELECT constraint_name FROM information_schema.table_constraints WHERE table_name = '",table.name,"'", sep=''))
-  #if(nrow(df) != length(unique(apply(df[,c('day','file')],1, paste, collapse='.')))
-  #stop
 
   # 4. create partition check constraint of "partition bound" (c1)
 
@@ -3164,19 +3118,8 @@ tryCatchLog::tryCatchLog({
 
   # 8. alter partition index attach [partition] pkey;
 
-  #
-  # pg.update.seq domain specific feature removed
-  #
-
-  #
-  # add.id domain specific feature removed
-  #
 
   return(WriteTable)
-
-
-  # End R CRAN package caroline function dbWriteTable2 area
-  #
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
