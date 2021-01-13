@@ -2687,7 +2687,7 @@ tryCatchLog::tryCatchLog({
 #' @param conn A connection object.
 #' @param name A character string, or a character vector, specifying a PostgreSQL table name.
 #' @param colname	A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.
-#' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this contraint to inherited tables(FALSE).
+#' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this constraint to inherited tables(FALSE).
 #' @param const.name String. Name of the constraint.
 #' @param type The type of the key, either "primary" or "foreign"
 #' @param reference	A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").
@@ -2697,6 +2697,7 @@ tryCatchLog::tryCatchLog({
 #' @returns TRUE if the key was successfully added.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
+#' @export
 dbAddKeyEM <- function(conn, name, colname, only = FALSE, const.name = characater(),
                        type = c("primary", "foreign"), reference, colref,
                        display = TRUE, exec = TRUE) {
@@ -2718,7 +2719,7 @@ tryCatchLog::tryCatchLog({
     references <- paste0(" REFERENCES ", paste(reference,
                                                collapse = "."), " (", colref, ")")
   }
-  tmp.query <- paste0("ALTER TABLE ", if(only) " ON ONLY ", nameque, " ADD ", if(length(const.name)) paste0(" ", const.name, " "), type,
+  tmp.query <- paste0("ALTER TABLE ", if(only) " ON ONLY ", nameque, " ADD ", if(length(const.name)) paste0(" CONSTRAINT ", const.name, " "), type,
                       " KEY (", colname, ")", references, ";")
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -2726,6 +2727,56 @@ tryCatchLog::tryCatchLog({
   }
   if (exec) {
     dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
+    return(TRUE)
+  }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Create an index
+#'
+#' Defines a new index on a PostgreSQL table.
+#'
+#' @param conn A connection object.
+#' @param name A character string specifying a PostgreSQL table name.
+#' @param colname A character string, or a character vector specifying the name of the column to which the key will be associated; alternatively, a character vector specifying the name of the columns to build the index.
+#' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this index to inherited indexes(FALSE).
+#' @param idxname A character string specifying the name of the index to be created. By default, this uses the name of the table (without the schema) and the name of the columns as follows: <table_name>_<column_names>_idx.
+#' @param unique Logical. Causes the system to check for duplicate values in the table when the index is created (if data already exist) and each time data is added. Attempts to insert or update data which would result in duplicate entries will generate an error.
+#' @param method The name of the method to be used for the index. Choices are "btree", "hash", "rtree", and "gist". The default method is "btree", although "gist" should be the index of choice for PostGIS spatial types (geometry, geography, raster).
+#' @param display Logical. Whether to display the query (defaults to TRUE).
+#' @returns TRUE if the index was successfully created.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbQuoteIdentifier
+#' @export
+dbIndexEM <- function(conn, name, colname, only = FALSE, idxname, unique = FALSE,
+                      method = c("btree","hash", "rtree", "gist"),
+                      display = TRUE, exec = TRUE) {
+tryCatchLog::tryCatchLog({
+
+  if (missing(idxname)) {
+    idxname <- DBI::dbQuoteIdentifier(conn, paste(name[length(name)],
+                                                  paste(colname, collapse = "_"), "idx", sep = "_"))
+  }
+  else {
+    idxname <- DBI::dbQuoteIdentifier(conn, idxname)
+  }
+  name <- dbObjectNameFix(conn, o.nm = name)
+  nameque <- paste(name, collapse = ".")
+  colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
+  unique <- ifelse(unique, "UNIQUE ", "")
+  method <- match.arg(method)
+  usemeth <- ifelse(method == "btree", "", paste(" USING",
+                                                 toupper(method)))
+  tmp.query <- paste0("CREATE ", unique, "INDEX ", if(only) " ON ONLY ", idxname,
+                      " ON ", nameque, usemeth, " (", colname, ");")
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+    message("--")
+  }
+  if (exec) {
+    dbExecuteEM(conn, Statement = tmp.query)
     return(TRUE)
   }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
