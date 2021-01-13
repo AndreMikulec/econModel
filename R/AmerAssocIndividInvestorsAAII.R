@@ -2679,6 +2679,57 @@ tryCatchLog::tryCatchLog({
 
 
 
+
+#' Add Key
+#'
+#' Add a primary or foreign key to a table column.
+#'
+#' @param conn A connection object.
+#' @param name A character string, or a character vector, specifying a PostgreSQL table name.
+#' @param colname	A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.
+#' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this contraint to inherited tables(FALSE).
+#' @param type The type of the key, either "primary" or "foreign"
+#' @param reference	A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").
+#' @param colref A character string specifying the name of the primary key in the foreign table to which the foreign key will be associated; alternatively, a character vector specifying the name of the columns for keys spanning more than one column (ignored if type == "primary").
+#' @param display	Logical. Whether to display the query (defaults to TRUE).
+#' @param exec	Logical. Whether to execute the query (defaults to TRUE).
+#' @returns TRUE if the key was successfully added.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbQuoteIdentifier
+dbAddKeyEM <- function(conn, name, colname, only = FALSE, type = c("primary", "foreign"),
+                       reference, colref, display = TRUE, exec = TRUE) {
+tryCatchLog::tryCatchLog({
+
+  name <- dbObjectNameFix(conn, o.nm = name)
+  nameque <- paste(name, collapse = ".")
+
+  colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
+  type <- toupper(match.arg(type))
+  if (type == "PRIMARY") {
+    colref <- ""
+    references <- ""
+  }
+  else if (type == "FOREIGN") {
+    colref <- paste(DBI::dbQuoteIdentifier(conn, colref),
+                    collapse = ", ")
+    reference <- dbObjectNameFix(conn, o.nm = reference)
+    references <- paste0(" REFERENCES ", paste(reference,
+                                               collapse = "."), " (", colref, ")")
+  }
+  tmp.query <- paste0("ALTER TABLE ", if(only) " ONLY ", nameque, " ADD ", type,
+                      " KEY (", colname, ")", references, ";")
+  if (display) {
+    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+    message(tmp.query)
+  }
+  if (exec) {
+    dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
+    return(TRUE)
+  }
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
 #' Insert or Append to a New or Current Table or Table partition.
 #'
 #' @description
@@ -2744,7 +2795,7 @@ tryCatchLog::tryCatchLog({
 #' # Creates the table (with zero rows).
 #' # Appends data (with the Df having the same columns that the server).
 #' mtcars2s <- mtcars2[1:5,]
-#' dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s)
+#' dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gmv = c("gear", "model", "vs")))
 #'
 #' # Appends data (with the Df having less columns that the server database).
 #' # Those server columns, that are not found in the Df, are added to the Df.
@@ -2822,7 +2873,7 @@ tryCatchLog::tryCatchLog({
 
   # 2. create partitioned index on partitioned table ONLY primary key (index) c1,c3,c4,c2) pkey
   if(!PreCallTableDfNameExisted){
-
+    PrimaryKey
   }
 
   # table already exists
