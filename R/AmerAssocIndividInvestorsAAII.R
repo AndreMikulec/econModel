@@ -2440,7 +2440,16 @@ dbCreatePartBoundTableEM <- function(conn, name, fields, temporary = FALSE, part
 tryCatchLog::tryCatchLog({
 
   table <- dbObjectNameFix(conn, o.nm = name)
-  tableque <- paste(table, collapse = ".")
+  if(temporary) {
+    if(length(table) == 2) {
+      tableque <- paste0(last(table))
+    } else {
+      tableque <- paste0(table)
+    }
+  } else {
+    tableque <- paste(table, collapse = ".")
+  }
+
 
   if(is.data.frame(fields)) {
     fields <- vapply(fields, function(x) DBI::dbDataType(conn, x), character(1))
@@ -2558,9 +2567,10 @@ tryCatchLog::tryCatchLog({
 #' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
 #' @export
 dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
-                           PartKeyDef, PartBound, PrimaryKey, Indexes,
+                           Temporary = FALSE,
+                           PartBound, PartKeyDef,
+                           PrimaryKey, Indexes,
                            FillNull = TRUE,
-                           RowNames = FALSE,
                            lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
                            display = TRUE, exec = TRUE,
                            ...) {
@@ -2594,12 +2604,12 @@ tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
 
-  if(missing(PartKeyDef)) {
-    PartKeyDef <- character()
-  }
-
   if(missing(PartBound)) {
     PartBound <- character()
+  }
+
+  if(missing(PartKeyDef)) {
+    PartKeyDef <- character()
   }
 
   if(missing(PrimaryKey)) {
@@ -2622,40 +2632,15 @@ tryCatchLog::tryCatchLog({
 
   # table does not exist
   # 1. create partitioned table ("p" - partitioned table) (c1)
-
+  #
   # Because caroline dbWriteTable2 requires the table to pre-exist.
   if(!DBI::dbExistsTable(conn, name = DfName)) {
     PreCallTableDfNameExisted <- FALSE
     # just need the structure (not the data)
-    if(length(PartKeyDef)) {
-      # p -paritioned table
-
-    } else {
-      # r - regular table
-      DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = RowNames)
-    }
-
+    dbCreatePartBoundTableEM(conn, name = DfName, fields = Df , temporary = Temporary,  part.bound = PartBound, character(), part.key.def = PartKeyDef, display = display, exec = exec)
   } else {
     PreCallTableDfNameExisted <- TRUE
   }
-  # 2. create partitioned index on paritioned table ONLY primary key (index) c1,c3,c4,c2) pkey
-
-
-  # new table: build the CREATE TABLE string
-  if((!missing(PartKeyDef)) && !PreCallTableDfNameExisted) {
-    # NOT IMPLEMENTED YET
-  }
-  # new table: build the CREATE TABLE string
-  if((!missing(PartBound)) && !PreCallTableDfNameExisted) {
-    # NOT IMPLEMENTED YET
-  }
-
-  if(!PreCallTableDfNameExisted) {
-    # NOT IMPLMENTED - CREATE TABLE
-  }
-
-  # table already exists
-  # 3. create partition ("r" - regular table)
 
   DetectedPartKeyDef <- character()
   if(PreCallTableDfNameExisted) {
@@ -2666,6 +2651,18 @@ tryCatchLog::tryCatchLog({
   if(PreCallTableDfNameExisted) {
     # DetectedPartBound <- <detected>
   }
+
+
+
+  # 2. create partitioned index on partitioned table ONLY primary key (index) c1,c3,c4,c2) pkey
+  if(!PreCallTableDfNameExisted){
+
+  }
+
+  # table already exists
+  # 3. create partition ("r" - regular table)
+
+
 
   # Begin R CRAN package caroline function dbWriteTable2 area
   #
@@ -2834,6 +2831,10 @@ tryCatchLog::tryCatchLog({
 
   ## load partitioned table (data (appending) only)
   message(paste0("Loading ", table.name, " table to database."))
+  # eventually
+  # if(NROW(Df)) {
+  #   DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = FALSE)
+  # }
   WriteTable <- DBI::dbWriteTable(con, name = table.name, value = df[FALSE, , drop = F], row.names = row.names, append = TRUE, ...)
 
   # 7. alter partition table attach [partition] for values in (c1);

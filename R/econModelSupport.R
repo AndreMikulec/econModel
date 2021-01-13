@@ -290,3 +290,38 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
+#' Find All Substrings
+#'
+#' Given a string or vector of strings, find and extract all substrings that match the pattern.
+#'
+#' @param pattrn String. Regular Expression Pattern.
+#' @param x vector of Strings.
+#' @return vectors of found substrings
+#' @references
+#' \cite{Regular expression to extract text between square brackets
+#' \url{https://stackoverflow.com/questions/2403122/regular-expression-to-extract-text-between-square-brackets}
+#' }
+#' @examples
+#' \dontrun{
+#' # not including the parentheses
+#' regExtract("(?<=\\()(.*?)(?=\\))", "LIST (c1)")
+#' [1] "c1"
+#'
+#' regExtract("(?<=\\()(.*?)(?=\\))", "LIST (((c1)::integer))")
+#' [1] "((c1"
+#'
+#' RegExtract("(?<=\\()(\\w+)(?=\\))", "LIST (((c1)::integer))")
+#' [1] "c1"
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+regExtract <- function(pattrn, x) {
+tryCatchLog::tryCatchLog({
+  Coordinates <- gregexpr(pattrn, x, perl = TRUE)
+  lapply(Coordinates, function(Coord) {
+    mapply(function(Co,Ma) {
+      substr(x, Co, Co + Ma - 1L)
+    }, Coord,  attr(Coord, "match.length"), SIMPLIFY = FALSE)
+  }) -> Result
+  return(unlist(Result))
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}

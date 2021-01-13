@@ -8,12 +8,12 @@ dbWriteTableEM(
   conn,
   DfName = substitute(Df),
   Df,
-  PartKeyDef,
+  Temporary = FALSE,
   PartBound,
+  PartKeyDef,
   PrimaryKey,
   Indexes,
   FillNull = TRUE,
-  RowNames = FALSE,
   lowerDfName = TRUE,
   lowerColNames = TRUE,
   replaceDotUsingUnderscore = TRUE,
@@ -29,17 +29,15 @@ dbWriteTableEM(
 
 \item{Df, }{data.frame. Required. To be loaded to the database.}
 
-\item{PartKeyDef}{String.  If the table is (or to be is) a Partitioned table is the parition key definition.  NOT YET IMPLEMENTED}
-
 \item{PartBound}{String. If the table is (or to be) a particpant as a Partition, then this is a partition bound.  NOT YET IMPLEMENTED}
+
+\item{PartKeyDef}{String.  If the table is (or to be is) a Partitioned table is the parition key definition.  NOT YET IMPLEMENTED}
 
 \item{PrimaryKey}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.}
 
 \item{Indexes}{List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.}
 
 \item{FillNull}{Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?}
-
-\item{RowNames}{Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).}
 
 \item{lowerDfName}{Logical. Default is TRUE. Make the target database table name to be in lowercase.}
 
@@ -52,6 +50,8 @@ dbWriteTableEM(
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).'}
 
 \item{...}{Dots. Other parameters passed to R CRAN package DBI dbWriteTable.}
+
+\item{RowNames}{Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).}
 }
 \description{
 \preformatted{
