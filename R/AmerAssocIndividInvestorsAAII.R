@@ -2716,7 +2716,7 @@ tryCatchLog::tryCatchLog({
     references <- paste0(" REFERENCES ", paste(reference,
                                                collapse = "."), " (", colref, ")")
   }
-  tmp.query <- paste0("ALTER TABLE ", if(only) " ONLY ", nameque, " ADD ", type,
+  tmp.query <- paste0("ALTER TABLE ", if(only) " ON ONLY ", nameque, " ADD ", type,
                       " KEY (", colname, ")", references, ";")
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
