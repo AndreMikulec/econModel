@@ -22,9 +22,10 @@ This is R cran package caroline function "nv" with modifications
 JAN 2021
 https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R/convert.R
 
-modifications
+Modifications:
 
 * function "names" is replaced with the safer function "Names"
-  Note, keeping function "Names" and not replacing using "colnames" keeps generalization ??
+  Note, keeping function "Names" and not replacing using "colnames"
+  keeps generalization ??
 }
 }

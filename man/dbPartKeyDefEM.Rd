@@ -20,4 +20,6 @@ If not a "partition table", an empty character vector is returned.
 }
 \details{
 This is only designed to work on List partitioned tables with the non-expression key.
+Will work: "PARTITION BY LIST (c1)" is stored as "LIST (c1)".
+Will not work: "PARTITION BY LIST (CAST(c1) AS INTEGER)" is stored as "LIST (((c1)::integer))".
 }

@@ -2371,15 +2371,17 @@ WHERE", Restriction, ";")
 #' JAN 2021
 #' https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R/convert.R
 #'
-#' modifications
+#' Modifications:
 #'
 #' * function "names" is replaced with the safer function "Names"
-#'   Note, keeping function "Names" and not replacing using "colnames" keeps generalization ??
+#'   Note, keeping function "Names" and not replacing using "colnames"
+#'   keeps generalization ??
 #' }
 #' @param x	The source dataframe, table, vector, or factor
 #' @param name	The column name you would like to pull out as a named vector. OR the names of the vector (if x is a vector)
 #' @returns a named vector or factor
 #' @importFrom tryCatchLog tryCatchLog
+#' @export
 nameVect <- function(x, name){
 tryCatchLog::tryCatchLog({
 
@@ -2484,6 +2486,8 @@ tryCatchLog::tryCatchLog({
 #' If not a "partition table", an empty character vector is returned.
 #'
 #' This is only designed to work on List partitioned tables with the non-expression key.
+#' Will work: "PARTITION BY LIST (c1)" is stored as "LIST (c1)".
+#' Will not work: "PARTITION BY LIST (CAST(c1) AS INTEGER)" is stored as "LIST (((c1)::integer))".
 #'
 #' @param conn PostgreSQLConnection.
 #' @param DfName String. Name of the PostgreSQL object.
@@ -2499,10 +2503,10 @@ tryCatchLog::tryCatchLog({
   }
   SubResults <- dbListInheritEM(conn, name = DfName)$PARENT_PART_KEY_DEF
   if(is.na(SubResults)) {
-    # not a "p" - partitioned table (is "r" - regular table)
+    # not a "p" - partitioned. (is "r" - regular)
     DetectedPartKeyDef <- character()
   } else {
-    # "p" - partitioned table
+    # "p" - partitioned
     # SIMPLE COLUMN NAMES ONLY (a)
     # NOT TOO CLEVER - WILL NOT CORRECTLY EXTRACT EXPRESSIONS
     DetectedPartKeyDef <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
@@ -2545,6 +2549,132 @@ tryCatchLog::tryCatchLog({
     DetectedPartBound <- PartBound
   }
   return(DetectedPartBound)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Server Side Table Column Stored Type C Classes
+#'
+#' Get the internal table of database server columns.
+#'
+#' @details
+#' \preformatted{
+#'
+#' Typical (SQLite) columns:
+#' NAME(chr)  TYPE(chr)
+#'
+#' Typical SQLite column TYPE values:
+#' TYPE: character double integer
+#'
+#' Typical PostgreSQL  columns:
+#' NAME(chr), SCLASS(chr), TYPE(chr),
+#' LEN(int), PRECISION(int), SCALE(int) NULLOK(logi)
+#'
+#' Typical PostgreSQL column values:
+#' SCLASS: character double integer logical Date
+#' TYPE: TEXT FLOAT8 INTEGER BOOL DATE
+#' }
+#' @param conn A connection object.
+#' @param name Table name string, length 1-2.
+#' @param temporary Logical.  This is a temporary table or not.
+#' @returns data.frame. Variables are "name" and "type" (optionally some others)
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE) {
+tryCatchLog::tryCatchLog({
+
+  table <- dbObjectNameFix(conn, o.nm = name)
+  if(temporary) {
+    if(length(table) == 2) {
+      tableque <- paste0(last(table))
+    } else {
+      tableque <- paste0(table)
+    }
+  } else {
+    tableque <- paste(table, collapse = ".")
+  }
+
+  r <- DBI::dbSendQuery(conn, paste0("SELECT * FROM ", tableque , " WHERE 1 = 0;"))
+  Server.fields.C.classes <- DBI::dbColumnInfo(r)
+  DBI::dbClearResult(r)
+  colnames(Server.fields.C.classes) <- toupper(colnames(Server.fields.C.classes))
+  return(Server.fields.C.classes)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Given an R data.frame, Get The Equivalent Database Server Column Types
+#
+#' If a data.frame would be promoted to be on a database server, then these would be the equivalent Server datatypes.
+#'
+#' @details
+#' \preformatted{
+#'
+#' typical SQLite results of TYPE values:
+#' "TEXT"  "REAL" "INTEGER"
+#'
+#' typical PostgreSQL results of TYPE values:
+#' "text"  "float8" "bool"  "integer" "date"
+#' }
+#' @param conn A connection object.
+#' @param Df data.frame
+#' @returns data.frame. Variables are "name" and "type"
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dfServerFieldsClassesEM <- function(conn, Df) {
+tryCatchLog::tryCatchLog({
+
+  # as would have been stored on the server
+  Server.fields.classes <- data.frame(sapply(mtcars2s, function(x) DBI::dbDataType(conn, x)))
+
+  Server.fields.classes <- cAppend(Server.fields.classes, list(name = row.names(Server.fields.classes)), after = 0L)
+  colnames(Server.fields.classes) <- c("NAME", "TYPE")
+  return(Server.fields.classes)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Given a Server Table, Of Its Fields, Get the Equivalent R Object classes
+#
+#' If a server table, of its fields,  would be demoted to be in R, then these would be the equivalent R Object classes.
+#'
+#' R Classes depend upon what the server supports.
+#' SQLite R equivalents typically are "character", "integer", and "real".
+#' PostgreSQL R equivalents typically are "character", integer", real", "Date", (and may be others: POSIXct?).
+#'
+#' @param conn A connection object.
+#' @param name Table name string, length 1-2. Requires at least one row.
+#' @param temporary Logical.  This is a temporary table or not.
+#' @returns data.frame. Variables are "name" and "type"
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dbRClmnsClassesEM <- function(conn, name, temporary = FALSE) {
+tryCatchLog::tryCatchLog({
+
+  table <- dbObjectNameFix(conn, o.nm = name)
+  if(temporary) {
+    if(length(table) == 2) {
+      tableque <- paste0(last(table))
+    } else {
+      tableque <- paste0(table)
+    }
+  } else {
+    tableque <- paste(table, collapse = ".")
+  }
+
+  r <- DBI::dbSendQuery(conn, paste0("SELECT * FROM ", tableque , " LIMIT 1;"))
+  R.zero.rows <- DBI::dbFetch(r, n = 0)
+  DBI::dbClearResult(r)
+  R.clmns.classes <- data.frame(sapply(R.zero.rows, class))
+
+  R.clmns.classes <- cAppend(R.clmns.classes, list(name = row.names(R.clmns.classes)), after = 0L)
+  colnames(R.clmns.classes) <- c("NAME", "TYPE")
+  return(R.clmns.classes)
+
+  return(data.frame(R.zero.rows))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2645,32 +2775,6 @@ dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
                            ...) {
 tryCatchLog::tryCatchLog({
 
-  # R CRAN package caroline function dbWriteTable2
-  # can not see DBI/RPostgreSQL S4 methods, so I am importing
-  # the package "DBI" methods that the package "caroline" uses.
-  # #' @importFrom DBI db* ETC
-
-  # Influenced by R CRAN packageS
-  # "RPostgreSQL", "caroline", and (especially) "rpostgis".
-  #   (excellent: but pg* functions require the "PostGIS extension")
-
-  # Influenced by the github/gitlab R packages
-  # https://github.com/jangorecki/pg   (https://gitlab.com/jangorecki/pg)
-  # https://github.com/jangorecki/logR (https://gitlab.com/jangorecki/logR)
-  #
-
-  # Note: Please also read
-  #
-  # dbWriteTable assumes creation (but caroline:dbWriteTable2 assumes "append").
-  # Behavior may have changed over time from (original default) "append" to (now) "create"
-  #
-  # overwrite = TRUE # destroy and re-create
-  # append = TRUE (do not "destroy and re-create") # append data
-  #
-  # DEC 2020
-  # RPostgreSQL/html/dbReadTable-methods.html
-  # DBI/html/dbWriteTable.html
-
   Dots <- list(...)
 
   if(missing(PartBound)) {
@@ -2712,7 +2816,7 @@ tryCatchLog::tryCatchLog({
 
   # paritioned table (if any)
   DetectedPartKeyDef <- dbPartKeyDefEM(conn, DfName = DfName)
-  # paritition (if any)
+  # partition (if any)
   DetectedPartBound  <- dbPartBoundEM(conn, DfName = DfName)
 
 
@@ -2726,7 +2830,7 @@ tryCatchLog::tryCatchLog({
 
 
 
-  # Begin R CRAN package caroline function dbWriteTable2 area
+  # From R CRAN package caroline function dbWriteTable2 . . .
   #
 
   # expect the table to already be there
