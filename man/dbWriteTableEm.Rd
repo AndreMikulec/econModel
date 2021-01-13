@@ -9,10 +9,11 @@ dbWriteTableEM(
   DfName = substitute(Df),
   Df,
   Temporary = FALSE,
-  PartBound,
-  PartKeyDef,
-  PrimaryKey,
-  Indexes,
+  PartitionOf = character(),
+  PartBoundValue = character(),
+  PartKeyCol = character(),
+  PrimaryKey = character(),
+  Indexes = list(),
   FillNull = TRUE,
   lowerDfName = TRUE,
   lowerColNames = TRUE,
@@ -29,13 +30,15 @@ dbWriteTableEM(
 
 \item{Df, }{data.frame. Required. To be loaded to the database.}
 
-\item{PartBound}{String. If the table is (or to be) a particpant as a Partition, then this is a partition bound.  NOT YET IMPLEMENTED}
+\item{PartitionOf}{String.  If the table is (or to be) a participant as a Partition, then this table is a partion of the this partitioned table "PartitionOf".}
 
-\item{PartKeyDef}{String.  If the table is (or to be is) a Partitioned table is the parition key definition.  NOT YET IMPLEMENTED}
+\item{PartBoundValue}{String. If the table is (or to be) a participant as a Partition, then this is a partition bound as a List value.}
 
-\item{PrimaryKey}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.}
+\item{PartKeyCol}{String.  If the table is (or to be is) a Partitioned table is of that List partition and the partition key column.}
 
-\item{Indexes}{List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.}
+\item{PrimaryKey}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. The name of the primary key is taken from the name of the vector.}
+
+\item{Indexes}{List of "Vector of Strings".  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. The name of the index is taken from the name of the vector.}
 
 \item{FillNull}{Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?}
 
@@ -102,7 +105,7 @@ rownames(mtcars2) <- NULL
 # Creates the table (with zero rows).
 # Appends data (with the Df having the same columns that the server).
 mtcars2s <- mtcars2[1:5,]
-dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gmv = c("gear", "model", "vs")))
+dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
 # Appends data (with the Df having less columns that the server database).
 # Those server columns, that are not found in the Df, are added to the Df.

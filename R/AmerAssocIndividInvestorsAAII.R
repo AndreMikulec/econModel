@@ -2425,7 +2425,8 @@ tryCatchLog::tryCatchLog({
 #'   [DBI::dbDataType()].
 #'
 #' @param temporary If `TRUE`, will generate a temporary table statement.
-#' @param part.bound String. `PARTITION OF parent_table [ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.
+#' @param part.by String. `PARTITION OF parent_table`
+#' @param part.bound String. `[ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.
 #' @param part.key.def String. `[ PARTITION BY { RANGE | LIST | HASH } ( { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [, ... ] ) ]`.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
@@ -2438,7 +2439,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbDataType dbQuoteIdentifier
 #' @export
-dbCreatePartBoundTableEM <- function(conn, name, fields, temporary = FALSE, part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE, ...) {
+dbCreatePartBoundTableEM <- function(conn, name, fields, temporary = FALSE, part.by = character(), part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({
 
   table <- dbObjectNameFix(conn, o.nm = name)
@@ -2460,17 +2461,21 @@ tryCatchLog::tryCatchLog({
   field_types <- unname(fields)
   fields <- paste0(field_names, " ", field_types)
 
+  if(length(part.by)) {
+    part.by <- paste0(" PARTITION OF ", part.by, " ")
+  }
+
   if(length(part.bound)) {
-    part.bound <- paste0(" PARTITION OF ", part.key.def)
+    part.bound <- paste0(" ", part.by, " ", part.bound, " ")
   }
 
   if(length(part.key.def)) {
-    part.key.def <- paste0(" PARTITION BY ", part.key.def)
+    part.key.def <- paste0(" PARTITION BY ", part.key.def, " ")
   }
 
   query <- paste0(
     "CREATE ", if (temporary) "TEMPORARY ", "TABLE ", tableque, " (\n",
-    "  ", paste(fields, collapse = ",\n  "), " \n)", part.bound, part.key.def, "\n"
+    "  ", paste(fields, collapse = ",\n  "), " \n)", part.by, part.bound, part.key.def, "\n"
   )
 
   dbExecuteEM(conn, Statement = query, display = display, exec = exec, ...)
@@ -2680,16 +2685,17 @@ tryCatchLog::tryCatchLog({
 
 
 
-#' Add Key
+#' Add Key or Check Constraint
 #'
-#' Add a primary or foreign key to a table column.
+#' Add a primary or foreign key or check constraint to a table column.
 #'
 #' @param conn A connection object.
 #' @param name A character string, or a character vector, specifying a PostgreSQL table name.
 #' @param colname	A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.
 #' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this constraint to inherited tables(FALSE).
 #' @param const.name String. Name of the constraint.
-#' @param type The type of the key, either "primary" or "foreign"
+#' @param type The type of the key, either "primary" or "foreign" or "check" constraint
+#' @param check.by If type = "check", then the value of the "check".  Ignored otherwise.
 #' @param reference	A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").
 #' @param colref A character string specifying the name of the primary key in the foreign table to which the foreign key will be associated; alternatively, a character vector specifying the name of the columns for keys spanning more than one column (ignored if type == "primary").
 #' @param display	Logical. Whether to display the query (defaults to TRUE).
@@ -2699,7 +2705,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
 dbAddKeyEM <- function(conn, name, colname, only = FALSE, const.name = characater(),
-                       type = c("primary", "foreign"), reference, colref,
+                       type = c("primary", "foreign" , "check"), reference, colref,
                        display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
@@ -2720,7 +2726,8 @@ tryCatchLog::tryCatchLog({
                                                collapse = "."), " (", colref, ")")
   }
   tmp.query <- paste0("ALTER TABLE ", if(only) " ON ONLY ", nameque, " ADD ", if(length(const.name)) paste0(" CONSTRAINT ", const.name, " "), type,
-                      " KEY (", colname, ")", references, ";")
+                      if(type != "check") " KEY ",
+                      " (", colname, if(type == "check") paste0(" = ", check.by) , ")", references, ";")
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
     message(tmp.query)
@@ -2810,7 +2817,7 @@ tryCatchLog::tryCatchLog({
   action <- toupper(match.arg(action))
   args <- ifelse(action == "ADD", coltype, ifelse(cascade,
                                                   "CASCADE", ""))
-  tmp.query <- paste0("ALTER TABLE ", nameque, " ", action,
+  tmp.query <- paste0("ALTER TABLE ", nameque, " ", toupper(action),
                       " COLUMN ", colname, " ", args, ";")
   if (display) {
     message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -2865,10 +2872,11 @@ tryCatchLog::tryCatchLog({
 #' @param conn A DBIConnection object, as returned by dbConnect().
 #' @param DfName  String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.
 #' @param Df, data.frame. Required. To be loaded to the database.
-#' @param PartKeyDef String.  If the table is (or to be is) a Partitioned table is the parition key definition.  NOT YET IMPLEMENTED
-#' @param PartBound String. If the table is (or to be) a particpant as a Partition, then this is a partition bound.  NOT YET IMPLEMENTED
-#' @param PrimaryKey Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. NOT YET IMPLEMENTED.
-#' @param Indexes List of "Vector of Strings", or just one Vector of Strings.  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. NOT YET IMPLEMENTED.
+#' @param PartitionOf String.  If the table is (or to be) a participant as a Partition, then this table is a partion of the this partitioned table "PartitionOf".
+#' @param PartBoundValue String. If the table is (or to be) a participant as a Partition, then this is a partition bound as a List value.
+#' @param PartKeyCol String.  If the table is (or to be is) a Partitioned table is of that List partition and the partition key column.
+#' @param PrimaryKey Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. The name of the primary key is taken from the name of the vector.
+#' @param Indexes List of "Vector of Strings".  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. The name of the index is taken from the name of the vector.
 #' @param FillNull Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?
 #' @param RowNames Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).
 #' @param lowerDfName Logical. Default is TRUE. Make the target database table name to be in lowercase.
@@ -2890,7 +2898,7 @@ tryCatchLog::tryCatchLog({
 #' # Creates the table (with zero rows).
 #' # Appends data (with the Df having the same columns that the server).
 #' mtcars2s <- mtcars2[1:5,]
-#' dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gmv = c("gear", "model", "vs")))
+#' dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 #'
 #' # Appends data (with the Df having less columns that the server database).
 #' # Those server columns, that are not found in the Df, are added to the Df.
@@ -2913,8 +2921,8 @@ tryCatchLog::tryCatchLog({
 #' @export
 dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
                            Temporary = FALSE,
-                           PartBound, PartKeyDef,
-                           PrimaryKey, Indexes,
+                           PartitionOf = character(), PartBoundValue = character(), PartKeyCol = character(),
+                           PrimaryKey = character(), Indexes = list(),
                            FillNull = TRUE,
                            lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
                            display = TRUE, exec = TRUE,
@@ -2922,22 +2930,6 @@ dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
 tryCatchLog::tryCatchLog({
 
   Dots <- list(...)
-
-  if(missing(PartBound)) {
-    PartBound <- character()
-  }
-
-  if(missing(PartKeyDef)) {
-    PartKeyDef <- character()
-  }
-
-  if(missing(PrimaryKey)) {
-    PrimaryKey <- character()
-  }
-
-  if(missing(Indexes)) {
-    Indexes <- character()
-  }
 
   if(lowerDfName) {
     DfName       <- tolower(DfName)
@@ -2955,7 +2947,26 @@ tryCatchLog::tryCatchLog({
   if(!DBI::dbExistsTable(conn, name = DfName)) {
     PreCallTableDfNameExisted <- FALSE
     # just need the structure (not the data)
-    dbCreatePartBoundTableEM(conn, name = DfName, fields = Df , temporary = Temporary,  part.bound = PartBound, character(), part.key.def = PartKeyDef, display = display, exec = exec)
+    if(length(PartitionOf)) {
+      SplittedDf <- split(Df, f = Df[[PartitionOf]])
+      if(length(SplittedDf)) {
+        # empty partioned table
+        dbCreatePartBoundTableEM(conn, name = DfName, fields = Df , temporary = Temporary,
+                                 part.by = if(length(PartitionOf)) { paste0(" PARTITION OF ", PartitionOf, " ") } else { character() },
+                                 display = display, exec = exec)
+        # ONLY constraint primary key
+
+        # ONLY constraint index
+      }
+
+    }
+
+
+    dbCreatePartBoundTableEM(conn, name = DfName, fields = Df , temporary = Temporary,
+      part.by =    if(length(PartitionOf)) { paste0(" PARTITION OF ", PartitionOf, " ") } else { character() },
+      part.bound = if(length(PartBoundValue)) { paste0(" FOR VALUES IN (", PartBoundValue, ") ") } else { character() },
+      part.key.def = if(length(PartKeyCol)) { paste0(" LIST (", PartKeyCol, ") ") } else { character() },
+      display = display, exec = exec)
   } else {
     PreCallTableDfNameExisted <- TRUE
   }

@@ -9,6 +9,7 @@ dbCreatePartBoundTableEM(
   name,
   fields,
   temporary = FALSE,
+  part.by = character(),
   part.bound = character(),
   part.key.def = character(),
   display = TRUE,
@@ -30,7 +31,9 @@ dbCreatePartBoundTableEM(
 
 \item{temporary}{If `TRUE`, will generate a temporary table statement.}
 
-\item{part.bound}{String. `PARTITION OF parent_table [ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.}
+\item{part.by}{String. `PARTITION OF parent_table`}
+
+\item{part.bound}{String. `[ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.}
 
 \item{part.key.def}{String. `[ PARTITION BY { RANGE | LIST | HASH } ( { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [, ... ] ) ]`.}
 

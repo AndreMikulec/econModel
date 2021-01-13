@@ -2,7 +2,7 @@
 % Please edit documentation in R/AmerAssocIndividInvestorsAAII.R
 \name{dbAddKeyEM}
 \alias{dbAddKeyEM}
-\title{Add Key}
+\title{Add Key or Check Constraint}
 \usage{
 dbAddKeyEM(
   conn,
@@ -10,7 +10,7 @@ dbAddKeyEM(
   colname,
   only = FALSE,
   const.name = characater(),
-  type = c("primary", "foreign"),
+  type = c("primary", "foreign", "check"),
   reference,
   colref,
   display = TRUE,
@@ -28,7 +28,7 @@ dbAddKeyEM(
 
 \item{const.name}{String. Name of the constraint.}
 
-\item{type}{The type of the key, either "primary" or "foreign"}
+\item{type}{The type of the key, either "primary" or "foreign" or "check" constraint}
 
 \item{reference}{A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").}
 
@@ -37,10 +37,12 @@ dbAddKeyEM(
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to TRUE).}
+
+\item{check.by}{If type = "check", then the value of the "check".  Ignored otherwise.}
 }
 \value{
 TRUE if the key was successfully added.
 }
 \description{
-Add a primary or foreign key to a table column.
+Add a primary or foreign key or check constraint to a table column.
 }
