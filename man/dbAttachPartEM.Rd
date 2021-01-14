@@ -9,6 +9,7 @@ dbAttachPartEM(
   dbobject = "table",
   name,
   partition,
+  if.not.exists = FALSE,
   part.bound.value,
   action = c("attach", "drop"),
   display = TRUE,
@@ -23,6 +24,8 @@ dbAttachPartEM(
 \item{name}{A character string specifying a PostgreSQL already partitioned table or index name. Note, a table can not be converted to a partitioned table and vice-versa.  ALTER has no option.}
 
 \item{partition}{A character string specifying the name of the partition.}
+
+\item{if.not.exists}{Logical. Default is FALSE. If TRUE, use pg_ tables to check that in the (potential target partition) object exists and is not attached, before the partitioned table or partitioned index tries to attach to it.}
 
 \item{part.bound.value}{Of the attaching the partition, the partitions partition bound single value.}
 

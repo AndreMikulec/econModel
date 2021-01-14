@@ -2855,7 +2855,8 @@ tryCatchLog::tryCatchLog({
 #' @param idxname A character string specifying the name of the index to be created. By default, this uses the name of the table (without the schema) and the name of the columns as follows: <table_name>_<column_names>_idx.
 #' @param unique Logical. Causes the system to check for duplicate values in the table when the index is created (if data already exist) and each time data is added. Attempts to insert or update data which would result in duplicate entries will generate an error.
 #' @param method The name of the method to be used for the index. Choices are "btree", "hash", "rtree", and "gist". The default method is "btree", although "gist" should be the index of choice for PostGIS spatial types (geometry, geography, raster).
-#' @param display Logical. Whether to display the query (defaults to TRUE).
+#' @param display	Logical. Whether to display the query (defaults to TRUE).
+#' @param exec	Logical. Whether to execute the query (defaults to TRUE).
 #' @returns TRUE if the index was successfully created.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
@@ -3270,6 +3271,10 @@ tryCatchLog::tryCatchLog({
 #' @param conn A DBIConnection PostgreSQL object, as returned by DBI::dbConnect().
 #' @param name a character string specifying a table name.
 #' @param value a data.frame (or coercible to data.frame).
+#' @param temporary Logical. Default is FALSE, If TRUE, then look for the "conn" object "name" in the temporary namespace.
+#' @param display	Logical. Whether to display the query (defaults to TRUE).
+#' @param exec	Logical. Whether to execute the query (defaults to TRUE).
+#' @return data.frame with more columns and/or re-ordered columns. The server "name" may get more columns.
 #' @examples
 #' \dontrun{
 #'
@@ -3305,13 +3310,15 @@ tryCatchLog::tryCatchLog({
 #' dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lSv)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DBI dbExistsTable dbWriteTable
-#' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
+#' @importFrom zoo as.Date
 #' @export
-dbdfMatchColsEM <- function(conn, name = substitute(value), value) {
+dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = FALSE,
+                            display = TRUE, exec = TRUE) {
   tryCatchLog::tryCatchLog({
 
   Df <- value
+
+  # Left over from the R CRAN package Caroline functon dbWriteTable2
   fields <- DBI::dbListFields(conn, name = name)
   fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
 
@@ -3319,77 +3326,45 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value) {
   colnames(Df) <- tolower(colnames(Df))
   colnames(Df) <- gsub("[.]",'_',colnames(Df))
 
+  # add columns to the data.frame (Df),
+  # that exist on the server table (name),
+  # but do not exist in the data.frame (Df)
 
-  # ANDRE REPLACEMENT (JUST WORDS)
-  clmn.match <- match(colnames(Df), fields)
-  if(any(is.na(clmn.match))) {
-    message(paste0("Found '", colnames(Df)[is.na(clmn.match)], "' not in columns of '", table.name,"' table. So Adding.\n"))
-  }
+  ColsToAddtoDfIndex <-
+    !dbRClmnsClassesEM(conn, name = name, temporary = temporary)$NAME  %in%
+     dfServerFieldsClassesEM(conn, Df = Df)$NAME
 
-  # NEW CODE (BY ANDRE MIKULEC) (NEW clmns.add.to.fields, df.classes.fields.compatible
-  # From the "df" columns, that do not exist in the fields(server)
-  # Add these columns to the server
-  # recalculate the variable "fields" and "clmn.match"
-  clmns.add.to.fields <- which(is.na(clmn.match))
-  if(length(clmns.add.to.fields)) {
-    # fields.classes.new <- sapply(df[clmns.add.to.fields], class)
-    #  SQL type of an R object according to the SQL 92 specification
-    df.classes.fields.compatible <- sapply(Df[clmns.add.to.fields], function(clmn) DBI::dbDataType(conn, clmn))
-    mapply(function(colname, coltype) {
-      dbColumnEM(conn, name = DfName, colname = colname, coltype = coltype, display = display, exec = exec)
-      invisible()
-    }, Names(df.classes.fields.compatible), df.classes.fields.compatible, SIMPLIFY = FALSE)
-    # cleanup
-    rm(df.classes.fields.compatible)
-  }
-  # cleanup
-  rm(clmns.add.to.fields)
-  # recalculate
-  fields <- DBI::dbListFields(conn, name = DfName)
-  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
-  clmn.match <- match(colnames(Df), fields)
+  as.Date <- zoo::as.Date
+  mapply(function(Name, Type) {
+    Df[[Name]] <- rep(NA, NROW(Df))
+    DF[[Name]] <- eval(parse(text = paste0("as.", Type, "(DF[[Name]])")))
+    invisible()
+  },
+  dbRClmnsClassesEM(conn, name = name, temporary = temporary)$NAME[ColsToAddtoDfIndex],
+  dbRClmnsClassesEM(conn, name = name, temporary = temporary)$TYPE[ColsToAddtoDfIndex],
+  SIMPLIFY = FALSE)
 
-  r <- DBI::dbSendQuery(conn, statement = paste("SELECT * FROM ", DfName, " WHERE FALSE;"))
-  fields.info <- DBI::dbColumnInfo(r); rownames(fields.info) <- fields.info$name
-  DBI::dbClearResult(r)
+  # add columns to the server table (name),
+  # that exist on the data.frame (Df),
+  # but do not exist in the server table (name)
 
-  fields.sclasses <- nameVect(fields.info,'Sclass')
-  # BEGIN ANDRE ADDED (NEW fields.classes.df.compatible)
-  fields.classes.df.compatible <- sapply(fields.sclasses, function(sdatatype) {
-    if(sdatatype == "double") {sdatatype <- "numeric"}
-    return(sdatatype)
-  })
-  # END ANDRE ADDED
+  ColsToAddtoServerIndex <-
+    !dfServerFieldsClassesEM(conn, Df = Df)$NAME %in%
+     dbRClmnsClassesEM(conn, name = name)$NAME
 
-  # ANDRE RE-WROTE (I WANT THE CORRECT CLASSES)
-  ## add missing fields to df
-  df.classes.new <- fields.classes.df.compatible[match(setdiff(fields, colnames(df)), Names(fields.classes.df.compatible))]
-  if(length(df.classes.new)) {
-    mapply(function(colname, coltype) {
-      if(coltype == "character") {
-        Df[[colname]] <<- rep(NA_character_, NROW(Df))
-      }
-      if(coltype %in% c("integer", "Date")) {
-        Df[[colname]] <<- rep(NA_integer_, NROW(Df))
-        if(coltype == "Date") {
-          Df[[colname]] <- zoo::as.Date(df[[colname]])
-        }
-      }
-      if(coltype == "numeric") {
-        Df[[colname]] <<- rep(NA_real_, NROW(Df))
-      }
-      if(coltype == "logical") {
-        Df[[colname]] <<- rep(NA, NROW(Df))
-      }
-      invisible()
-    }, Names(df.classes.new), df.classes.new, SIMPLIFY = FALSE)
-  }
-  rm(df.classes.new)
+  mapply(function(Name, Type) {
+    dbColumnEM(conn, name = name, colname = Name, coltype = Type, display = display, exec = exec)
+    invisible()
+  },
+  dfServerFieldsClassesEM(conn, Df = mtcars2s)$NAME[ColsToAddtoServerIndex],
+  dfServerFieldsClassesEM(conn, Df = mtcars2s)$TYPE[ColsToAddtoServerIndex],
+  SIMPLIFY = FALSE)
 
-  ## reorder df columns as per field order
-  reordered.names <- colnames(Df)[match(fields, colnames(Df))]
-  if(any(is.na(reordered.names)))
-    stop('Too many unmatched columns to database column list. Stopping')
-  Df <- Df[ ,reordered.names, drop = F]
+  # in the data.frame, re-order the  columns
+  # to match those of the server order
+  Df <- Df[, cSort(colnames(Df), InitOrder = dbRClmnsClassesEM(conn, name = "mtcars2s")$NAME)
+           , drop = F]
 
-  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+  return(Df)
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}

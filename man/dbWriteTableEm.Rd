@@ -13,7 +13,6 @@ dbWriteTableEM(
   PartKeyCol = character(),
   PrimaryKey = character(),
   Indexes = list(),
-  FillNull = TRUE,
   lowerDfName = TRUE,
   lowerColNames = TRUE,
   replaceDotUsingUnderscore = TRUE,
@@ -39,8 +38,6 @@ dbWriteTableEM(
 
 \item{Indexes}{List of "Vector of Strings".  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. The name of the index is taken from the name of the vector.}
 
-\item{FillNull}{Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?}
-
 \item{lowerDfName}{Logical. Default is TRUE. Make the target database table name to be in lowercase.}
 
 \item{lowerColNames}{Logical. Default is TRUE. Make the target database table column names to be in lowercase.}
@@ -52,8 +49,6 @@ dbWriteTableEM(
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).'}
 
 \item{...}{Dots. Other parameters passed to R CRAN package DBI dbWriteTable.}
-
-\item{RowNames}{Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).}
 }
 \description{
 \preformatted{

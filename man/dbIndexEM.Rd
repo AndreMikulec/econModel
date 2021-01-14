@@ -35,6 +35,8 @@ dbIndexEM(
 \item{method}{The name of the method to be used for the index. Choices are "btree", "hash", "rtree", and "gist". The default method is "btree", although "gist" should be the index of choice for PostGIS spatial types (geometry, geography, raster).}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to TRUE).}
 }
 \value{
 TRUE if the index was successfully created.
