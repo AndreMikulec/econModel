@@ -3313,17 +3313,12 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo as.Date
-#' @importFrom DBI dbListFields
 #' @export
 dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = FALSE,
                             display = TRUE, exec = TRUE) {
   tryCatchLog::tryCatchLog({
 
   Df <- value
-
-  # Left over from the R CRAN package Caroline functon dbWriteTable2
-  fields <- DBI::dbListFields(conn, name = name)
-  fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
 
   ## look for unloadable columns in the df
   colnames(Df) <- tolower(colnames(Df))
