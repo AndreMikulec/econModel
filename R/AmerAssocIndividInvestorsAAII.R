@@ -2641,6 +2641,7 @@ tryCatchLog::tryCatchLog({
 #' @param temporary Logical.  This is a temporary table or not.
 #' @returns data.frame. Variables are "name" and "type" (optionally some others)
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbColumnInfo
 #' @export
 dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE) {
 tryCatchLog::tryCatchLog({
@@ -2683,6 +2684,7 @@ tryCatchLog::tryCatchLog({
 #' @param Df data.frame
 #' @returns data.frame. Variables are "name" and "type"
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbDataType
 #' @export
 dfServerFieldsClassesEM <- function(conn, Df) {
 tryCatchLog::tryCatchLog({
@@ -2711,6 +2713,7 @@ tryCatchLog::tryCatchLog({
 #' @param temporary Logical.  This is a temporary table or not.
 #' @returns data.frame. Variables are "name" and "type"
 #' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbSendQuery dbClearResult
 #' @export
 dbRClmnsClassesEM <- function(conn, name, temporary = FALSE) {
 tryCatchLog::tryCatchLog({
@@ -3087,7 +3090,6 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExistsTable dbWriteTable
-#' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
 #' @export
 dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
                            PartitionOf = character(), PartBoundValue = character(), PartKeyCol = character(),
@@ -3311,6 +3313,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo as.Date
+#' @importFrom DBI dbListFields
 #' @export
 dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = FALSE,
                             display = TRUE, exec = TRUE) {
