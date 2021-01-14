@@ -2438,7 +2438,12 @@ tryCatchLog::tryCatchLog({
 #' NOTE: In PostgreSQL, one can not convert a table to a partitioned table and vice-versa.
 #'
 #' @param conn A PostgreSQL database connection.
-#' @param table Name of the table. Escaped with
+#' @param temporary Logical. Create a temporary table.  Default is FALSE.
+#' @param if.not.exists Logical. Default is FALSE. If TRUE, add the " IF NOT EXISTS " clause.
+#' @param name Name of the table. Escaped with.
+#' @param like.name  Create a table like this one. If this has a name, then all other parameters are ignored EXCEPT "like.name.defaults" and "like.name.constraints".
+#' @param like.name.defaults Logical.  Default is FALSE. This is an option only when "like.name" has a value.
+#' @param like.name.constraints Logical. Default is FALSE. This is an option only when "like.name" has a value.
 #'   [DBI::dbQuoteIdentifier()].
 #' @param fields Either a character vector or a data frame.
 #'
@@ -2455,7 +2460,6 @@ tryCatchLog::tryCatchLog({
 #' @param part.key.def String. `[ PARTITION BY { RANGE | LIST | HASH } ( { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [, ... ] ) ]`.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @param ... Dots passed.
 #' @examples
 #' \dontrun{
 #' conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user="postgres", password="postgres", dbname="postgres")
@@ -2464,7 +2468,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbDataType dbQuoteIdentifier
 #' @export
-dbCreatePartBoundTableEM <- function(conn, name, fields, temporary = FALSE, part.by = character(), part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE, ...) {
+dbCreatePartBoundTableEM <- function(conn, name, temporary = FALSE, if.not.exists = FALSE, like.name = character() , like.name.defaults = FALSE, like.name.constraints = FALSE,  fields, part.by = character(), part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
   table <- dbObjectNameFix(conn, o.nm = name)
@@ -2476,6 +2480,33 @@ tryCatchLog::tryCatchLog({
     }
   } else {
     tableque <- paste(table, collapse = ".")
+  }
+
+  like.tableque <- character()
+  if(length(like.name)) {
+    like.table <- dbObjectNameFix(conn, o.nm = like.name)
+    if(temporary) {
+      if(length(table) == 2) {
+        like.tableque <- paste0(last(like.table))
+      } else {
+        like.tableque <- paste0(like.table)
+      }
+    } else {
+      like.tableque <- paste(like.table, collapse = ".")
+    }
+  }
+
+  if(length(like.name)) {
+
+    tmp.query <- paste0("CREATE TABLE ", if (temporary) "TEMPORARY ", if(if.not.exists) " IF NOT EXISTS ",
+                        like.tableque, " (", " LIKE ", tableque,
+                        if(like.name.defaults)    " INCLUDING DEFAULTS ",
+                        if(like.name.constraints) " INCLUDING CONSTRAINTS ",
+                         ");")
+    dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec, ...)
+    # short circuit
+    return(invisible(TRUE))
+
   }
 
   if(is.data.frame(fields)) {
@@ -2499,7 +2530,8 @@ tryCatchLog::tryCatchLog({
   }
 
   query <- paste0(
-    "CREATE ", if (temporary) "TEMPORARY ", "TABLE ", tableque, " (\n",
+    "CREATE ", if (temporary) "TEMPORARY ", "TABLE ", if(if.not.exists) " IF NOT EXISTS ",
+    tableque, " (\n",
     "  ", paste(fields, collapse = ",\n  "), " \n)", part.by, part.bound, part.key.def, "\n"
   )
 
@@ -2524,7 +2556,7 @@ tryCatchLog::tryCatchLog({
 #' @returns vector of size 1 of the partition key definition.
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbPartKeyDefEM <- function(conn, DfName) {
+dbPartKeyColEM <- function(conn, DfName) {
 tryCatchLog::tryCatchLog({
   DetectedPartKeyDef <- character()
   Results <- dbListInheritEM(conn, DfName)
@@ -2534,14 +2566,14 @@ tryCatchLog::tryCatchLog({
   SubResults <- dbListInheritEM(conn, name = DfName)$PARENT_PART_KEY_DEF
   if(is.na(SubResults)) {
     # not a "p" - partitioned. (is "r" - regular)
-    DetectedPartKeyDef <- character()
+    DetectedPartKeyCol <- character()
   } else {
     # "p" - partitioned
     # SIMPLE COLUMN NAMES ONLY (a)
     # NOT TOO CLEVER - WILL NOT CORRECTLY EXTRACT EXPRESSIONS
-    DetectedPartKeyDef <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
+    DetectedPartKeyCol <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
   }
-  return(DetectedPartKeyDef)
+  return(DetectedPartKeyCol)
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2717,6 +2749,7 @@ tryCatchLog::tryCatchLog({
 #' @param conn A connection object.
 #' @param name A character string, or a character vector, specifying a PostgreSQL table name.
 #' @param colname	A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.
+#' @param if.not.exists Logical. Default is FALSE. If TRUE, use pg_ tables to check that in the namespace(schema) the constraint name does not exist.  Needed for the check to work is that parameter "const.name" must also be provided.
 #' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this constraint to inherited tables(FALSE).
 #' @param const.name String. Name of the constraint.
 #' @param type The type of the key, either "primary" or "foreign" or "check" constraint
@@ -2729,10 +2762,58 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
-dbAddKeyEM <- function(conn, name, colname, only = FALSE, const.name = characater(),
-                       type = c("primary", "foreign" , "check"), reference, colref,
+dbAddKeyEM <- function(conn, name, colname, if.not.exists = FALSE, only = FALSE, const.name = characater(),
+                       type = c("primary", "foreign" , "check"), check.by = character(), reference, colref,
                        display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
+
+  if(if.not.exists && length(const.name)) {
+
+    SchemaAndName <- dbObjectNameFix(conn, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal")
+
+    Restriction <-
+      paste0("
+      table_schema    = ", first(SchemaAndName), "
+      AND constraint  = ", last(SchemaAndName)
+      )
+
+    # pgc.contype
+    # 'c' - check constraint
+    # 'p' - primary key constraint
+    # 'u' - unique constraint
+    # 'f' - foreign key constraint
+    #  +  - some rare others
+    #
+    # List all check constraints in PostgreSQL database
+    # 2019
+    # https://dataedo.com/kb/query/postgresql/list-check-constraints-in-database
+
+    Statement <- paste0("
+    SELECT q.* FROM (
+      SELECT
+           ccu.table_schema as table_schema,
+           pgc.conname as constraint,
+           pgc.contype,
+           ccu.table_name,
+           ccu.column_name
+      FROM pg_constraint pgc
+      JOIN pg_namespace nsp on nsp.oid = pgc.connamespace
+      JOIN pg_class  cls on pgc.conrelid = cls.oid
+      LEFT JOIN information_schema.constraint_column_usage ccu
+                on pgc.conname = ccu.constraint_name
+                and nsp.nspname = ccu.constraint_schema
+      ORDER BY pgc.conname
+    ) q
+    WHERE", Restriction, ";")
+
+    Results <- dbGetQueryEM(conn, Statement = Statement, display = display, exec = exec)
+
+    if(!NROW(Results)) {
+      message(paste0("Constraint ", toupper(paste0(SchemaAndName, collapse = ".")) , " already exists, so skipping . . ."))
+      return(TRUE)
+    }
+
+  }
 
   name <- dbObjectNameFix(conn, o.nm = name)
   nameque <- paste(name, collapse = ".")
@@ -2753,12 +2834,9 @@ tryCatchLog::tryCatchLog({
   tmp.query <- paste0("ALTER TABLE ", if(only) " ON ONLY ", nameque, " ADD ", if(length(const.name)) paste0(" CONSTRAINT ", const.name, " "), type,
                       if(type != "check") " KEY ",
                       " (", colname, if(type == "check") paste0(" = ", check.by) , ")", references, ";")
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
+
+  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
   if (exec) {
-    dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
     return(TRUE)
   }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -2772,6 +2850,7 @@ tryCatchLog::tryCatchLog({
 #' @param conn A connection object.
 #' @param name A character string specifying a PostgreSQL table name.
 #' @param colname A character string, or a character vector specifying the name of the column to which the key will be associated; alternatively, a character vector specifying the name of the columns to build the index.
+#' @param if.not.exists Logical. Default is FALSE. If TRUE, add the " IF NOT EXISTS " clause.
 #' @param only Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this index to inherited indexes(FALSE).
 #' @param idxname A character string specifying the name of the index to be created. By default, this uses the name of the table (without the schema) and the name of the columns as follows: <table_name>_<column_names>_idx.
 #' @param unique Logical. Causes the system to check for duplicate values in the table when the index is created (if data already exist) and each time data is added. Attempts to insert or update data which would result in duplicate entries will generate an error.
@@ -2781,7 +2860,7 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
-dbIndexEM <- function(conn, name, colname, only = FALSE, idxname, unique = FALSE,
+dbIndexEM <- function(conn, name, colname, if.not.exists = FALSE, only = FALSE, idxname, unique = FALSE,
                       method = c("btree","hash", "rtree", "gist"),
                       display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
@@ -2800,17 +2879,13 @@ tryCatchLog::tryCatchLog({
   method <- match.arg(method)
   usemeth <- ifelse(method == "btree", "", paste(" USING",
                                                  toupper(method)))
-  tmp.query <- paste0("CREATE ", unique, "INDEX ", if(only) " ON ONLY ", idxname,
+  tmp.query <- paste0("CREATE ", unique, "INDEX ", if(if.not.exists) " IF NOT EXISTS ", if(only) " ON ONLY ", idxname,
                       " ON ", nameque, usemeth, " (", colname, ");")
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-    message("--")
-  }
-  if (exec) {
+
     dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-    return(TRUE)
-  }
+    if (exec) {
+      return(TRUE)
+    }
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2854,6 +2929,77 @@ tryCatchLog::tryCatchLog({
   if (exec)
     return(TRUE)
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Add or Remove a Partition
+#'
+#' From a partitioned table or partitioned index add or remove a partition.
+#'
+#' @param conn A connection object.
+#' @param dbobject A character string specifying if the the type of the parent database object.  This can be "table"(default) or "index".
+#' @param name A character string specifying a PostgreSQL already partitioned table or index name. Note, a table can not be converted to a partitioned table and vice-versa.  ALTER has no option.
+#' @param partition A character string specifying the name of the partition.
+#' @param if.not.exists Logical. Default is FALSE. If TRUE, use pg_ tables to check that in the (potential target partition) object exists and is not attached, before the partitioned table or partitioned index tries to attach to it.
+#' @param part.bound.value Of the attaching the partition, the partitions partition bound single value.
+#' @param action A character string specifying if the column is to be added ("attach", default) or removed ("drop").
+#' @param display Logical. Whether to display the query (defaults to TRUE).
+#' @param exec Logical. Whether to execute the query (defaults to TRUE).
+#' @returns TRUE if the partition was successfully added or removed.
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbQuoteIdentifier
+#' @export
+dbAttachPartEM <- function (conn, dbobject = "table", name, partition, if.not.exists = FALSE, part.bound.value, action = c("attach", "drop"),
+                            display = TRUE, exec = TRUE) {
+tryCatchLog::tryCatchLog({
+
+  name <- dbObjectNameFix(conn, o.nm = name)
+  nameque <- paste(name, collapse = ".")
+
+  partition <- dbObjectNameFix(conn, o.nm = partition)
+  partitionque <- paste(partition, collapse = ".")
+
+  if(if.not.exists) {
+     Results <- dbListInheritEM(conn, name = name)
+     if(!NROW(Results)) {
+       message(past0("Partitioned ", toupper(dbobject), " ", paste0(nameque, collapse = "."), " does not exist, so skipping . . ."))
+       return(invisible(TRUE))
+     }
+  }
+
+  if(if.not.exists) {
+    Results <- dbListInheritEM(conn, name = partition)
+    if(!NROW(Results)) {
+      message(past0("Target ", toupper(dbobject), " ", paste0(partitionque, collapse = "."), " does not exist, so skipping . . ."))
+      return(invisible(TRUE))
+    }
+  }
+
+  if(if.not.exists) {
+    Results <- dbListInheritEM(conn, name = name)
+    if(1) {
+      MatchSchemaIdx <- match(noquote(paste0(first(nameque))) %in% Results$CHILD_SCHEMA)
+      MatchNameIdx   <- match(noquote(paste0(last(nameque)))  %in% Results$CHILD)
+      if(length(match(MatchSchemaIdx %in% MatchNameIdx))) {
+         message("Partition object with Partition, relationship already exists, so skipping ...")
+        return(invisible(TRUE))
+      }
+    }
+  }
+
+  action <- toupper(match.arg(action))
+  args <- ifelse(action == "ATTACH" && dbobject == "table", paste0(" FOR VALUES IN (" , part.bound.value , ") "), "")
+
+  tmp.query <- paste0("ALTER ", toupper(dbobject) , " ", nameque, " ", action,
+                      " PARTITION ", partitionque, " ", args, ";")
+
+  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+
+  if (exec)
+    return(TRUE)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 
 
 
@@ -2902,8 +3048,6 @@ tryCatchLog::tryCatchLog({
 #' @param PartKeyCol String.  If the table is (or to be is) a Partitioned table is of that List partition and the partition key column.
 #' @param PrimaryKey Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. The name of the primary key is taken from the name of the vector.
 #' @param Indexes List of "Vector of Strings".  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. The name of the index is taken from the name of the vector.
-#' @param FillNull Logical.  Default is TRUE. Should new db present fields be added to the data.frame before it is loaded?
-#' @param RowNames Logical. Default is FALSE.  Should the row names be loaded as a separate column? (unlike the original dbWriteTable, default is FALSE).
 #' @param lowerDfName Logical. Default is TRUE. Make the target database table name to be in lowercase.
 #' @param lowerColNames Logical. Default is TRUE. Make the target database table column names to be in lowercase.
 #' @param replaceDotUsingUnderscore Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).
@@ -2945,10 +3089,8 @@ tryCatchLog::tryCatchLog({
 #' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
 #' @export
 dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
-                           Temporary = FALSE,
                            PartitionOf = character(), PartBoundValue = character(), PartKeyCol = character(),
                            PrimaryKey = character(), Indexes = list(),
-                           FillNull = TRUE,
                            lowerDfName = TRUE, lowerColNames = TRUE, replaceDotUsingUnderscore = TRUE,
                            display = TRUE, exec = TRUE,
                            ...) {
@@ -2970,51 +3112,207 @@ tryCatchLog::tryCatchLog({
   # 1. create partitioned table ("p" - partitioned table) (c1)
   #
   if(!DBI::dbExistsTable(conn, name = DfName)) {
-    PreCallTableDfNameExisted <- FALSE
+
     # just need the structure (not the data)
     if(length(PartitionOf)) {
-      SplittedDf <- split(Df, f = Df[[PartitionOf]])
-      if(length(SplittedDf)) {
-        # empty partioned table
-        dbCreatePartBoundTableEM(conn, name = DfName, fields = Df , temporary = Temporary,
-                                 part.by = if(length(PartitionOf)) { paste0(" PARTITION OF ", PartitionOf, " ") } else { character() },
-                                 display = display, exec = exec)
-        # ONLY constraint primary key
+      SplittedDf <- split(Df, f = Df[[PartKeyCol]])
 
-        # ONLY constraint index
+      # create the parent partitioned table and its indexes onlies
+      if(length(SplittedDf)) {
+        # empty partitioned parent table
+        dbCreatePartBoundTableEM(conn, name = DfName, fields = Df,
+                                 part.key.def = if(length(PartKeyCol)) { paste0(" LIST (", PartKeyCol, ") ") } else { character() },
+                                 display = display, exec = exec)
+
+        # create the partitioned parent table index onlies
+        mapply(function(Index, IndexName) {
+          dbIndexEM(conn, name = DfName, colname = Index, only = TRUE, idxname = paste0(DfName , "_", IndexName, "_idx"))
+        }, Indexes, Names(Indexes), SIMPLIFY = FALSE)
+
       }
+
+      # per each chunk part
+      mapply(function(DfPart, DfPartBoundValue) {
+
+        DfPartNameSuffix <- try(as.integer(DfPartBoundValue), silent = TRUE)
+        if(inherits(DfPartNameSuffix, "try-error")) {
+          DfPartNameSuffix <- try(as.character(DfPartBoundValue), silent = TRUE)
+          if(inherits(DfPartNameSuffix, "try-error")) {
+            stop("Can not create an integer nor a character partition \"DfPartNameSuffix\".")
+          }
+        }
+        DfPartName <- paste0(DfName, "_", DfPartNameSuffix)
+
+        # create an empty table (to be a future partition)
+        dbCreatePartBoundTableEM(conn, name = DfPartName, like = DfName,  like.name.defaults = TRUE,
+                                 display = display, exec = exec)
+
+        # create empty table indexes
+        mapply(function(Index, IndexName) {
+          dbIndexEM(conn, name = DfPartName, colname = Index, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+        }, Indexes, Names(Indexes), SIMPLIFY = FALSE)
+
+        # alter table add constraint x primary key(default)
+        dbAddKeyEM(conn, name = DfPartName, colname = PrimaryKey, const.name = paste0(DfPartName, "_pk"),
+                   display = TRUE, exec = TRUE)
+
+        # alter table add constraint x check
+        dbAddKeyEM(conn, name = DfPartName, colname = PartKeyCol, const.name = paste0(DfPartName, "_chk"),
+                   type = "check", check.by = DfPartBoundValue,
+                   display = TRUE, exec = TRUE)
+
+        # DfPart: data to be loaded
+        dbdfMatchColsEM(conn, name = DfName, value = DfPart)
+
+        # col.names: a character vector with column names; column names are quoted to work as SQL identifiers. Thus, the column names are case sensitive and make.db.names will NOT be used here.
+        # field.types: is a list of named field SQL types where names(field.types) provide the new table's column names (if missing, field types are inferred using dbDataType).
+        # RPostgreSQL/html/dbReadTable-methods.html
+        DBI::dbWriteTable(conn, name = DfName, value = DfPart, append = TRUE, row.names = FALSE)
+
+        # alter "partition table" attach partition
+        dbAttachPartEM(conn, name = DfName, partition = DfPartName, part.bound.value = DfPartBoundValue,
+                       display = display, exec = exec)
+
+        # alter "partition index" attach partition
+        mapply(function(IndexName) {
+
+          dbAttachPartEM(conn, dbobject = "index",
+                         name =  paste0(DfName , "_", IndexName, "_idx"),
+                         partition = paste0(DfPartName , "_", IndexName, "_idx"),
+                         display = display, exec = exec)
+
+        }, Names(Indexes), SIMPLIFY = FALSE)
+
+      }, SplittedDf, Names(SplittedDf), SIMPLIFY = FALSE)
 
     }
 
+  } else { # already exists
 
-    dbCreatePartBoundTableEM(conn, name = DfName, fields = Df , temporary = Temporary,
-      part.by =    if(length(PartitionOf)) { paste0(" PARTITION OF ", PartitionOf, " ") } else { character() },
-      part.bound = if(length(PartBoundValue)) { paste0(" FOR VALUES IN (", PartBoundValue, ") ") } else { character() },
-      part.key.def = if(length(PartKeyCol)) { paste0(" LIST (", PartKeyCol, ") ") } else { character() },
-      display = display, exec = exec)
-  } else {
-    PreCallTableDfNameExisted <- TRUE
+    DetectedPartKeyCol  <- dbPartKeyColEM(conn, DfName = DfName)
+    SplittedDf <- split(Df, f = Df[[DetectedPartKeyCol]])
+
+    # per each chunk part
+    mapply(function(DfPart, DfPartBoundValue) {
+
+      DfPartNameSuffix <- try(as.integer(DfPartBoundValue), silent = TRUE)
+      if(inherits(DfPartNameSuffix, "try-error")) {
+        DfPartNameSuffix <- try(as.character(DfPartBoundValue), silent = TRUE)
+        if(inherits(DfPartNameSuffix, "try-error")) {
+          stop("Can not create an integer nor a character partition \"DfPartNameSuffix\".")
+        }
+      }
+      DfPartName <- paste0(DfName, "_", DfPartNameSuffix)
+
+      # create an empty table (to be a future partition)
+      dbCreatePartBoundTableEM(conn, if.not.exists = TRUE, name = DfPartName, like = DfName,  like.name.defaults = TRUE,
+                               display = display, exec = exec)
+
+      # create empty table indexes
+      mapply(function(Index, IndexName) {
+        dbIndexEM(conn, name = DfPartName, colname = Index, if.not.exists = TRUE, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+      }, Indexes, Names(Indexes), SIMPLIFY = FALSE)
+
+      # alter table add constraint x primary key(default)
+      dbAddKeyEM(conn, name = DfPartName, colname = PrimaryKey, if.not.exists = TRUE,
+                 const.name = paste0(DfPartName, "_pk"),
+                 display = TRUE, exec = TRUE)
+
+      # alter table add constraint x check
+      dbAddKeyEM(conn, name = DfPartName, colname = PartKeyCol, if.not.exists = TRUE,
+                 const.name = paste0(DfPartName, "_chk"),
+                 type = "check", check.by = DfPartBoundValue,
+                 display = TRUE, exec = TRUE)
+
+
+      # DfPart: data to be loaded
+      dbdfMatchColsEM(conn, name = DfName, value = DfPart)
+
+      # col.names: a character vector with column names; column names are quoted to work as SQL identifiers. Thus, the column names are case sensitive and make.db.names will NOT be used here.
+      # field.types: is a list of named field SQL types where names(field.types) provide the new table's column names (if missing, field types are inferred using dbDataType).
+      # RPostgreSQL/html/dbReadTable-methods.html
+      DBI::dbWriteTable(conn, name = DfName, value = DfPart, append = TRUE, row.names = FALSE)
+
+      # alter "partition table" attach partition
+      dbAttachPartEM(conn, name = DfName, partition = DfPartName, if.not.exists = TRUE, part.bound.value = DfPartBoundValue,
+                     display = display, exec = exec)
+
+      # alter "partition index" attach partition
+      mapply(function(IndexName) {
+
+        dbAttachPartEM(conn, dbobject = "index",
+                       name =  paste0(DfName , "_", IndexName, "_idx"),
+                       partition = paste0(DfPartName , "_", IndexName, "_idx"),
+                       if.not.exists = TRUE,
+                       display = display, exec = exec)
+
+      }, Names(Indexes), SIMPLIFY = FALSE)
+
+    }, SplittedDf, Names(SplittedDf), SIMPLIFY = FALSE)
+
   }
 
-  # paritioned table (if any)
-  DetectedPartKeyDef <- dbPartKeyDefEM(conn, DfName = DfName)
-  # partition (if any)
-  DetectedPartBound  <- dbPartBoundEM(conn, DfName = DfName)
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
-  # 2. create partitioned index on partitioned table ONLY primary key (index) c1,c3,c4,c2) pkey
-  if(!PreCallTableDfNameExisted){
-    PrimaryKey
-  }
 
-  # table already exists
-  # 3. create partition ("r" - regular table)
 
-  #
 
-  # expect the table to already be there
 
-  fields <- DBI::dbListFields(conn, name = DfName)
+
+#' Create New Columns In the Data.frame or On the Server Table
+#'
+#' Match the the Server/data.frame columns with each other.
+#' Create new columns as necessary. Verify/Make the data.frame
+#' columns order match that of the Server table order.
+#' Inspired by the R CRAN package Caroline.
+#'
+#' @param conn A DBIConnection PostgreSQL object, as returned by DBI::dbConnect().
+#' @param name a character string specifying a table name.
+#' @param value a data.frame (or coercible to data.frame).
+#' @examples
+#' \dontrun{
+#'
+#' conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user = "postgres")
+#'
+#' mtcars2 <- mtcars
+#' mtcars2[["model"]] <- rownames(mtcars2)
+#' mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
+#' mtcars2[["vs"]] <- as.logical(mtcars2[["vs"]])
+#' mtcars2[["gear"]] <- as.integer(mtcars2[["gear"]])
+#' mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
+#' rownames(mtcars2) <- NULL
+#' #
+#' # Creates the table (with zero rows).
+#' # Appends data (with the Df having the same columns that the server).
+#' mtcars2s <- mtcars2[1:5,]
+#' dbdfMatchColsEM(conn, DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+#'
+#' # Appends data (with the Df having less columns that the server database).
+#' # Those server columns, that are not found in the Df, are added to the Df.
+#' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
+#' dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lDf)
+#'
+#' # Appends data (with the server database having less columns that the Df).
+#' # Those Df columns, that are not found in the server, are added to the sever.
+#' mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
+#'                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
+#'                DfNew[["model"]] <- DfNew[["model_new"]]
+#'                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
+#'                DfNew
+#'               }; rm(DfNew)
+#'
+#' dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lSv)
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbExistsTable dbWriteTable
+#' @importFrom DBI dbListFields dbGetQuery dbSendQuery dbColumnInfo dbClearResult
+#' @export
+dbdfMatchColsEM <- function(conn, name = substitute(value), value) {
+  tryCatchLog::tryCatchLog({
+
+  Df <- value
+  fields <- DBI::dbListFields(conn, name = name)
   fields <- fields[!grepl('\\.\\.pg\\.dropped',fields)]
 
   ## look for unloadable columns in the df
@@ -3094,32 +3392,4 @@ tryCatchLog::tryCatchLog({
     stop('Too many unmatched columns to database column list. Stopping')
   Df <- Df[ ,reordered.names, drop = F]
 
-  ## BEGIN ERROR CHECKING
-
-  # 4. create partition check constraint of "partition bound" (c1)
-
-  # 5. create partition primary key (index) (c1,c3,c4,c2) pkey
-
-  ## load partitioned table (definition only)
-  message(paste0("Loading ", table.name, " table to database."))
-  WriteTable <- DBI::dbWriteTable(con, name = table.name, value = df[FALSE, , drop = F], row.names = row.names, append = TRUE, ...)
-
-  # 6. load the  data
-
-  ## load partitioned table (data (appending) only)
-  message(paste0("Loading ", table.name, " table to database."))
-  # eventually
-  # if(NROW(Df)) {
-  #   DBI::dbWriteTable(conn, name = DfName, value = Df[FALSE, , drop = F], row.names = FALSE)
-  # }
-  WriteTable <- DBI::dbWriteTable(con, name = table.name, value = df[FALSE, , drop = F], row.names = row.names, append = TRUE, ...)
-
-  # 7. alter partition table attach [partition] for values in (c1);
-
-  # 8. alter partition index attach [partition] pkey;
-
-
-  return(WriteTable)
-
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
-
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}

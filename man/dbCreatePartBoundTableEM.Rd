@@ -7,18 +7,34 @@
 dbCreatePartBoundTableEM(
   conn,
   name,
-  fields,
   temporary = FALSE,
+  if.not.exists = FALSE,
+  like.name = character(),
+  like.name.defaults = FALSE,
+  like.name.constraints = FALSE,
+  fields,
   part.by = character(),
   part.bound = character(),
   part.key.def = character(),
   display = TRUE,
-  exec = TRUE,
-  ...
+  exec = TRUE
 )
 }
 \arguments{
 \item{conn}{A PostgreSQL database connection.}
+
+\item{name}{Name of the table. Escaped with.}
+
+\item{temporary}{If `TRUE`, will generate a temporary table statement.}
+
+\item{if.not.exists}{Logical. Default is FALSE. If TRUE, add the " IF NOT EXISTS " clause.}
+
+\item{like.name}{Create a table like this one. If this has a name, then all other parameters are ignored EXCEPT "like.name.defaults" and "like.name.constraints".}
+
+\item{like.name.defaults}{Logical.  Default is FALSE. This is an option only when "like.name" has a value.}
+
+\item{like.name.constraints}{Logical. Default is FALSE. This is an option only when "like.name" has a value.
+[DBI::dbQuoteIdentifier()].}
 
 \item{fields}{Either a character vector or a data frame.
 
@@ -29,8 +45,6 @@ dbCreatePartBoundTableEM(
   A data frame: field types are generated using
   [DBI::dbDataType()].}
 
-\item{temporary}{If `TRUE`, will generate a temporary table statement.}
-
 \item{part.by}{String. `PARTITION OF parent_table`}
 
 \item{part.bound}{String. `[ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.}
@@ -40,11 +54,6 @@ dbCreatePartBoundTableEM(
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
-
-\item{table}{Name of the table. Escaped with
-[DBI::dbQuoteIdentifier()].}
 }
 \description{
 Exposes an interface to simple PostgreSQL

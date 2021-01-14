@@ -8,7 +8,6 @@ dbWriteTableEM(
   conn,
   DfName = substitute(Df),
   Df,
-  Temporary = FALSE,
   PartitionOf = character(),
   PartBoundValue = character(),
   PartKeyCol = character(),

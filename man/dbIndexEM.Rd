@@ -8,6 +8,7 @@ dbIndexEM(
   conn,
   name,
   colname,
+  if.not.exists = FALSE,
   only = FALSE,
   idxname,
   unique = FALSE,
@@ -22,6 +23,8 @@ dbIndexEM(
 \item{name}{A character string specifying a PostgreSQL table name.}
 
 \item{colname}{A character string, or a character vector specifying the name of the column to which the key will be associated; alternatively, a character vector specifying the name of the columns to build the index.}
+
+\item{if.not.exists}{Logical. Default is FALSE. If TRUE, add the " IF NOT EXISTS " clause.}
 
 \item{only}{Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this index to inherited indexes(FALSE).}
 

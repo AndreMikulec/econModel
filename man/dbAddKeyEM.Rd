@@ -8,9 +8,11 @@ dbAddKeyEM(
   conn,
   name,
   colname,
+  if.not.exists = FALSE,
   only = FALSE,
   const.name = characater(),
   type = c("primary", "foreign", "check"),
+  check.by = character(),
   reference,
   colref,
   display = TRUE,
@@ -24,11 +26,15 @@ dbAddKeyEM(
 
 \item{colname}{A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.}
 
+\item{if.not.exists}{Logical. Default is FALSE. If TRUE, use pg_ tables to check that in the namespace(schema) the constraint name does not exist.  Needed for the check to work is that parameter "const.name" must also be provided.}
+
 \item{only}{Logical. Default is FALSE. Whether to add to apply this key just to this parent table(TRUE). Otherwise, also apply this constraint to inherited tables(FALSE).}
 
 \item{const.name}{String. Name of the constraint.}
 
 \item{type}{The type of the key, either "primary" or "foreign" or "check" constraint}
+
+\item{check.by}{If type = "check", then the value of the "check".  Ignored otherwise.}
 
 \item{reference}{A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").}
 
@@ -37,8 +43,6 @@ dbAddKeyEM(
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to TRUE).}
-
-\item{check.by}{If type = "check", then the value of the "check".  Ignored otherwise.}
 }
 \value{
 TRUE if the key was successfully added.
