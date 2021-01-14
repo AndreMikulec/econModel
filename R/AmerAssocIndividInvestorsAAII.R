@@ -3163,7 +3163,7 @@ tryCatchLog::tryCatchLog({
                    display = TRUE, exec = TRUE)
 
         # DfPart: data to be loaded
-        dbdfMatchColsEM(conn, name = DfName, value = DfPart)
+        DfPart <- dbdfMatchColsEM(conn, name = DfName, value = DfPart)
 
         # col.names: a character vector with column names; column names are quoted to work as SQL identifiers. Thus, the column names are case sensitive and make.db.names will NOT be used here.
         # field.types: is a list of named field SQL types where names(field.types) provide the new table's column names (if missing, field types are inferred using dbDataType).
@@ -3227,7 +3227,7 @@ tryCatchLog::tryCatchLog({
 
 
       # DfPart: data to be loaded
-      dbdfMatchColsEM(conn, name = DfName, value = DfPart)
+      DfPart <- dbdfMatchColsEM(conn, name = DfName, value = DfPart)
 
       # col.names: a character vector with column names; column names are quoted to work as SQL identifiers. Thus, the column names are case sensitive and make.db.names will NOT be used here.
       # field.types: is a list of named field SQL types where names(field.types) provide the new table's column names (if missing, field types are inferred using dbDataType).
