@@ -4,7 +4,7 @@
 \alias{dbCreateDbaseEM}
 \title{Database Creation}
 \usage{
-dbCreateDbaseEM(conn, dbname, owner = dbname, display = TRUE, exec = TRUE, ...)
+dbCreateDbaseEM(conn, dbname, owner = dbname, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Required.}
@@ -16,8 +16,6 @@ dbCreateDbaseEM(conn, dbname, owner = dbname, display = TRUE, exec = TRUE, ...)
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots Passed.}
 }
 \value{
 TRUE(success) or Error(failure)

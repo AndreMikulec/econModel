@@ -10,8 +10,7 @@ dbCreateSchemaEM(
   role_specification = schema,
   grant_all_roles = schema,
   display = TRUE,
-  exec = TRUE,
-  ...
+  exec = TRUE
 )
 }
 \arguments{
@@ -22,8 +21,6 @@ dbCreateSchemaEM(
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
 
 \item{role_specification.}{String. The schema role specification.  Defaults to "schema".}
 

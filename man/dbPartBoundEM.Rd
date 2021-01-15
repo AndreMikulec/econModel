@@ -4,12 +4,16 @@
 \alias{dbPartBoundEM}
 \title{From a PostgreSQL Object Get Its Partition Bounds}
 \usage{
-dbPartBoundEM(conn, DfName)
+dbPartBoundEM(conn, DfName, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQLConnection.}
 
 \item{DfName}{String. Name of the PostgreSQL object.}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
 vector of partiton bound list values.

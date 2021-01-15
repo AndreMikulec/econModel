@@ -4,12 +4,14 @@
 \alias{dbGetInfoExtraEM}
 \title{Extra Information About The RPostgreSQL Connection}
 \usage{
-dbGetInfoExtraEM(conn, ...)
+dbGetInfoExtraEM(conn, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection}
 
-\item{...}{Dots passed.}
+\item{display}{Logical. Whether to display the query (defaults to TRUE).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to TRUE).}
 }
 \value{
 R list of Strings of properties.

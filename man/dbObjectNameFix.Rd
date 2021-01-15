@@ -8,7 +8,9 @@ dbObjectNameFix(
   conn = NULL,
   o.nm,
   as.identifier = TRUE,
-  dbQuote = "Identifier"
+  dbQuote = "Identifier",
+  display = TRUE,
+  exec = TRUE
 )
 }
 \arguments{
@@ -21,6 +23,10 @@ where a dummy connection will be used.}
 sanitized identifiers (TRUE) or as regular character (FALSE)}
 
 \item{dbQuote}{String. Only used when "as.identifier = TRUE". Default is "Identifier". Alternately, this value can be "Literal."}
+
+\item{display}{Logical. Whether to display the query (defaults to TRUE).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to TRUE).}
 }
 \value{
 character vector of length 2. Each character element is in
@@ -37,7 +43,7 @@ inputs.
 \examples{
 \dontrun{
 name <- c("schema","table")
-dbObjectNameFix(conn,name)
+dbObjectNameFix(conn, name)
 
 #current search path schema is added to single-length character object (if only table is given)
 name<-"table"

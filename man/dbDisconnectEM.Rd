@@ -4,7 +4,7 @@
 \alias{dbDisconnectEM}
 \title{Disconnect from and econModel database}
 \usage{
-dbDisconnectEM(conn, connName, env, ...)
+dbDisconnectEM(conn, connName, env)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".}

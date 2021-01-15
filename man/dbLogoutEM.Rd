@@ -4,7 +4,7 @@
 \alias{dbLogoutEM}
 \title{Disconnect from the econModel database}
 \usage{
-dbLogoutEM(connName, env, ...)
+dbLogoutEM(connName, env)
 }
 \arguments{
 \item{connName}{String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".}

@@ -18,8 +18,7 @@ dbLoginEM(
   env,
   auto.assign = TRUE,
   display = TRUE,
-  exec = TRUE,
-  ...
+  exec = TRUE
 )
 }
 \arguments{
@@ -50,8 +49,6 @@ dbLoginEM(
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
 }
 \value{
 DBI connection object named "connEM" is created, connected and assigned to the environment "env".
@@ -77,6 +74,6 @@ Store the new connection object connName in "env".
 }
 \examples{
 \dontrun{
-dbConnectEM()
+dbLoginEM()
 }
 }

@@ -5,7 +5,7 @@
 \title{Given a Server Table, Of Its Fields, Get the Equivalent R Object classes
 If a server table, of its fields,  would be demoted to be in R, then these would be the equivalent R Object classes.}
 \usage{
-dbRClmnsClassesEM(conn, name, temporary = FALSE)
+dbRClmnsClassesEM(conn, name, temporary = FALSE, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{A connection object.}
@@ -13,6 +13,10 @@ dbRClmnsClassesEM(conn, name, temporary = FALSE)
 \item{name}{Table name string, length 1-2. Requires at least one row.}
 
 \item{temporary}{Logical.  This is a temporary table or not.}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
 data.frame. Variables are "name" and "type"

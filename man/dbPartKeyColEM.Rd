@@ -4,12 +4,16 @@
 \alias{dbPartKeyColEM}
 \title{From a PostgreSQL Object Get Its Partition Key Definition}
 \usage{
-dbPartKeyColEM(conn, DfName)
+dbPartKeyColEM(conn, DfName, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQLConnection.}
 
 \item{DfName}{String. Name of the PostgreSQL object.}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
 vector of size 1 of the partition key definition.

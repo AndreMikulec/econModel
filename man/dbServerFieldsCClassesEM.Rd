@@ -4,7 +4,13 @@
 \alias{dbServerFieldsCClassesEM}
 \title{Server Side Table Column Stored Type C Classes}
 \usage{
-dbServerFieldsCClassesEM(conn, name, temporary = FALSE)
+dbServerFieldsCClassesEM(
+  conn,
+  name,
+  temporary = FALSE,
+  display = TRUE,
+  exec = TRUE
+)
 }
 \arguments{
 \item{conn}{A connection object.}
@@ -12,6 +18,10 @@ dbServerFieldsCClassesEM(conn, name, temporary = FALSE)
 \item{name}{Table name string, length 1-2.}
 
 \item{temporary}{Logical.  This is a temporary table or not.}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
 data.frame. Variables are "name" and "type" (optionally some others)

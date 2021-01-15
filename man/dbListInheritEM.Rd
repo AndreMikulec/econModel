@@ -4,7 +4,7 @@
 \alias{dbListInheritEM}
 \title{Of a PostgreSQL Object, Get Inherited or Inherit_From Objects}
 \usage{
-dbListInheritEM(conn, name, side = "parent", display = TRUE, exec = TRUE, ...)
+dbListInheritEM(conn, name, side = "parent", display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQLConnection . Required.}

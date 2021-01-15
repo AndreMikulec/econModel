@@ -4,10 +4,14 @@
 \alias{dbSetPerformanceEM}
 \title{PostgreSQL Performance}
 \usage{
-dbSetPerformanceEM(conn)
+dbSetPerformanceEM(conn, exec = TRUE, display = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection.}
+
+\item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
+
+\item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 }
 \value{
 PostgreSQL parameters are set

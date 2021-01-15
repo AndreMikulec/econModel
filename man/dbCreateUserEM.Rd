@@ -10,8 +10,7 @@ dbCreateUserEM(
   attributes = c("LOGIN"),
   password = user,
   display = TRUE,
-  exec = TRUE,
-  ...
+  exec = TRUE
 )
 }
 \arguments{
@@ -26,8 +25,6 @@ dbCreateUserEM(
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots Passed.}
 }
 \value{
 TRUE(success) or Error(failure)
