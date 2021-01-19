@@ -929,6 +929,7 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                        FromFiles = c("SETUP.DBF",
                                      "SI_CI.DBF" , "SI_EXCHG.DBF", "SI_SP.DBF", "SI_PTYP.DBF",
                                      "SI_DATE.DBF", "SI_UTYP.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF",
+                                     "SI_DOW.DBF",
                                      # Prices
                                      "SI_PSD.DBF", "SI_PSDC.DBF", "SI_PSDD.DBF",
                                      # Sheets
