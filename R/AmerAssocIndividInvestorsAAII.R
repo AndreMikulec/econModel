@@ -777,7 +777,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' Creates a data.frame from each  file.  Loads those data.frames into the .Global environment.  Calls View() upon each data.frame (so the user may see the data).
 #'
-#' @param Collection String.  Some of "Base", "Prices", "Sheets", or "Dictionary". Required.
+#' @param Collection String.  Some of "Base", "Prices", "QuarterlySheets", "AnnualSheets", "DetailedPrices", "Predictive", or "Dictionary". Required.
 #' @param Source String.  One of "Install" or "Repository".
 #' @param SubDir String.  Single directory containing the "DBF" files. If "Source" = "Repository", then Required. Otherwise, ignored.
 #' @param Ext String. Default is "DBF". This is always the case when "Source = "Install": so, this parameters is ignored.  Alternatively, this parameter can be "FST" when "Source = "Repository"".
@@ -785,8 +785,8 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' viewSIPRO("Base")
-#' viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18565")
-#' viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18565", Ext = "FST")
+#' viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18627")
+#' viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18627", Ext = "FST")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DescTools DoCall
@@ -800,8 +800,8 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"Collection\" is required.")
   }
 
-  if( !Collection %in% c("Base", "Prices", "Sheets", "Dictionary")) {
-    stop("Parameter \"Collection\" must be some of \"Base\", \"Prices\", \"Sheets\", or \"Dictionary\".")
+  if( !Collection %in% c("Base", "Prices", "QuarterlySheets", "AnnualSheets", "DetailedPrices", "Predictive", "Dictionary")) {
+    stop("Parameter \"Collection\" must be some of \"Base\", \"Prices\", \"QuarterlySheets\", \"AnnualSheets\", \"DetailedPrices\", \"Predictive\", or \"Dictionary\".")
   }
 
   if(!missing(SubDir)) {
@@ -860,12 +860,38 @@ tryCatchLog::tryCatchLog({
   )
 
   # Needs "Base"
-  FullCollection[["Sheets"]] <- c(
+  FullCollection[["QuarterlySheets"]] <- c(
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_isq.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_bsq.dbf",
     "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_cfq.dbf"
   )
 
+  # Needs "Base"
+  FullCollection[["AnnualSheets"]] <- c(
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_isa.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_bsa.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Static\\si_cfa.dbf"
+  )
+
+  # Needs "Base"
+  FullCollection[["DetailedPrices"]] <- c(
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_psda.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_psdh.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_psdl.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_psdv.dbf"
+  )
+
+  FullCollection[["Predictive"]] <- c(
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_avg.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_ee.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_gr.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_val.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_mgavg.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_mgav2.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_perc.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_rat.dbf",
+    "C:\\Program Files (x86)\\Stock Investor\\Professional\\Dbfs\\si_mlt.dbf"
+  )
 
   SelectedFromFullCollection <- unlist(FullCollection[match(Collection, Names(FullCollection))], use.names = FALSE)
 
@@ -918,6 +944,7 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' formatDBFs()
+#' formatDBFs(paste0("C:\\DATA\\AAIISIPRO\\MONTHDATE","\\", 18627))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom foreign read.dbf
@@ -932,8 +959,18 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                                      "SI_DOW.DBF",
                                      # Prices
                                      "SI_PSD.DBF", "SI_PSDC.DBF", "SI_PSDD.DBF",
-                                     # Sheets
-                                     "SI_ISQ.DBF", "SI_BSQ.DBF" , "SI_CFQ.DBF"
+                                     # Quarterly Sheets
+                                     "SI_ISQ.DBF", "SI_BSQ.DBF" , "SI_CFQ.DBF",
+                                     # Annual(or Yearly) Sheets
+                                     "SI_ISA.DBF", "SI_BSA.DBF" , "SI_CFA.DBF",
+                                     # Detailed Prices
+                                     "SI_PSDA.DBF", "SI_PSDH.DBF", "SI_PSDL.DBF", "SI_PSDV.DBF",
+                                     # Predictive (stats and opinions)
+                                     "SI_AVG.DBF", "SI_EE.DBF", "SI_GR.DBF", "SI_VAL.DBF",
+                                     # Predictive (sectors and industries and ranks)
+                                     "SI_MGAVG.DBF", "SI_MGAV2.DBF", "SI_PERC.DBF",
+                                     # Predictive (ratio and multiples)
+                                     "SI_RAT.DBF", "SI_MLT.DBF"
                                      ),
                        To = From,
                        PrependColFile = "SETUP.DBF",
@@ -941,14 +978,18 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                                       SI_MGDSC = "MG_CODE", SI_MGDSC = "MG_DESC",
                                       SI_TRBCS = "MG_CODE", SI_TRBCS = "MG_DESC",
                                       SI_PTYP  = "TYPE_CODE", SI_PTYP = "TYPE_DESCR",
-                                      SI_UTYP  = "TYPE_CODE", SI_UTYP = "TYPE_DESCR"
+                                      SI_UTYP  = "TYPE_CODE", SI_UTYP = "TYPE_DESCR",
+                                      SI_MLT   = "PE",
+                                      SI_MGAVG = "*", SI_MGAV2 = "*"
                                     ),                                 # only one that has different dates
                        RemoveCols = c("^X.*$", "X_NullFlags", "REPNO", "(?<!CI_)LASTMOD", "UPDATED"),
                        # because the "UTYP" codes (re-statements) are in here
                        RemoveDupsColFileExceptions = c(""), # SI_DATE.DBF only has the most recent 'statement' (so no DUPS)
                        RemoveDupsColValues = c("COMPANY_ID"),
                                                 # Dates seem to be already Dates (NOTHING TO DO)
-                       ChangeType = list(Date = c("^.*DATE$", "^PRICED.*$", "^.*DT$", "^.*LASTMOD$", "^PEREND_.*$"),
+                       ChangeType = list(Date = c("^.*DATE$", "^PRICED.*$", "^.*DT$", "^.*LASTMOD$", "^PEREND_.*$",
+                                                  "^DATE_EY0$", "^DATE_EQ0$"
+                                                  ),
                                                    # Logicals seem to be already Logicals (NOTHING TO DO)
                                          logical = c("^ADR$", "^OPTIONABLE$", "^DRP_AVAIL$", "^UPDATED$"),
                                          integer = c("^EMPLOYEES$", "^PERLEN_.*$", "^SHRINSTN$"),
@@ -957,11 +998,17 @@ formatDBFs <- function(From = paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565),
                                                       "^COUNTRY$", "^PHONE$", "^WEB_ADDR$", "^BUSINESS$", "^ANALYST_FN$", "IND_2_DIG", "^IND_3_DIG$", "^SIC$", "^SP$", "^DOW$",
                                                       "^EXCHG_CODE$", "^EXCHG_DESC$", "^.*MG_CODE$", "^.*MG_DESC$",
                                                       "^PERTYP_.*$", "^UPDTYP_.*$",
-                                                      "^SP_CODE$", "^SP_DESC$", "^.*TYPE_CODE$", "^.*TYPE_DESCR$", "^TYPE_SHORT$")
+                                                      "^SP_CODE$", "^SP_DESC$", "^.*TYPE_CODE$", "^.*TYPE_DESCR$", "^TYPE_SHORT$",
+                                                      "^DOW_CODE$", "^DOW_DESC$",
+                                                      "^FIELD_NAME")
 
                                         )
                        ) {
 tryCatchLog::tryCatchLog({
+
+  # consistency
+  From <- normalizePath(From, winslash = "/")
+  To   <- normalizePath(To,   winslash = "/")
 
   # PrependColFile garanteed to be first
   if(length(PrependColFile)) {
@@ -999,8 +1046,13 @@ tryCatchLog::tryCatchLog({
         mapply(function(ColTable, ColName) {
           if(FromFileRoot == ColTable) {
             NewPreFix <- last(strsplit(ColTable, "_")[[1]])
-            cat(paste0("Renaming: ", PathandFile, " column: ", ColName, " name to ", paste0(NewPreFix, "_", colnames(ReadFile)[colnames(ReadFile) == ColName]), ". . . . "))
-            colnames(ReadFile)[colnames(ReadFile) == ColName] <<- paste0(NewPreFix, "_", colnames(ReadFile)[colnames(ReadFile) == ColName])
+            if(ColName != "*") {
+              cat(paste0("Renaming: ", PathandFile, " column: ", ColName, " name to ", paste0(NewPreFix, "_", colnames(ReadFile)[colnames(ReadFile) == ColName]), ". . . . "))
+              colnames(ReadFile)[colnames(ReadFile) == ColName] <<- paste0(NewPreFix, "_", colnames(ReadFile)[colnames(ReadFile) == ColName])
+            } else { # rename all columns
+              cat(paste0("Renaming: ", PathandFile, " columns: ", paste0(colnames(ReadFile), collapse = ", "), " names to ", paste0(paste0(NewPreFix, "_", colnames(ReadFile)[TRUE             ]), collapse = ", "), ". . . . "))
+              colnames(ReadFile)[TRUE                         ] <<- paste0(NewPreFix, "_", colnames(ReadFile)[TRUE                         ])
+            }
             cat("Done.\n")
           }
         },Names(PrefixCols), PrefixCols, SIMPLIFY = FALSE)
@@ -1917,7 +1969,7 @@ tryCatchLog::tryCatchLog({
 #' dbObjectNameFix(conn,name)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DBI dbGetQuery dbQuoteIdentifier ANSI
+#' @importFrom DBI dbQuoteIdentifier ANSI
 dbObjectNameFix <- function(conn = NULL, o.nm, as.identifier = TRUE, dbQuote = "Identifier", display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
   # case of no schema provided
@@ -2057,7 +2109,7 @@ tryCatchLog::tryCatchLog({
 #' clRemoveOldWorkDbasesEM()
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DBI dbDriver dbConnect dbGetQuery, dbQuoteLiteral dbDisconnect
+#' @importFrom DBI dbDriver dbConnect dbQuoteLiteral dbDisconnect
 #' @export
 clRemoveOldWorkDbasesEM <- function(display = TRUE, exec = TRUE, ...) {
 tryCatchLog::tryCatchLog({

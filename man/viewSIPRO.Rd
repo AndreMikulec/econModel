@@ -7,7 +7,7 @@
 viewSIPRO(Collection, Source = "Install", SubDir, Ext = "DBF", ...)
 }
 \arguments{
-\item{Collection}{String.  Some of "Base", "Prices", "Sheets", or "Dictionary". Required.}
+\item{Collection}{String.  Some of "Base", "Prices", "QuarterlySheets", "AnnualSheets", "DetailedPrices", "Predictive", or "Dictionary". Required.}
 
 \item{Source}{String.  One of "Install" or "Repository".}
 
@@ -24,7 +24,7 @@ Creates a data.frame from each  file.  Loads those data.frames into the .Global 
 \examples{
 \dontrun{
 viewSIPRO("Base")
-viewSIPRO("Base", Source = "Repository", SubDir = "C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE\\\\18565")
-viewSIPRO("Base", Source = "Repository", SubDir = "C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE\\\\18565", Ext = "FST")
+viewSIPRO("Base", Source = "Repository", SubDir = "C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE\\\\18627")
+viewSIPRO("Base", Source = "Repository", SubDir = "C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE\\\\18627", Ext = "FST")
 }
 }

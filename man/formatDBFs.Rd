@@ -8,23 +8,28 @@ formatDBFs(
   From = paste0("C:/DATA/AAIISIPRO/MONTHDATE", "/", 18565),
   FromFiles = c("SETUP.DBF", "SI_CI.DBF", "SI_EXCHG.DBF", "SI_SP.DBF", "SI_PTYP.DBF",
     "SI_DATE.DBF", "SI_UTYP.DBF", "SI_TRBCS.DBF", "SI_MGDSC.DBF", "SI_DOW.DBF",
-    "SI_PSD.DBF", "SI_PSDC.DBF", "SI_PSDD.DBF", "SI_ISQ.DBF", "SI_BSQ.DBF", "SI_CFQ.DBF"),
+    "SI_PSD.DBF", "SI_PSDC.DBF", "SI_PSDD.DBF", "SI_ISQ.DBF", "SI_BSQ.DBF", "SI_CFQ.DBF",
+    "SI_ISA.DBF", "SI_BSA.DBF", "SI_CFA.DBF", "SI_PSDA.DBF", "SI_PSDH.DBF",
+    "SI_PSDL.DBF", "SI_PSDV.DBF", "SI_AVG.DBF", "SI_EE.DBF", "SI_GR.DBF", "SI_VAL.DBF",
+    "SI_MGAVG.DBF", "SI_MGAV2.DBF", "SI_PERC.DBF", "SI_RAT.DBF", "SI_MLT.DBF"),
   To = From,
   PrependColFile = "SETUP.DBF",
   PrefixCols = c(SI_CI = "LASTMOD", SI_MGDSC = "MG_CODE", SI_MGDSC = "MG_DESC",
     SI_TRBCS = "MG_CODE", SI_TRBCS = "MG_DESC", SI_PTYP = "TYPE_CODE", SI_PTYP =
-    "TYPE_DESCR", SI_UTYP = "TYPE_CODE", SI_UTYP = "TYPE_DESCR"),
+    "TYPE_DESCR", SI_UTYP = "TYPE_CODE", SI_UTYP = "TYPE_DESCR", SI_MLT = "PE", SI_MGAVG
+    = "*", SI_MGAV2 = "*"),
   RemoveCols = c("^X.*$", "X_NullFlags", "REPNO", "(?<!CI_)LASTMOD", "UPDATED"),
   RemoveDupsColFileExceptions = c(""),
   RemoveDupsColValues = c("COMPANY_ID"),
   ChangeType = list(Date = c("^.*DATE$", "^PRICED.*$", "^.*DT$", "^.*LASTMOD$",
-    "^PEREND_.*$"), logical = c("^ADR$", "^OPTIONABLE$", "^DRP_AVAIL$", "^UPDATED$"),
-    integer = c("^EMPLOYEES$", "^PERLEN_.*$", "^SHRINSTN$"), character =
-    c("^COMPANY_ID$", "^COMPANY$", "^TICKER$", "^EXCHANGE$", "^STREET$", "^CITY$",
-    "^STATE$", "^ZIP$", "^COUNTRY$", "^PHONE$", "^WEB_ADDR$", "^BUSINESS$",
+    "^PEREND_.*$", "^DATE_EY0$", "^DATE_EQ0$"), logical = c("^ADR$", "^OPTIONABLE$",
+    "^DRP_AVAIL$", "^UPDATED$"), integer = c("^EMPLOYEES$", "^PERLEN_.*$", "^SHRINSTN$"),
+    character = c("^COMPANY_ID$", "^COMPANY$", "^TICKER$", "^EXCHANGE$", "^STREET$",
+    "^CITY$", "^STATE$", "^ZIP$", "^COUNTRY$", "^PHONE$", "^WEB_ADDR$", "^BUSINESS$",
     "^ANALYST_FN$", "IND_2_DIG", "^IND_3_DIG$", "^SIC$", "^SP$", "^DOW$", "^EXCHG_CODE$",
-    "^EXCHG_DESC$", "^.*MG_CODE$", "^.*MG_DESC$", "^PERTYP_.*$",      "^UPDTYP_.*$",
-    "^SP_CODE$", "^SP_DESC$", "^.*TYPE_CODE$", "^.*TYPE_DESCR$", "^TYPE_SHORT$"))
+    "^EXCHG_DESC$", "^.*MG_CODE$",      "^.*MG_DESC$", "^PERTYP_.*$", "^UPDTYP_.*$",
+    "^SP_CODE$", "^SP_DESC$", "^.*TYPE_CODE$", "^.*TYPE_DESCR$", "^TYPE_SHORT$",
+    "^DOW_CODE$", "^DOW_DESC$", "^FIELD_NAME"))
 )
 }
 \arguments{
@@ -53,5 +58,6 @@ Removed useless columns.  Remove duplicated data.  Change column datatypes.
 \examples{
 \dontrun{
 formatDBFs()
+formatDBFs(paste0("C:\\\\DATA\\\\AAIISIPRO\\\\MONTHDATE","\\\\", 18627))
 }
 }
