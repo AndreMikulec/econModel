@@ -2534,8 +2534,10 @@ tryCatchLog::tryCatchLog({
     "  ", paste(fields, collapse = ",\n  "), " \n)", part.by, part.bound, part.key.def, "\n"
   )
 
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-  invisible(TRUE)
+  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+  return(data.frame(DBCREATEPARTBOUNDTABLEEM = unlist(Results)))
+
+  return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2575,6 +2577,9 @@ tryCatchLog::tryCatchLog({
     DetectedPartKeyCol <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
   }
   return(DetectedPartKeyCol)
+
+  return(invisible(data.frame(DBPARTKEYCOLEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2614,6 +2619,9 @@ tryCatchLog::tryCatchLog({
     DetectedPartBound <- PartBound
   }
   return(DetectedPartBound)
+
+  return(invisible(data.frame(DBPARTBOUNDTABLEEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2676,7 +2684,9 @@ tryCatchLog::tryCatchLog({
     colnames(Server.fields.C.classes) <- toupper(colnames(Server.fields.C.classes))
     return(Server.fields.C.classes)
   }
-  invisible()
+
+  return(invisible(data.frame(DBSERVERFIELDSCCLASSESEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2713,7 +2723,7 @@ tryCatchLog::tryCatchLog({
     return(Server.fields.classes)
   }
 
-  invisible()
+  return(invisible(data.frame(DFSERVERFIELDSCLASSESEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2766,7 +2776,9 @@ tryCatchLog::tryCatchLog({
     colnames(R.clmns.classes) <- c("NAME", "TYPE")
     return(R.clmns.classes)
   }
-  invisible()
+
+  return(invisible(data.frame(DBRCLMNSCLASSESEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2869,6 +2881,9 @@ tryCatchLog::tryCatchLog({
   if (exec) {
     return(TRUE)
   }
+
+  return(invisible(data.frame(DFADDKEYEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2917,6 +2932,9 @@ tryCatchLog::tryCatchLog({
   if (exec) {
     return(TRUE)
   }
+
+  return(invisible(data.frame(DBINDEXEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -2956,6 +2974,8 @@ tryCatchLog::tryCatchLog({
   if (exec) {
     return(TRUE)
   }
+
+  return(invisible(data.frame(DBCOLUMNEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -3027,6 +3047,9 @@ tryCatchLog::tryCatchLog({
   if (exec) {
     return(TRUE)
   }
+
+  return(invisible(data.frame(DBATTACHPARTEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -3292,6 +3315,8 @@ tryCatchLog::tryCatchLog({
 
   }
 
+  return(invisible(data.frame(DBWRITETABLEEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -3401,5 +3426,7 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = F
            , drop = F]
 
   return(Df)
+
+  return(invisible(data.frame(DBDFMATCHOLSEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
