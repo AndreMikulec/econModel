@@ -41,6 +41,8 @@ formatDBFs(
 
 \item{PrependColFile}{DBF file that has the  Unique identifier column name.  This is the first column.}
 
+\item{PrefixCols}{Named vector of Strings. Names represent the table names and values represents the column names.  New column names will have a pre-pended values that is the last characters of the table name that follow the table name "_".  Value of "*" means "all columns".}
+
 \item{RemoveCols}{Vector of regular expressions(PERL = T) of columns to remove.}
 
 \item{RemoveDupsColFileExceptions}{Files to non-remove duplicate column values.  See the next parameter. RemoveDupsColValues.}

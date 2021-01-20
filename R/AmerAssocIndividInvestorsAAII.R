@@ -936,6 +936,7 @@ tryCatchLog::tryCatchLog({
 #' @param FromFiles if From is a directory, then a vector of "DBF" files of interest.
 #' @param To if From is a directory, then the new directory location (xor R object list of data.frames - NOT-IMPLEMENTED).
 #' @param PrependColFile DBF file that has the  Unique identifier column name.  This is the first column.
+#' @param PrefixCols Named vector of Strings. Names represent the table names and values represents the column names.  New column names will have a pre-pended values that is the last characters of the table name that follow the table name "_".  Value of "*" means "all columns".
 #' @param RemoveCols Vector of regular expressions(PERL = T) of columns to remove.
 #' @param RemoveDupsColFileExceptions Files to non-remove duplicate column values.  See the next parameter. RemoveDupsColValues.
 #' @param RemoveDupsColValues Column name to have its duplicates (and an corresponding non-duplicates) removed.
