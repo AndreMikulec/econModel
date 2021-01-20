@@ -10,8 +10,6 @@ dbLogoutEM(connName, env)
 \item{connName}{String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".}
 
 \item{env}{Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".}
-
-\item{...}{Dots passed.}
 }
 \value{
 Disconnects "connEM" from the database or disconnects "connName" from the database and removes it from the environment "env".

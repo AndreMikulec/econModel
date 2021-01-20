@@ -4,7 +4,7 @@
 \alias{dbExecuteEM}
 \title{Executes in the  database}
 \usage{
-dbExecuteEM(conn, Statement, display = TRUE, exec = TRUE, ...)
+dbExecuteEM(conn, Statement, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".}
@@ -14,8 +14,6 @@ dbExecuteEM(conn, Statement, display = TRUE, exec = TRUE, ...)
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
 }
 \value{
 Execution of "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".

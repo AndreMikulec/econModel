@@ -4,7 +4,7 @@
 \alias{dbIsConnectedEM}
 \title{Test The RPostgreSQL Connection}
 \usage{
-dbIsConnectedEM(conn, display = TRUE, exec = TRUE, ...)
+dbIsConnectedEM(conn, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection.}
@@ -12,8 +12,6 @@ dbIsConnectedEM(conn, display = TRUE, exec = TRUE, ...)
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
 }
 \value{
 TRUE(connected) or FALSE(otherwise)

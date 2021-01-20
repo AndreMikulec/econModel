@@ -16,8 +16,6 @@ dbListInheritEM(conn, name, side = "parent", display = TRUE, exec = TRUE)
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
 }
 \value{
 Dataframe of inherited or inherit_from "objects" (if any) (with schema name).

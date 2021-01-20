@@ -4,7 +4,7 @@
 \alias{dbExistsUserEM}
 \title{User Existence?}
 \usage{
-dbExistsUserEM(conn, user, display = TRUE, exec = TRUE, ...)
+dbExistsUserEM(conn, user, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Required.}
@@ -14,8 +14,6 @@ dbExistsUserEM(conn, user, display = TRUE, exec = TRUE, ...)
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{...}{Dots passed.}
 }
 \value{
 TRUE(exists) or FALSE(not exists)

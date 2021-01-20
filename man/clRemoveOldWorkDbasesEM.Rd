@@ -4,14 +4,12 @@
 \alias{clRemoveOldWorkDbasesEM}
 \title{From the Cluster, Remove Old Work Databases}
 \usage{
-clRemoveOldWorkDbasesEM(display = TRUE, exec = TRUE, ...)
+clRemoveOldWorkDbasesEM(display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{Dots}{passed.}
 }
 \value{
 TRUE(always).  Will attempt to drop each 'rtmp%' database (but not the current work database).

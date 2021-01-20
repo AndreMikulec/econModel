@@ -1178,7 +1178,7 @@ tryCatchLog::tryCatchLog({
 
   ## Execute the query and return TRUE
   if (exec) {
-    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query, ...)})
+    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)})
     colnames(Results) <- toupper(colnames(Results))
     return(Results)
   }
@@ -1251,7 +1251,6 @@ tryCatchLog::tryCatchLog({
 #' Is the connection not expired or not valid?
 #'
 #' @param conn PostgreSQL DBI connection.
-#' @param ... Dots passed.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(connected) or FALSE(otherwise)
@@ -1261,10 +1260,8 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbIsConnectedEM <- function(conn, display = TRUE, exec = TRUE, ...) {
+dbIsConnectedEM <- function(conn, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
-
-  Dots <- list(...)
 
   if(missing(conn)) {
     stop(paste0("Parameter \"conn\" is required."))
@@ -1589,7 +1586,6 @@ tryCatchLog::tryCatchLog({
 #' @param Statement String. Required.  DML/DDL/DCL to execute
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @param ... Dots passed.
 #' @returns Execution of "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
@@ -1597,7 +1593,7 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbExecuteEM <- function(conn, Statement, display = TRUE, exec = TRUE, ...) {
+dbExecuteEM <- function(conn, Statement, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
   #correct for TZ
@@ -1606,8 +1602,6 @@ tryCatchLog::tryCatchLog({
     Sys.setenv(TZ="UTC")
   }
   on.exit({Sys.setenv(TZ=oldtz)})
-
-  Dots <- list(...)
 
   if(missing(conn)) {
     stop("Parameter \"conn\" must be provided.")
@@ -1652,7 +1646,6 @@ tryCatchLog::tryCatchLog({
 #' @param conn PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".
 #' @param connName String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".
 #' @param env Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".
-#' @param ... Dots passed.
 #' @returns Disconnects "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
@@ -1703,7 +1696,6 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param connName String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".
 #' @param env Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".
-#' @param ... Dots passed.
 #' @returns Disconnects "connEM" from the database or disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
@@ -1738,7 +1730,6 @@ tryCatchLog::tryCatchLog({
 #' @param user String. Required.  Potential user in the database.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @param ... Dots passed.
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
 #' \dontrun{
@@ -1746,7 +1737,7 @@ tryCatchLog::tryCatchLog({
 #'  dbExistsUserEM(conn, user = "rtmp")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsUserEM <- function(conn, user, display = TRUE, exec = TRUE, ...) {
+dbExistsUserEM <- function(conn, user, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
   tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, x = user), ");")
@@ -2103,7 +2094,6 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @param Dots passed.
 #' @returns TRUE(always).  Will attempt to drop each 'rtmp%' database (but not the current work database).
 #' @examples
 #' \dontrun{
@@ -2112,13 +2102,11 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbDriver dbConnect dbQuoteLiteral dbDisconnect
 #' @export
-clRemoveOldWorkDbasesEM <- function(display = TRUE, exec = TRUE, ...) {
+clRemoveOldWorkDbasesEM <- function(display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
   ops <- options()
   options(warn = 1L)
-
-  Dots <- list(...)
 
   drv  <- DBI::dbDriver("PostgreSQL")
   conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
@@ -2192,7 +2180,6 @@ tryCatchLog::tryCatchLog({
 #' @param side String. View from the "parent side. Default is "parent".  Alternately, the view from the "child side" is the value "child".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @param ... Dots passed.
 #' @returns Dataframe of inherited or inherit_from "objects" (if any) (with schema name).
 #' @references
 #' \cite{Get number of partitions in PostgreSQL database
@@ -2897,7 +2884,7 @@ tryCatchLog::tryCatchLog({
       MatchSchemaIdx <- match(noquote(paste0(first(nameque))) %in% Results$CHILD_SCHEMA)
       MatchNameIdx   <- match(noquote(paste0(last(nameque)))  %in% Results$CHILD)
       if(length(match(MatchSchemaIdx %in% MatchNameIdx))) {
-         message("Partition object with Partition, relationship already exists, so skipping ...")
+         message("Partition object with Partition, relationship already exists, so skipping . . .")
         return(invisible(TRUE))
       }
     }
@@ -3046,8 +3033,8 @@ tryCatchLog::tryCatchLog({
 
         if(length(PrimaryKey)) {
           # alter table add constraint x primary key(default)
-          # so, I can do global . .
-          # insert into a ... on conflict on constraint a_pk do update set . . .
+          # so, I can do global . . .
+          # INSERT INTO a . . . ON CONFLICT ON CONSTRAINT a_pk DO UPDATE SET . . .
           dbAddKeyEM(conn, name = DfName, colname = PrimaryKey, const.name = paste0(DfName, "_pk"),
                      display = display, exec = exec)
         }
