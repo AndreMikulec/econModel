@@ -17,7 +17,7 @@ tryCatchLog::tryCatchLog({
                       , "R package \"econModel\" is *not yet* connected(ing) to a PosgreSQL-like database.\n"
                       , "\n"
                       , "(1) (If not already started), start the  PosgreSQL-like database.\n"
-                      , "(2) Run \"dbConnectEM()\" or for help type \"? econModel::dbConnectEM\"\n"
+                      , "(2) Run \"dbLoginEM()\" or for help type \"? econModel::dbLoginEM\"\n"
   )
   packageStartupMessage(start_message)
   invisible()
@@ -86,7 +86,7 @@ tryCatchLog::tryCatchLog({
   if(!"econmodel_db_driver" %in% names(ops)) {
     # currently, I only have an implementation for
     # PostgreSQL (or PostgreSQL-like) databases
-    ops <- append(ops, list(econmodel_db_driver = "PostgreSQL"))
+    ops <- append(ops, list(econmodel_db_driver = {try({RPostgreSQL::dbDriver("PostgreSQL")}, silent = TRUE); DBI::dbDriver("PostgreSQL")}))
   }
   options(ops)
   ops <- options()
