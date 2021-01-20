@@ -51,12 +51,12 @@ rownames(mtcars2) <- NULL
 # Creates the table (with zero rows).
 # Appends data (with the Df having the same columns that the server).
 mtcars2s <- mtcars2[1:5,]
-dbdfMatchColsEM(conn, DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+dbdfMatchColsEM(conn, name = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
 # Appends data (with the Df having less columns that the server database).
 # Those server columns, that are not found in the Df, are added to the Df.
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lDf)
+dbdfMatchColsEM(conn, name = "mtcars", Df = mtcars2lDf)
 
 # Appends data (with the server database having less columns that the Df).
 # Those Df columns, that are not found in the server, are added to the sever.
@@ -67,6 +67,6 @@ mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                DfNew
               }; rm(DfNew)
 
-dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lSv)
+dbdfMatchColsEM(conn, name = "mtcars", Df = mtcars2lSv)
 }
 }

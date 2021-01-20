@@ -2049,20 +2049,20 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' name <- c("schema","table")
-#' dbObjectNameFixEM(conn, name)
+#' objectNameFixEM(conn, name)
 #'
 #' #current search path schema is added to single-length character object (if only table is given)
 #' name<-"table"
-#' dbObjectNameFixEM(conn,name)
+#' objectNameFixEM(conn,name)
 #'
 #' #schema or table names with double quotes should be given exactly as they are
 #' (make sure to wrap in single quotes in R):
 #' name <- c('sch"ema','"table"')
-#' dbObjectNameFixEM(conn,name)
+#' objectNameFixEM(conn,name)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier ANSI
-dbObjectNameFixEM <- function(conn, o.nm, as.identifier = TRUE, dbQuote = "Identifier", display = TRUE, exec = TRUE) {
+objectNameFixEM <- function(conn, o.nm, as.identifier = TRUE, dbQuote = "Identifier", display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
@@ -2332,7 +2332,7 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"name\" is required.")
   }
 
-  SchemaAndName <- dbObjectNameFixEM(conn, o.nm = name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
+  SchemaAndName <- objectNameFixEM(conn, o.nm = name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
 
   if(side == "parent") {
     Restriction <-
@@ -2470,7 +2470,7 @@ tryCatchLog::tryCatchLog({
 dbCreatePartBoundTableEM <- function(conn, name, temporary = FALSE, if.not.exists = FALSE, like.name = character() , like.name.defaults = FALSE, like.name.constraints = FALSE,  fields, part.by = character(), part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  table <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2483,7 +2483,7 @@ tryCatchLog::tryCatchLog({
 
   like.tableque <- character()
   if(length(like.name)) {
-    like.table <- dbObjectNameFixEM(conn, o.nm = like.name, display = display, exec = exec)
+    like.table <- objectNameFixEM(conn, o.nm = like.name, display = display, exec = exec)
     if(temporary) {
       if(length(table) == 2) {
         like.tableque <- paste0(last(like.table))
@@ -2502,9 +2502,9 @@ tryCatchLog::tryCatchLog({
                         if(like.name.defaults)    " INCLUDING DEFAULTS ",
                         if(like.name.constraints) " INCLUDING CONSTRAINTS ",
                          ");")
-    dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+    Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
     # short circuit
-    return(invisible(TRUE))
+    return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = unlist(Results))))
 
   }
 
@@ -2561,13 +2561,14 @@ tryCatchLog::tryCatchLog({
 #' @export
 dbPartKeyColEM <- function(conn, DfName, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
+
   DetectedPartKeyDef <- character()
   Results <- dbListInheritEM(conn, DfName)
   if(!NROW(Results)) {
     stop(paste0("Object ", DfName, " is missing from the database."))
   }
-  SubResults <- dbListInheritEM(conn, name = DfName, display = display, exec = exec)$PARENT_PART_KEY_DEF
-  if(is.na(SubResults)) {
+  PARENT_PART_KEY_DEF <- dbListInheritEM(conn, name = DfName, display = display, exec = exec)$PARENT_PART_KEY_DEF
+  if(is.na(PARENT_PART_KEY_DEF)) {
     # not a "p" - partitioned. (is "r" - regular)
     DetectedPartKeyCol <- character()
   } else {
@@ -2576,9 +2577,9 @@ tryCatchLog::tryCatchLog({
     # NOT TOO CLEVER - WILL NOT CORRECTLY EXTRACT EXPRESSIONS
     DetectedPartKeyCol <- RegExtract("(?<=\\()(\\w+)(?=\\))", SubResults)
   }
-  return(DetectedPartKeyCol)
+  return(data.frame(DBPARTKEYCOLEM = DetectedPartKeyCol))
 
-  return(invisible(data.frame(DBPARTKEYCOLEM = logical())))
+  return(invisible(data.frame(DBPARTKEYCOLEM = character())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2600,13 +2601,14 @@ tryCatchLog::tryCatchLog({
 #' @export
 dbPartBoundEM <- function(conn, DfName, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
+
   DetectedPartBound <- character()
   Results <- dbListInheritEM(conn, DfName)
   if(!NROW(Results)) {
     stop(paste0("Object ", DfName, " is missing from the database."))
   }
-  SubResults <- dbListInheritEM(conn, name = DfName, display = display, exec = exec)$PARENT_PART_BOUND
-  if(is.na(SubResults)) {
+  PARENT_PART_BOUND <- dbListInheritEM(conn, name = DfName, display = display, exec = exec)$PARENT_PART_BOUND
+  if(is.na(PARENT_PART_BOUND)) {
     # does not have a parent
     DetectedPartBound <- character()
   } else {
@@ -2618,9 +2620,9 @@ tryCatchLog::tryCatchLog({
     PartBound <- unlist(strsplit(PartBound, ","))
     DetectedPartBound <- PartBound
   }
-  return(DetectedPartBound)
+  return(data.frame(DBPARTBOUNDTABLEEM = DetectedPartBound))
 
-  return(invisible(data.frame(DBPARTBOUNDTABLEEM = logical())))
+  return(invisible(data.frame(DBPARTBOUNDTABLEEM = character())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2659,7 +2661,7 @@ tryCatchLog::tryCatchLog({
 dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  table <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2682,10 +2684,10 @@ tryCatchLog::tryCatchLog({
     Server.fields.C.classes <- DBI::dbColumnInfo(r)
     DBI::dbClearResult(r)
     colnames(Server.fields.C.classes) <- toupper(colnames(Server.fields.C.classes))
-    return(Server.fields.C.classes)
+    return(Server.fields.C.classes) # NAME TYPE
   }
 
-  return(invisible(data.frame(DBSERVERFIELDSCCLASSESEM = logical())))
+  return(invisible(data.frame(NAME = character(), TYPE = character())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2720,10 +2722,10 @@ tryCatchLog::tryCatchLog({
     Server.fields.classes <- data.frame(sapply(Df, function(x) DBI::dbDataType(conn, x)))
     Server.fields.classes <- cAppend(Server.fields.classes, list(name = row.names(Server.fields.classes)), after = 0L)
     colnames(Server.fields.classes) <- c("NAME", "TYPE")
-    return(Server.fields.classes)
+    return(Server.fields.classes) # NAME TYPE
   }
 
-  return(invisible(data.frame(DFSERVERFIELDSCLASSESEM = logical())))
+  return(invisible(data.frame(NAME = character(), TYPE = character())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2749,7 +2751,7 @@ tryCatchLog::tryCatchLog({
 dbRClmnsClassesEM <- function(conn, name, temporary = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  table <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2760,6 +2762,7 @@ tryCatchLog::tryCatchLog({
     tableque <- paste(table, collapse = ".")
   }
 
+  # !! [ ] High consider adding CClasses fallback when the rowcount is zero(0)
   tmp.query <- paste0("SELECT * FROM ", tableque , " LIMIT 1;")
   ## Display the query
   if (display) {
@@ -2774,10 +2777,10 @@ tryCatchLog::tryCatchLog({
     R.clmns.classes <- data.frame(sapply(R.zero.rows, class))
     R.clmns.classes <- cAppend(R.clmns.classes, list(name = row.names(R.clmns.classes)), after = 0L)
     colnames(R.clmns.classes) <- c("NAME", "TYPE")
-    return(R.clmns.classes)
+    return(R.clmns.classes) # NAME TYPE
   }
 
-  return(invisible(data.frame(DBRCLMNSCLASSESEM = logical())))
+  return(invisible(data.frame(NAME = character(), TYPE = character())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2811,7 +2814,7 @@ tryCatchLog::tryCatchLog({
 
   if(if.not.exists && length(const.name)) {
 
-    SchemaAndName <- dbObjectNameFixEM(conn, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
+    SchemaAndName <- objectNameFixEM(conn, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
 
     Restriction <-
       paste0("
@@ -2824,7 +2827,7 @@ tryCatchLog::tryCatchLog({
     # 'p' - primary key constraint
     # 'u' - unique constraint
     # 'f' - foreign key constraint
-    #  +  - some rare others
+    #  +  - some rare others (e.g. exclusion constraint, . . .)
     #
     # List all check constraints in PostgreSQL database
     # 2019
@@ -2850,14 +2853,14 @@ tryCatchLog::tryCatchLog({
 
     Results <- dbGetQueryEM(conn, Statement = Statement, display = display, exec = exec)
 
-    if(!NROW(Results)) {
+    if(NROW(Results)) {
       message(paste0("Constraint ", toupper(paste0(SchemaAndName, collapse = ".")) , " already exists, so skipping . . ."))
-      return(TRUE)
+      return(invisible(data.frame(DBADDKEYEM = unlist(Results))))
     }
 
   }
 
-  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
 
   colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
@@ -2869,7 +2872,7 @@ tryCatchLog::tryCatchLog({
   else if (type == "FOREIGN") {
     colref <- paste(DBI::dbQuoteIdentifier(conn, colref),
                     collapse = ", ")
-    reference <- dbObjectNameFixEM(conn, o.nm = reference, display = display, exec = exec)
+    reference <- objectNameFixEM(conn, o.nm = reference, display = display, exec = exec)
     references <- paste0(" REFERENCES ", paste(reference,
                                                collapse = "."), " (", colref, ")")
   }
@@ -2877,9 +2880,9 @@ tryCatchLog::tryCatchLog({
                       if(type != "check") " KEY ",
                       " (", colname, if(type == "check") paste0(" = ", check.by) , ")", references, ";")
 
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
-  if (exec) {
-    return(TRUE)
+  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
+  if(NROW(Results)) {
+    return(invisible(data.frame(DBADDKEYEM = unlist(Results))))
   }
 
   return(invisible(data.frame(DFADDKEYEM = logical())))
@@ -2918,7 +2921,7 @@ tryCatchLog::tryCatchLog({
   else {
     idxname <- DBI::dbQuoteIdentifier(conn, idxname)
   }
-  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
   colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
   unique <- ifelse(unique, "UNIQUE ", "")
@@ -2928,12 +2931,12 @@ tryCatchLog::tryCatchLog({
   tmp.query <- paste0("CREATE ", unique, "INDEX ", if(if.not.exists) " IF NOT EXISTS ", if(only) " ON ONLY ", idxname,
                       " ON ", nameque, usemeth, " (", colname, ");")
 
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if (exec) {
-    return(TRUE)
+  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+  if (NROW(Results)) {
+    return(invisible(data.frame(DFADDINDEXEM = unlist(Results))))
   }
 
-  return(invisible(data.frame(DBINDEXEM = logical())))
+  return(invisible(data.frame(DFADDINDEXEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2960,7 +2963,7 @@ dbColumnEM <- function (conn, name, colname, action = c("add", "drop"), coltype 
                         cascade = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
   colname <- DBI::dbQuoteIdentifier(conn, colname)
   action <- toupper(match.arg(action))
@@ -2969,10 +2972,10 @@ tryCatchLog::tryCatchLog({
   tmp.query <- paste0("ALTER TABLE ", nameque, " ", toupper(action),
                       " COLUMN ", colname, " ", args, ";")
 
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
 
-  if (exec) {
-    return(TRUE)
+  if(NROW(Results)) {
+    return(invisible(data.frame(DBCOLUMNEM = unlist(Results))))
   }
 
   return(invisible(data.frame(DBCOLUMNEM = logical())))
@@ -3002,36 +3005,33 @@ dbAttachPartEM <- function (conn, dbobject = "table", name, partition, if.not.ex
                             display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
 
-  partition <- dbObjectNameFixEM(conn, o.nm = partition, display = display, exec = exec)
+  partition <- objectNameFixEM(conn, o.nm = partition, display = display, exec = exec)
   partitionque <- paste(partition, collapse = ".")
 
   if(if.not.exists) {
      Results <- dbListInheritEM(conn, name = name, display = display, exec = exec)
+     # SQL Results
      if(!NROW(Results)) {
        message(past0("Partitioned ", toupper(dbobject), " ", paste0(nameque, collapse = "."), " does not exist, so skipping . . ."))
-       return(invisible(TRUE))
+       message(paste0("Target ", toupper(dbobject), " ", paste0(partitionque, collapse = "."), " does not exist, so skipping . . ."))
+       return(invisible(data.frame(DBATTACHPARTEM = FALSE)))
      }
   }
 
-  if(if.not.exists) {
-    Results <- dbListInheritEM(conn, name = partition, display = display, exec = exec)
-    if(!NROW(Results)) {
-      message(past0("Target ", toupper(dbobject), " ", paste0(partitionque, collapse = "."), " does not exist, so skipping . . ."))
-      return(invisible(TRUE))
-    }
-  }
 
   if(if.not.exists) {
     Results <- dbListInheritEM(conn, name = name, display = display, exec = exec)
-    if(1) {
+    # SQL Results
+    if(NROW(Results)) {
       MatchSchemaIdx <- match(noquote(paste0(first(nameque))) %in% Results$CHILD_SCHEMA)
       MatchNameIdx   <- match(noquote(paste0(last(nameque)))  %in% Results$CHILD)
       if(length(match(MatchSchemaIdx %in% MatchNameIdx))) {
          message("Partition object with Partition, relationship already exists, so skipping . . .")
-        return(invisible(TRUE))
+        # NOTHING TO DO IS OK
+        return(invisible(data.frame(DBATTACHPARTEM = TRUE)))
       }
     }
   }
@@ -3042,10 +3042,10 @@ tryCatchLog::tryCatchLog({
   tmp.query <- paste0("ALTER ", toupper(dbobject) , " ", nameque, " ", action,
                       " PARTITION ", partitionque, " ", args, ";")
 
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
 
-  if (exec) {
-    return(TRUE)
+  if (NROW(Results)) {
+    return(invisible(data.frame(DBATTACHPARTEM = unlist(Results))))
   }
 
   return(invisible(data.frame(DBATTACHPARTEM = logical())))
@@ -3148,7 +3148,6 @@ dbWriteTableEM <- function(conn, DfName = substitute(Df), Df,
                            ...) {
 tryCatchLog::tryCatchLog({
 
-  Dots <- list(...)
 
   if(lowerDfName) {
     DfName       <- tolower(DfName)
@@ -3160,7 +3159,19 @@ tryCatchLog::tryCatchLog({
     colnames(Df) <- gsub("[.]", "_", colnames(Df))
   }
 
-  if(!DBI::dbExistsTable(conn, name = DfName)) {
+  table <- objectNameFixEM(conn, o.nm = DfName, display = display, exec = exec)
+  if(temporary) {
+    if(length(table) == 2) {
+      tableque <- paste0(last(table))
+    } else {
+      tableque <- paste0(table)
+    }
+  } else {
+    tableque <- paste(table, collapse = ".")
+  }
+
+                                    # DfName
+  if(!DBI::dbExistsTable(conn, name = tableque)) {
     # table does not exist
     # create partitioned table ("p" - partitioned table) (c1)
     #
@@ -3171,21 +3182,30 @@ tryCatchLog::tryCatchLog({
       # create the parent partitioned table and its indexes onlies
       if(length(SplittedDf)) {
         # empty partitioned parent table
-        dbCreatePartBoundTableEM(conn, name = DfName, fields = Df,
+        Results <- dbCreatePartBoundTableEM(conn, name = DfName, fields = Df,
                                  part.key.def = if(length(PartKeyCol)) { paste0(" LIST (", PartKeyCol, ") ") } else { character() },
                                  display = display, exec = exec)
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
 
-        # create the partitioned parent table index onlies
+        # create the partitioned parent table index ONLYies
         mapply(function(Index, IndexName) {
-          dbIndexEM(conn, name = DfName, colname = Index, only = TRUE, idxname = paste0(DfName , "_", IndexName, "_idx"))
+          Results <- dbIndexEM(conn, name = DfName, colname = Index, only = TRUE, idxname = paste0(DfName , "_", IndexName, "_idx"))
+          if(NROW(Results) && !unlist(Results)) {
+            return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+          }
         }, Indexes, Names(Indexes), SIMPLIFY = FALSE)
 
         if(length(PrimaryKey)) {
           # alter table add constraint x primary key(default)
           # so, I can do global . . .
           # INSERT INTO a . . . ON CONFLICT ON CONSTRAINT a_pk DO UPDATE SET . . .
-          dbAddKeyEM(conn, name = DfName, colname = PrimaryKey, const.name = paste0(DfName, "_pk"),
+          Results <- dbAddKeyEM(conn, name = DfName, colname = PrimaryKey, const.name = paste0(DfName, "_pk"),
                      display = display, exec = exec)
+          if(NROW(Results) && !unlist(Results)) {
+            return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+          }
         }
 
       }
@@ -3203,24 +3223,35 @@ tryCatchLog::tryCatchLog({
         DfPartName <- paste0(DfName, "_", DfPartNameSuffix)
 
         # create an empty table (to be a future partition)
-        dbCreatePartBoundTableEM(conn, name = DfPartName, like = DfName,  like.name.defaults = TRUE,
+        Results <- dbCreatePartBoundTableEM(conn, name = DfPartName, like = DfName,  like.name.defaults = TRUE,
                                  display = display, exec = exec)
-
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
         # create empty table indexes
         mapply(function(Index, IndexName) {
-          dbIndexEM(conn, name = DfPartName, colname = Index, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+          Results <- dbIndexEM(conn, name = DfPartName, colname = Index, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+          if(NROW(Results) && !unlist(Results)) {
+            return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+          }
         }, Indexes, Names(Indexes), SIMPLIFY = FALSE)
 
         if(length(PrimaryKey)) {
           # alter table add constraint x primary key(default)
-          dbAddKeyEM(conn, name = DfPartName, colname = PrimaryKey, const.name = paste0(DfPartName, "_pk"),
+          Results <- dbAddKeyEM(conn, name = DfPartName, colname = PrimaryKey, const.name = paste0(DfPartName, "_pk"),
                      display = display, exec = exec)
+          if(NROW(Results) && !unlist(Results)) {
+            return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+          }
         }
 
         # alter table add constraint x check
-        dbAddKeyEM(conn, name = DfPartName, colname = PartKeyCol, const.name = paste0(DfPartName, "_chk"),
+        Results <- dbAddKeyEM(conn, name = DfPartName, colname = PartKeyCol, const.name = paste0(DfPartName, "_chk"),
                    type = "check", check.by = DfPartBoundValue,
                    display = display, exec = exec)
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
 
         # DfPart: data to be loaded
         DfPart <- dbdfMatchColsEM(conn, name = DfName, value = DfPart, display = display, exec = exec)
@@ -3228,25 +3259,34 @@ tryCatchLog::tryCatchLog({
         # col.names: a character vector with column names; column names are quoted to work as SQL identifiers. Thus, the column names are case sensitive and make.db.names will NOT be used here.
         # field.types: is a list of named field SQL types where names(field.types) provide the new table's column names (if missing, field types are inferred using dbDataType).
         # RPostgreSQL/html/dbReadTable-methods.html
-        DBI::dbWriteTable(conn, name = DfName, value = DfPart, append = TRUE, row.names = FALSE)
-
+        Results <- DBI::dbWriteTable(conn, name = DfName, value = DfPart, append = TRUE, row.names = FALSE)
+        if(NROW(Results) && !Results) {
+          return(invisible(data.frame(DBWRITETABLEEM = Results)))
+        }
         # alter "partition table" attach partition
-        dbAttachPartEM(conn, name = DfName, partition = DfPartName, part.bound.value = DfPartBoundValue,
+        Results <- dbAttachPartEM(conn, name = DfName, partition = DfPartName, part.bound.value = DfPartBoundValue,
                        display = display, exec = exec)
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
 
         # alter "partition index" attach partition
         mapply(function(IndexName) {
 
-          dbAttachPartEM(conn, dbobject = "index",
+          Results <- dbAttachPartEM(conn, dbobject = "index",
                          name =  paste0(DfName , "_", IndexName, "_idx"),
                          partition = paste0(DfPartName , "_", IndexName, "_idx"),
                          display = display, exec = exec)
+          if(NROW(Results) && !unlist(Results)) {
+            return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+          }
 
         }, Names(Indexes), SIMPLIFY = FALSE)
 
       }, SplittedDf, Names(SplittedDf), SIMPLIFY = FALSE)
 
     }
+    return(invisible(data.frame(DBWRITETABLEEM = TRUE)))
 
   } else { # already exists
 
@@ -3266,27 +3306,38 @@ tryCatchLog::tryCatchLog({
       DfPartName <- paste0(DfName, "_", DfPartNameSuffix)
 
       # create an empty table (to be a future partition)
-      dbCreatePartBoundTableEM(conn, if.not.exists = TRUE, name = DfPartName, like = DfName,  like.name.defaults = TRUE,
+      Results <- dbCreatePartBoundTableEM(conn, if.not.exists = TRUE, name = DfPartName, like = DfName,  like.name.defaults = TRUE,
                                display = display, exec = exec)
+      if(NROW(Results) && !unlist(Results)) {
+        return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+      }
 
       # create empty table indexes
       mapply(function(Index, IndexName) {
-        dbIndexEM(conn, name = DfPartName, colname = Index, if.not.exists = TRUE, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+        Results <- dbIndexEM(conn, name = DfPartName, colname = Index, if.not.exists = TRUE, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
       }, Indexes, Names(Indexes), SIMPLIFY = FALSE)
 
       if(length(PrimaryKey)) {
-      # alter table add constraint x primary key(default)
-      dbAddKeyEM(conn, name = DfPartName, colname = PrimaryKey, if.not.exists = TRUE,
-                 const.name = paste0(DfPartName, "_pk"),
-                 display = display, exec = exec)
+        # alter table add constraint x primary key(default)
+        Results <- dbAddKeyEM(conn, name = DfPartName, colname = PrimaryKey, if.not.exists = TRUE,
+                   const.name = paste0(DfPartName, "_pk"),
+                   display = display, exec = exec)
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
       }
 
       # alter table add constraint x check
-      dbAddKeyEM(conn, name = DfPartName, colname = PartKeyCol, if.not.exists = TRUE,
+      Results <- dbAddKeyEM(conn, name = DfPartName, colname = PartKeyCol, if.not.exists = TRUE,
                  const.name = paste0(DfPartName, "_chk"),
                  type = "check", check.by = DfPartBoundValue,
                  display = display, exec = exec)
-
+      if(NROW(Results) && !unlist(Results)) {
+        return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+      }
 
       # DfPart: data to be loaded
       DfPart <- dbdfMatchColsEM(conn, name = DfName, value = DfPart, display = display, exec = exec)
@@ -3294,34 +3345,40 @@ tryCatchLog::tryCatchLog({
       # col.names: a character vector with column names; column names are quoted to work as SQL identifiers. Thus, the column names are case sensitive and make.db.names will NOT be used here.
       # field.types: is a list of named field SQL types where names(field.types) provide the new table's column names (if missing, field types are inferred using dbDataType).
       # RPostgreSQL/html/dbReadTable-methods.html
-      DBI::dbWriteTable(conn, name = DfName, value = DfPart, append = TRUE, row.names = FALSE)
+      Results <- DBI::dbWriteTable(conn, name = DfName, value = DfPart, append = TRUE, row.names = FALSE)
+      if(NROW(Results) && !Results) {
+        return(invisible(data.frame(DBWRITETABLEEM = Results)))
+      }
 
       # alter "partition table" attach partition
-      dbAttachPartEM(conn, name = DfName, partition = DfPartName, if.not.exists = TRUE, part.bound.value = DfPartBoundValue,
+      Results <- dbAttachPartEM(conn, name = DfName, partition = DfPartName, if.not.exists = TRUE, part.bound.value = DfPartBoundValue,
                      display = display, exec = exec)
+      if(NROW(Results) && !unlist(Results)) {
+        return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+      }
 
       # alter "partition index" attach partition
       mapply(function(IndexName) {
 
-        dbAttachPartEM(conn, dbobject = "index",
+        Results <- dbAttachPartEM(conn, dbobject = "index",
                        name =  paste0(DfName , "_", IndexName, "_idx"),
                        partition = paste0(DfPartName , "_", IndexName, "_idx"),
                        if.not.exists = TRUE,
                        display = display, exec = exec)
+        if(NROW(Results) && !unlist(Results)) {
+          return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
+        }
 
       }, Names(Indexes), SIMPLIFY = FALSE)
 
     }, SplittedDf, Names(SplittedDf), SIMPLIFY = FALSE)
 
+    return(invisible(data.frame(DBWRITETABLEEM = TRUE)))
   }
 
   return(invisible(data.frame(DBWRITETABLEEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
-
-
-
-
 
 
 
@@ -3355,12 +3412,12 @@ tryCatchLog::tryCatchLog({
 #' # Creates the table (with zero rows).
 #' # Appends data (with the Df having the same columns that the server).
 #' mtcars2s <- mtcars2[1:5,]
-#' dbdfMatchColsEM(conn, DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+#' dbdfMatchColsEM(conn, name = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 #'
 #' # Appends data (with the Df having less columns that the server database).
 #' # Those server columns, that are not found in the Df, are added to the Df.
 #' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-#' dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lDf)
+#' dbdfMatchColsEM(conn, name = "mtcars", Df = mtcars2lDf)
 #'
 #' # Appends data (with the server database having less columns that the Df).
 #' # Those Df columns, that are not found in the server, are added to the sever.
@@ -3371,7 +3428,7 @@ tryCatchLog::tryCatchLog({
 #'                DfNew
 #'               }; rm(DfNew)
 #'
-#' dbdfMatchColsEM(conn, DfName = "mtcars", Df = mtcars2lSv)
+#' dbdfMatchColsEM(conn, name = "mtcars", Df = mtcars2lSv)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo as.Date
@@ -3414,7 +3471,9 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = F
 
   mapply(function(Name, Type) {
     dbColumnEM(conn, name = name, colname = Name, coltype = Type, display = display, exec = exec)
-    invisible()
+    if(NROW(Results) && !unlist(Results)) {
+      stop(paste0("Can not add table ", name))
+    }
   },
   dfServerFieldsClassesEM(conn, Df = Df, display = display, exec = exec)$NAME[ColsToAddtoServerIndex],
   dfServerFieldsClassesEM(conn, Df = Df, display = display, exec = exec)$TYPE[ColsToAddtoServerIndex],
@@ -3427,6 +3486,6 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = F
 
   return(Df)
 
-  return(invisible(data.frame(DBDFMATCHOLSEM = logical())))
+  stop(paste0("Can not match/create the local data.frame to its equivalent found on the server \"conn\"."))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
