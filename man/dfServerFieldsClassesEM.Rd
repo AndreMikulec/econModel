@@ -5,12 +5,12 @@
 \title{Given an R data.frame, Get The Equivalent Database Server Column Types
 If a data.frame would be promoted to be on a database server, then these would be the equivalent Server datatypes.}
 \usage{
-dfServerFieldsClassesEM(conn, Df, exec = TRUE, display = TRUE)
+dfServerFieldsClassesEM(conn, value, exec = TRUE, display = TRUE)
 }
 \arguments{
 \item{conn}{A connection object.}
 
-\item{Df}{data.frame}
+\item{value}{data.frame}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 

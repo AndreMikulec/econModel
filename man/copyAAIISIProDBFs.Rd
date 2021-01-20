@@ -139,7 +139,7 @@ formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18627))
 # Use dbWriteTableEM to load the FST files into the PostgreSQL database
 # # NEED
 # 0. Partition detection\creation db*x* functions.
-# 1. NEED dbWriteTableEM to read FST files into local "Df"s
+# 1. NEED dbWriteTableEM to read FST files into local data.frames
 #         NEED "inital empty table" creation to be a paritioned table
 #         NEED ListPartitionCols = c()
 # 2. dbWriteTableEnMassEM

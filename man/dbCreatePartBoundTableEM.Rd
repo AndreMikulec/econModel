@@ -12,7 +12,7 @@ dbCreatePartBoundTableEM(
   like.name = character(),
   like.name.defaults = FALSE,
   like.name.constraints = FALSE,
-  fields,
+  fields = character(),
   part.by = character(),
   part.bound = character(),
   part.key.def = character(),

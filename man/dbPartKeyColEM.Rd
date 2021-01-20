@@ -4,12 +4,12 @@
 \alias{dbPartKeyColEM}
 \title{From a PostgreSQL Object Get Its Partition Key Definition}
 \usage{
-dbPartKeyColEM(conn, DfName, display = TRUE, exec = TRUE)
+dbPartKeyColEM(conn, name, display = TRUE, exec = TRUE)
 }
 \arguments{
 \item{conn}{PostgreSQLConnection.}
 
-\item{DfName}{String. Name of the PostgreSQL object.}
+\item{name}{String. Name of the PostgreSQL object.}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 

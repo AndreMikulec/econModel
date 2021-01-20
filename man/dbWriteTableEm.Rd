@@ -6,8 +6,8 @@
 \usage{
 dbWriteTableEM(
   conn,
-  DfName = substitute(Df),
-  Df,
+  name = substitute(value),
+  value,
   PartitionOf = character(),
   PartBoundValue = character(),
   PartKeyCol = character(),
@@ -24,9 +24,9 @@ dbWriteTableEM(
 \arguments{
 \item{conn}{A DBIConnection object, as returned by dbConnect().}
 
-\item{DfName}{String.  Default is substitute(Df). The name of the table to which the data frame is to be loaded.}
+\item{name}{String.  Default is substitute(value). The name of the table to which the data frame is to be loaded.}
 
-\item{Df, }{data.frame. Required. To be loaded to the database.}
+\item{value, }{data.frame. Required. To be loaded to the database.}
 
 \item{PartitionOf}{String.  If the table is (or to be) a participant as a Partition, then this table is a partion of the this partitioned table "PartitionOf".}
 
@@ -97,23 +97,23 @@ mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
 rownames(mtcars2) <- NULL
 #
 # Creates the table (with zero rows).
-# Appends data (with the Df having the same columns that the server).
+# Appends data (with the value(data.frame) having the same columns that the server).
 mtcars2s <- mtcars2[1:5,]
-dbWriteTableEM(get("connEM"), DfName = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+dbWriteTableEM(get("connEM"), name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
-# Appends data (with the Df having less columns that the server database).
-# Those server columns, that are not found in the Df, are added to the Df.
+# Appends data (with the value(data.frame) having less columns that the server database).
+# Those server columns, that are not found in the value(data.frame), are added to the value(data.frame).
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-dbWriteTableEM(get("connEM"), DfName = "mtcars", Df = mtcars2lDf)
+dbWriteTableEM(get("connEM"), name = "mtcars", value = mtcars2lDf)
 
-# Appends data (with the server database having less columns that the Df).
-# Those Df columns, that are not found in the server, are added to the sever.
+# Appends data (with the server database having less columns that the value(data.frame)).
+# Those value(data.frame) columns, that are not found in the server, are added to the sever.
 mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
                DfNew[["model"]] <- DfNew[["model_new"]]
                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
                DfNew
               }; rm(DfNew)
-dbWriteTableEM(get("connEM"), DfName = "mtcars", Df = mtcars2lSv)
+dbWriteTableEM(get("connEM"), DfName = "mtcars", value = mtcars2lSv)
 }
 }

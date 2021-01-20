@@ -2,7 +2,7 @@
 % Please edit documentation in R/AmerAssocIndividInvestorsAAII.R
 \name{nameVect}
 \alias{nameVect}
-\title{Create a Named Vector from a dataframe, Table or Vector}
+\title{Create a Named Vector from a Data.frame, Table or Vector}
 \usage{
 nameVect(x, name)
 }

@@ -49,17 +49,17 @@ mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
 rownames(mtcars2) <- NULL
 #
 # Creates the table (with zero rows).
-# Appends data (with the Df having the same columns that the server).
+# Appends data (with the value(data.frame) having the same columns that the server).
 mtcars2s <- mtcars2[1:5,]
-dbdfMatchColsEM(conn, name = "mtcars",  Df = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+dbdfMatchColsEM(conn, name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
-# Appends data (with the Df having less columns that the server database).
-# Those server columns, that are not found in the Df, are added to the Df.
+# Appends data (with the value(data.frame) having less columns that the server database).
+# Those server columns, that are not found in the value(data.frame), are added to the value(data.frame).
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-dbdfMatchColsEM(conn, name = "mtcars", Df = mtcars2lDf)
+dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lDf)
 
-# Appends data (with the server database having less columns that the Df).
-# Those Df columns, that are not found in the server, are added to the sever.
+# Appends data (with the server database having less columns that the value(data.frame)).
+# Those value(data.frame) columns, that are not found in the server, are added to the server.
 mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
                DfNew[["model"]] <- DfNew[["model_new"]]
@@ -67,6 +67,6 @@ mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                DfNew
               }; rm(DfNew)
 
-dbdfMatchColsEM(conn, name = "mtcars", Df = mtcars2lSv)
+dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lSv)
 }
 }
