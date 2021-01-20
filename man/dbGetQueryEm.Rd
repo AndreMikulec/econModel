@@ -4,16 +4,27 @@
 \alias{dbGetQueryEM}
 \title{Results column names are always in UPPERCASE.}
 \usage{
-dbGetQueryEM(conn, Statement, display = TRUE, exec = TRUE)
+dbGetQueryEM(
+  conn,
+  Statement,
+  time_zone = "UTC",
+  client_encoding = "UTF8",
+  display = TRUE,
+  exec = TRUE
+)
 }
 \arguments{
 \item{conn}{A DBIConnection object, as returned by dbConnect().}
 
+\item{Statement}{a character string containing SQL. The statement "SELECT 1;" will test if a database connection is non-expired or is-valid. Then, the returned value is either data.frame(DBISCONNECTEDEM = TRUE) or data.frame(DBISCONNECTEDEM = TRUE).}
+
+\item{time_zone}{Execution time zone. Default is "UTC".}
+
+\item{client_encoding}{Execution encoding. Default is "UTF8".}
+
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{statement}{a character string containing SQL.}
 }
 \description{
 Thin wrapper over R CRAN package DBI function dbGetQuery

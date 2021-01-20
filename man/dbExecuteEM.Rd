@@ -4,12 +4,23 @@
 \alias{dbExecuteEM}
 \title{Executes in the  database}
 \usage{
-dbExecuteEM(conn, Statement, display = TRUE, exec = TRUE)
+dbExecuteEM(
+  conn,
+  Statement,
+  time_zone = "UTC",
+  client_encoding = "UTF8",
+  display = TRUE,
+  exec = TRUE
+)
 }
 \arguments{
 \item{conn}{PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".}
 
 \item{Statement}{String. Required.  DML/DDL/DCL to execute}
+
+\item{time_zone}{Execution time zone. Default is "UTC".}
+
+\item{client_encoding}{Execution encoding. Default is "UTF8".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 

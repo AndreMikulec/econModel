@@ -1153,21 +1153,30 @@ tryCatchLog::tryCatchLog({
 #' Thin wrapper over R CRAN package DBI function dbGetQuery
 #'
 #' @param conn A DBIConnection object, as returned by dbConnect().
-#' @param statement	a character string containing SQL.
+#' @param Statement	a character string containing SQL. The statement "SELECT 1;" will test if a database connection is non-expired or is-valid. Then, the returned value is either data.frame(DBISCONNECTEDEM = TRUE) or data.frame(DBISCONNECTEDEM = TRUE).
+#' @param time_zone Execution time zone. Default is "UTC".
+#' @param client_encoding Execution encoding. Default is "UTF8".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery
 #' @export
-dbGetQueryEM <- function(conn, Statement, display = TRUE, exec = TRUE) {
+dbGetQueryEM <- function(conn, Statement, time_zone = "UTC", client_encoding = "UTF8", display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  #correct for TZ
-  oldtz <- Sys.getenv('TZ')
-  if(oldtz=='') {
-    Sys.setenv(TZ="UTC")
+  if(missing(conn)) {
+    stop("Parameter \"conn\" must be provided.")
   }
+
+  if(missing(Statement)) {
+    stop("Parameter \"Statement\" must be provided.")
+  }
+
+  oldtz <- Sys.getenv("TZ")
+  Sys.setenv(TZ=time_zone)
   on.exit({Sys.setenv(TZ=oldtz)})
+
+  DBI::dbExecute(conn, statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
 
   tmp.query <- Statement
   ## Display the query
@@ -1176,14 +1185,21 @@ tryCatchLog::tryCatchLog({
     message(tmp.query)
   }
 
-  ## Execute the query and return TRUE
-  if (exec) {
-    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)})
-    colnames(Results) <- toupper(colnames(Results))
-    return(Results)
+  if(exec) {
+    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
   }
+  if(exec && !inherits(Results, "try-error")) {
+    # catch all
+    return(data.frame(Results))
+  } else if(!exec) {
+    return(invisible(data.frame(DBGETQUERYEM = logical())))
+  } else if(exec && inherits(Results, "try-error")) {
+     # SPECIAL
+     stop(paste0("Statement failed: ", tmp.query))
+     # return(data.frame(DBGETQUERYEM = logical()))
+  } else {}
 
-  invisible()
+  return(invisible(data.frame(DBGETQUERYEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1214,6 +1230,10 @@ tryCatchLog::tryCatchLog({
 dbSetPerformanceEM <- function(conn, exec = TRUE, display = TRUE) {
 tryCatchLog::tryCatchLog({
 
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+
   # DELL HOME "COMPUTER" ( 2017 / WINDOWS 10 PROFESSIONAL )
   # HAS 16GB of RAM AND 4 CORES
 
@@ -1240,7 +1260,44 @@ tryCatchLog::tryCatchLog({
   # Postgresql 9.6
   dbExecuteEM(conn, Statement = "SET max_parallel_workers_per_gather TO 4;", display = display, exec = exec)
 
-  return(TRUE)
+  # always TRUE
+  return(invisible(data.frame(DBSETPERFORMANCEEM = TRUE)))
+
+}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' PostgreSQL Current User
+#'
+#' Get PostgreSQL CURRENT_USER.
+#'
+#' @param conn PostgreSQL DBI connection.
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @returns Current user
+#' @examples
+#' \dontrun{
+#' dbGetCurrentuserEM(get("connEM"))
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @export
+dbGetCurrentuserEM <- function(conn, exec = TRUE, display = TRUE) {
+tryCatchLog::tryCatchLog({
+
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+
+  Results <- dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER;", display = display, exec = exec)
+  if(exec) {
+    if(NROW(Results)) {
+      colnames(Results)[1] <- "DBCURRENTUSEREM"
+      return(Results)
+    } else {
+      stop("The Current user is not being returned fromt the dataase.")
+    }
+  }
+  return(invisible(data.frame(DBCURRENTUSEREM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1267,19 +1324,35 @@ tryCatchLog::tryCatchLog({
     stop(paste0("Parameter \"conn\" is required."))
   }
 
-  Results <- list()
+  Statement <- "SELECT 1;"
 
   if(inherits(conn, "PostgreSQLConnection")) {
 
-    One <-try({dbGetQueryEM(conn, Statement = "SELECT 1;", display = display, exec = exec)}, silent = TRUE)
-    if(inherits(One, "try-error")) {
-      return(FALSE)
-    } else {
-      return(TRUE)
+    tmp.query <- Statement
+    ## Display the query
+    if (display) {
+      message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+      message(tmp.query)
     }
+
+    if(exec) {
+      Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
+    }
+    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
+    if(exec && !inherits(Results, "try-error")) {
+      return(data.frame(DBISCONNECTEDEM = TRUE))
+    } else if(!exec) {
+      return(invisible(data.frame(DBISCONNECTEDEM = logical())))
+    } else if(exec && inherits(Results, "try-error")) {
+      # not a connection
+      return(data.frame(DBISCONNECTEDEM = FALSE))
+    } else {}
+
   } else {
-    return(FALSE)
+    stop("Need a \"PostgreSQLConnection\"")
   }
+
+  return(invisible(data.frame(DBISCONNECTEDEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1323,12 +1396,17 @@ tryCatchLog::tryCatchLog({
     if(length(getOption("econmodel_db_dbname"))) {
        Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
     }
-
     Results["client_encoding"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW client_encoding;", display = display, exec = exec)))
     Results["time_zone"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW TIMEZONE;", display = display, exec = exec)))
+  } else {
+    stop("Need a \"PostgreSQLConnection\"")
   }
 
+  Results <- data.frame(Results)
+  colnames(Results) <- toupper(colnames(Results))
   return(Results)
+
+  logical()
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1338,22 +1416,11 @@ tryCatchLog::tryCatchLog({
 #'
 #' Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
 #'
-#' This function tries to return a new "DBI" connection object to the environment "env".
-#'
-#' First, this function will try to connect to the database using the user name "user" specified from getOption("econmodel_db_*") parameters listed in the "parameters" section.
-#'
-#' If the connection can be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
-#' If the connection is made, then next the schema "r_user_econmodel" is attempted to be made..
-#'
-#' If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
-#' If the connection can be made, the the user/password/dbname/schema of "r_user_econmodel" will be made.
-#' Next, disconnect. Connect as "r_user_econmodel".
-#' Create the user/password/dbname of "user"
-#' Next, disconnect. Connect as "user".
-#' Create the schema "user".
-#' Store the new connection object connName in "env".
+#' Try to connect or try to connect as "user".  If the user (or its support structure) does not exists, then create the support structure and the "user".
 #'
 #' @param driver String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
+#' @param conn Maybe a PostgreSQLConnection.  Its validility and active status is checked (and re-used if valid and active).
+#' @param String.  Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param user String. Defaults to getOption("econmodel_db_user").
 #' @param password String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_password") .
 #' @param host String. Defaults to getOption("econmodel_db_host").
@@ -1364,10 +1431,9 @@ tryCatchLog::tryCatchLog({
 #' @param forceISOdate Logical. Default is getOption("econmodel_db_forceISOdate").
 #' @param connName String.  Name of the database connection object.  The default is "connEM".
 #' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
-#' @param auto.assign Logical. Should the results be loaded to "env" as variable "connEM" If FALSE, then results are returned from the function  normally.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns DBI connection object named "connEM" is created, connected and assigned to the environment "env".
+#' @returns 1. invisibly a DBI connection 2. Object named "connEM" is created, connected, and assigned to the environment "env".
 #' @examples
 #' \dontrun{
 #' dbLoginEM()
@@ -1375,16 +1441,39 @@ tryCatchLog::tryCatchLog({
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
 #' @export
-dbLoginEM <- function(driver, user, password = user, host, dbname = user, port,
-                        tty, options, forceISOdate, connName, env, auto.assign = TRUE, display = TRUE, exec = TRUE) {
+dbLoginEM <- function(driver, conn, connName, user, password = user, host, dbname = user, port,
+                      tty, options, forceISOdate, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  #correct for TZ
-  oldtz <- Sys.getenv('TZ')
-  if(oldtz=='') {
-    Sys.setenv(TZ="UTC")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
-  on.exit({Sys.setenv(TZ=oldtz)})
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+    ReturnTo <- "the Global environment"
+  }
+
+  if(identical(env, .GlobalEnv)) {
+    ReturnTo <- "the Global environment"
+  } else {
+    ReturnTo <- paste0("environment ", capture.output(env))
+  }
+
+  if(!missing(conn)) {
+    Results <- dbIsConnectedEM(conn, display = display, exec = exec)
+    if(exec) {
+      if(unlist(Results)) {
+        if(unlist(dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec))) {
+          dbDisconnectEM(connName = connName, env = env)
+        }
+        # re-use
+        assign(connName, conn, envir = env)
+        return(invisible(conn))
+      }
+
+    }
+  }
 
   if(missing(driver)) {
     driver <- getOption("econmodel_db_driver")
@@ -1396,6 +1485,7 @@ tryCatchLog::tryCatchLog({
   if(missing(user)) {
     user <- getOption("econmodel_db_user")
   }
+
   # note: "password" is never missing
   if(missing(password)) {
     password <- getOption("econmodel_db_password")
@@ -1420,159 +1510,106 @@ tryCatchLog::tryCatchLog({
     forceISOdate <- getOption("econmodel_db_forceISOdate")
   }
 
-  if(missing(env)) {
-    env <- .GlobalEnv
-    ReturnTo <- "the Global environment"
+
+  # (survey of the) current connection, if any
+
+  connNameExists  <- exists(connName, envir = env, inherits = FALSE)
+  connNameConnected <- FALSE
+  if(connNameExists) {
+    connNameConnected <- dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec)
   }
-  if(identical(env, .GlobalEnv)) {
-    ReturnTo <- "the Global environment"
-  } else {
-    ReturnTo <- paste0("environment ", capture.output(env))
+  if(connNameConnected) {
+    CurrentUser <- dbGetCurrentuserEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec)
+    if(exec) {
+      if(unlist(CurrentUser) == user) {
+        if(!unlist(dbExistsSchemaEM(get(connName, envir = env, inherits = FALSE), schema = user, display = display, exec = exec)))
+          dbCreateSchemaEM(get(connName, envir = env, inherits = FALSE), schema = user, display = display, exec = exec)
+        return(invisible(get(connName, envir = env, inherits = FALSE)))
+      }
+    }
   }
 
-  if(missing(connName)) {
-    connName <- "connEM"
-  }
+  # try to find or create a connection . . .
 
   drv <- try({drv <- DBI::dbDriver(getOption("econmodel_db_driver"))}, silent = TRUE)
-  if(!inherits(drv, "try-error")) {
-
-    connNameConnected <- FALSE
-    connNameExists      <- exists(connName, envir = env, inherits = FALSE)
-    if(connNameExists) {
-      connNameConnected <- dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec)
+  if(inherits(drv, "try-error")) {
+    message("\"Driver\" failed to load.")
+    if(exec) {
+      # NOTHING CAN BE DONE
+      stop("\"Driver\" failed to load.")
     }
-
-    haveConnLocal <- FALSE
-    if(connNameExists && connNameConnected) {
-      # creates a reference
-      conn <- try({get(connName, envir = env, inherits = FALSE)}, silent = TRUE)
-    }
-    if(!inherits(conn, "try-error")) {
-      haveConnLocal <- TRUE
-
-      tmp.query <- "SET client_encoding TO 'UTF8';"
-      try({dbExecuteEM(conn, statement = tmp.query, display = display, exec = exec)})
-
-    }
-
-    if( !haveConnLocal
-        ||
-        (
-        !connNameExists
-         ||
-        (connNameExists && !connNameConnected)
-        )
-    ) {
-      conn <- try({DBI::dbConnect(drv,
-                                         user = user, password = password,
-                                         host = host, dbname = dbname, port = port,
-                                         tty = tty, options = dboptions, forceISOdate = forceISOdate)},
-                  silent = TRUE)
-    }
-    if(!inherits(conn, "try-error") && dbGetInfo(conn)$user == user) {
-      message(paste0("Successfully connected to user \"", user, "\"."))
-
-      tmp.query <- "SET client_encoding TO 'UTF8';"
-      try({dbExecuteEM(conn, statement = tmp.query, display = display, exec = exec)})
-
-
-      if(!dbExistsSchemaEM(conn, schema = user, display = display, exec = exec)) dbCreateSchemaEM(conn, schema = user, display = display, exec = exec)
-      # creates a reference
-      if(auto.assign) {
-        assign(connName, conn, envir = env)
-        message(paste0("Connection R object \"connEM\" has been returned to ", ReturnTo, "."))
-      } else {
-        return(conn)
-      }
-      # "r_user_econmodel" in the "r_user_econmodel" database
-      # tries to create the schema "r_user_econmodel"
-      # do not Disconnect
-    }
-    else {
-      # try another connection
-      if(haveConnLocal) {
-        dbDisconnectEM(conn)
-      }
-      conn <- try({DBI::dbConnect(drv,
-                                 user = "r_user_econmodel", password = "r_user_econmodel",
-                                 host = host, dbname = "r_user_econmodel", port = port,
-                                 tty = tty, options = dboptions, forceISOdate = forceISOdate)},
-                  silent = TRUE)
-
-      if(!inherits(conn, "try-error")) {
-
-        message(paste0("Successfully connected to user \"", "r_user_econmodel", "."))
-
-        tmp.query <- "SET client_encoding TO 'UTF8';"
-        try({dbExecuteEM(conn, statement = tmp.query, display = display, exec = exec)})
-
-        if(!dbExistsSchemaEM(conn, schema = "r_user_econmodel", display = display, exec = exec)) dbCreateSchemaEM(conn, schema = "r_user_econmodel", display = display, exec = exec)
-        # user = user
-
-        if(!dbExistsUserEM( conn, user   = user,   display = display, exec = exec))  dbCreateUserEM( conn,  user   = user, display = display, exec = exec)
-        if(!dbExistsDbaseEM(conn, dbname = dbname, display = display, exec = exec))  dbCreateDbaseEM(conn,  dbname = user, display = display, exec = exec)
-        dbDisconnectEM(conn)
-        #
-        # as "ruser"
-        # login to the database "user" and and create the "user" schema
-        #
-        conn <- try({DBI::dbConnect(drv,
-                                    user = user, password = password,
-                                    host = host, dbname = user, port = port,
-                                    tty = tty, options = dboptions, forceISOdate = forceISOdate)},
-                    silent = TRUE)
-        if(!inherits(conn, "try-error")) {
-          # "user" in the "user" database
-
-          tmp.query <- "SET client_encoding TO 'UTF8';"
-          try({dbExecuteEM(conn, statement = tmp.query, display = display, exec = exec)})
-
-          tmp.query <- "SET timezone TO 'UTC';"
-          try({dbExecuteEM(conn, statement = tmp.query, display = display, exec = exec)})
-
-          # tries to create the schema "user"
-          if(!dbExistsSchemaEM(conn, schema = user, display = display, exec = exec)) dbCreateSchemaEM(conn, schema = user, display = display, exec = exec)
-          dbDisconnectEM(conn)
-          # login as "user" to its own database "user"
-          dbLoginEM(connName = connName, env = env, display = display, exec = exec)
-        } else {
-          stop(paste0("\"r_user_econmodel\" could not connect to the user database ", user))
-        }
-
-      } else {
-        # try another connection
-        conn <- try({DBI::dbConnect(drv,
-                                   user = "postgres", password = "postgres",
-                                   host = host, dbname = "postgres", port = port,
-                                   tty = tty, options = dboptions, forceISOdate = forceISOdate)},
-                    silent = TRUE)
-        if(!inherits(conn, "try-error")) {
-          message(paste0("Successfully connected to user \"", "postgres", "\"."))
-
-          tmp.query <- "SET client_encoding TO 'UTF8';"
-          try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-
-          tmp.query <- "SET timezone TO 'UTC';"
-          try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-
-          if(!dbExistsUserEM( conn, user   = "r_user_econmodel", display = display, exec = exec)) dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"), display = display, exec = exec)
-          if(!dbExistsDbaseEM(conn, dbname = "r_user_econmodel", display = display, exec = exec)) dbCreateDbaseEM(conn, dbname = "r_user_econmodel", display = display, exec = exec)
-          dbDisconnectEM(conn)
-          DBI::dbConnect(driver, user = "r_user_econmodel", password = "r_user_econmodel", host = host, dbname = "r_user_econmodel", port = port,
-                      tty = tty, options = dboptions, forceISOdate = forceISOdate, connName = connName, env = env)
-        } else {
-          stop("Failed to login as getOption(\"econmodel_db_user\"), \"r_user_econmodel\", and \"postgres.\"  Please set options()")
-        }
-      }
-    }
-  } else {
-    stop(paste0("Parameter \"driver\" is specified as \"", driver, "\".  But the driver failed to load."))
   }
 
-  invisible()
+  SessionConn <- try({DBI::dbConnect(drv,
+                                     user = user, password = password,
+                                     host = host, dbname = dbname, port = port,
+                                     tty = tty, options = dboptions, forceISOdate = forceISOdate)},
+                     silent = TRUE)
+  if(inherits(SessionConn, "try-error")) {
+    SessionConnLoginWorks <- FALSE
+    message("User login failed.")
+  } else {
+    SessionConnLoginWorks <- TRUE
+    message("User login succeeded.")
+    if(exec) {
+      if(!unlist(dbExistsSchemaEM(SessionConn, schema = user, display = display, exec = exec)))
+                 dbCreateSchemaEM(SessionConn, schema = user, display = display, exec = exec)
+      assign(connName, SessionConn, envir = env)
+      return(invisible(SessionConn))
+    }
+  }
+
+  PostgresConn <- try({DBI::dbConnect(drv,
+                                      user = "postgres", password = "postgres",
+                                      host = host, dbname = "postgres", port = port,
+                                      tty = tty, options = dboptions, forceISOdate = forceISOdate)},
+                      silent = TRUE)
+  if(inherits(conn, "try-error")) {
+    PostgresConnLoginWorks <- FALSE
+    message("Postgres login failed.")
+  } else {
+    PostgresConnLoginWorks <- TRUE
+    message("Postgres login succeeded.")
+    if(exec) {
+      # dispatcher database
+      if(!unlist(dbExistsUserEM(PostgresConn, user   = "r_user_econmodel", display = display, exec = exec)))
+                 dbCreateUserEM(PostgresConn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"), display = display, exec = exec)
+      if(!unlist(dbExistsDbaseEM(PostgresConn, dbname = "r_user_econmodel", display = display, exec = exec)))
+                 dbCreateDbaseEM(PostgresConn, dbname = "r_user_econmodel", display = display, exec = exec)
+
+      dbDisconnectEM(PostgresConn)
+    }
+
+  }
+  DispatcherConn <- try({DBI::dbConnect(drv,
+                                        user = "r_user_econmodel", password = "r_user_econmodel",
+                                        host = host, dbname = "r_user_econmodel", port = port,
+                                        tty = tty, options = dboptions, forceISOdate = forceISOdate)},
+                        silent = TRUE)
+  if(inherits(conn, "try-error")) {
+    DispatcherConnLoginWorks <- FALSE
+    message("Dipatcher login failed.")
+  } else {
+    DispatcherConnLoginWorks <- TRUE
+    message("Dipatcher login succeeded.")
+    if(exec) {
+      if(!unlist(dbExistsSchemaEM(DispatcherConn, schema = "r_user_econmodel", display = display, exec = exec)))
+                dbCreateSchemaEM(DispatcherConn, schema = "r_user_econmodel", display = display, exec = exec)
+      # user database
+      if(!unlist(dbExistsUserEM(DispatcherConn, user = user, display = display, exec = exec)))
+                 dbCreateUserEM(DispatcherConn, user = user, display = display, exec = exec)
+      if(!unlist(dbExistsDbaseEM(DispatcherConn, dbname = user, display = display, exec = exec)))
+                 dbCreateDbaseEM(DispatcherConn, dbname = user, display = display, exec = exec)
+      dbDisconnectEM(DispatcherConn)
+      dbLoginEM(user = user)
+    }
+  }
+
+  return(invisible(data.frame(DBLOGINEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 
 
 
@@ -1584,6 +1621,8 @@ tryCatchLog::tryCatchLog({
 #'
 #' @param conn PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".
 #' @param Statement String. Required.  DML/DDL/DCL to execute
+#' @param time_zone Execution time zone. Default is "UTC".
+#' @param client_encoding Execution encoding. Default is "UTF8".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns Execution of "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
@@ -1593,15 +1632,8 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbExecuteEM <- function(conn, Statement, display = TRUE, exec = TRUE) {
+dbExecuteEM <- function(conn, Statement, time_zone = "UTC", client_encoding = "UTF8", display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
-
-  #correct for TZ
-  oldtz <- Sys.getenv('TZ')
-  if(oldtz=='') {
-    Sys.setenv(TZ="UTC")
-  }
-  on.exit({Sys.setenv(TZ=oldtz)})
 
   if(missing(conn)) {
     stop("Parameter \"conn\" must be provided.")
@@ -1610,6 +1642,12 @@ tryCatchLog::tryCatchLog({
   if(missing(Statement)) {
     stop("Parameter \"Statement\" must be provided.")
   }
+
+  oldtz <- Sys.getenv("TZ")
+  Sys.setenv(TZ=time_zone)
+  on.exit({Sys.setenv(TZ=oldtz)})
+
+  DBI::dbExecute(conn, statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
 
   ## Build the query
   tmp.query <- Statement
@@ -1620,17 +1658,17 @@ tryCatchLog::tryCatchLog({
     message(tmp.query)
   }
 
-  # Execute the query
-  if(exec) {
-    Results <- try({DBI::dbExecute(conn, statement = tmp.query)}, silent = T)
-    if(inherits(Results, "try-error")) {
-      stop("Execution of statement \"", tmp.query, "\" failed.")
-    } else {
-      return(Results)
-    }
+  Results <- try({DBI::dbExecute(conn, statement = tmp.query)}, silent = T)
+  if(exec && !inherits(Results, "try-error")) {
+    return(data.frame(DBEXECUTEEM = TRUE))
+  } else if(!exec) {
+    return(invisible(data.frame(DBEXECUTEEM = logical())))
+  } else {
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBEXECUTEEM = FALSE))
   }
 
-  invisible()
+  return(invisible(data.frame(DBEXECUTEEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1657,6 +1695,8 @@ tryCatchLog::tryCatchLog({
 #' @export
 dbDisconnectEM <- function(conn, connName, env) {
 tryCatchLog::tryCatchLog({
+
+  # missing(conn) # is handled below
 
   if(missing(connName)) {
     connName <- "connEM"
@@ -1686,7 +1726,8 @@ tryCatchLog::tryCatchLog({
 
   # DBI::dbDisconnect
   # always returns TRUE
-  TRUE
+  return(invisible(data.frame(DBDISCONNECTEM = TRUE)))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
@@ -1714,7 +1755,17 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  dbDisconnectEM(connName = connName, env = env)
+  Results <- dbDisconnectEM(connName = connName, env = env)
+  if(exec && !inherits(Results, "try-error")) {
+    return(data.frame(DBLOGOUTEM = unlist(Results)))
+  } else if(!exec) {
+    return(invisible(data.frame(DBLOGOUTEM = logical())))
+  } else {
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBLOGOUTEM = FALSE))
+  }
+
+  return(invisible(data.frame(DBLOGOUTEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1740,16 +1791,26 @@ tryCatchLog::tryCatchLog({
 dbExistsUserEM <- function(conn, user, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+
+  if(missing(user)) {
+    stop("Parameter \"user\" is required.")
+  }
+
   tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, x = user), ");")
 
-  Result <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && unlist(Result)) {
-   return(TRUE)
+  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  if(exec && NROW(Results)) {
+   return(data.frame(DBEXISTSUSEREM = unlist(Results)))
   } else if(!exec) {
-    return(FALSE)
+    return(invisible(data.frame(DBEXISTSUSEREM = logical())))
   } else {
-   return(FALSE)
+    return(data.frame(DBEXISTSUSEREM = FALSE))
   }
+
+  return(invisible(data.frame(DBEXISTSUSEREM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1779,28 +1840,29 @@ tryCatchLog::tryCatchLog({
   if(missing(conn)) {
     stop("Parameter \"conn\" is required.")
   }
+
   if(missing(user)) {
     stop("Parameter \"user\" is required.")
   }
+
   if(length(attributes)) {
     attributes <- paste0(attributes , collapse = " ")
   }
-  if(missing(password)) {
-    password <- character()
-  } else {
-    password <- paste0("password ", DBI::dbQuoteLiteral(conn, x = password))
-  }
+
+  password <- paste0("password ", DBI::dbQuoteLiteral(conn, x = password))
 
   tmp.query <- paste0("CREATE ROLE ", user, " ", attributes, " NOINHERIT ", password, ";")
-
   Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
   if(exec && !inherits(Results, "try-error")) {
-    return(TRUE)
+    return(data.frame(DBCREATEUSEREM = unlist(Results)))
   } else if(!exec) {
-    return(FALSE)
+    return(invisible(data.frame(DBCREATEUSEREM = logical())))
   } else {
-    stop("Failed to create the user.")
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATEUSEREM = FALSE))
   }
+
+  return(invisible(data.frame(DBCREATEUSEREM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1824,16 +1886,26 @@ tryCatchLog::tryCatchLog({
 dbExistsSchemaEM <- function(conn, schema, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
+  }
+
+  if(missing(schema)) {
+    stop("Parameter \"schema\" is required.")
+  }
+
   tmp.query <-  paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ", DBI::dbQuoteLiteral(conn, x = schema), ");")
 
-  Result <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && unlist(Result)) {
-   return(TRUE)
+  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  if(exec && NROW(Results)) {
+    return(data.frame(DBEXISTSSCHEMAEM = unlist(Results)))
   } else if(!exec) {
-    return(FALSE)
+    return(invisible(data.frame(DBEXISTSSCHEMAEM = logical())))
   } else {
-    return(FALSE)
+    return(data.frame(DBEXISTSSCHEMAEM = FALSE))
   }
+
+  return(invisible(data.frame(DBEXISTSSCHEMAEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1864,29 +1936,48 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"conn\" is required.")
   }
 
+  if(missing(schema)) {
+    stop("Parameter \"schema\" is required.")
+  }
+
   if(1L < NROW(role_specification)) {
     stop("Parameter \"role_specification\" can only have one role.")
   }
 
   tmp.query <- paste0("CREATE SCHEMA ", schema, " AUTHORIZATION ", role_specification, ";")
-
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
-  if(exec && inherits(Results, "try-error")) {
-    stop("Failed to create the schema.")
+  # Execute the query
+  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
+  if(exec && !inherits(Results, "try-error")) {
+    # return(data.frame(DBCREATESCHEMAEM = unlist(Results)))
+  } else if(!exec) {
+    # return(invisible(logical()))
+  } else {
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATESCHEMAEM = FALSE))
   }
 
   lapply(grant_all_roles, function(grant_all_role) {
 
     tmp.query <- paste0("GRANT ALL ON SCHEMA ", schema, " TO ", grant_all_role, ";")
-
-    Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
-    if(exec && inherits(Results, "try-error")) {
-      stop(paste0("Failed to grant all on the schema to ", grant_all_role))
+    # Execute the query
+    Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
+    if(exec && !inherits(Results, "try-error")) {
+      # return(data.frame(DBCREATESCHEMAEM = unlist(Results)))
+    } else if(!exec) {
+      # return(invisible(logical()))
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(data.frame(DBCREATESCHEMAEM = FALSE))
     }
 
   })
 
-  TRUE
+  if(exec) {
+    return(data.frame(DBCREATESCHEMAEM = TRUE))
+  }
+  if(display) {
+    return(invisible(data.frame(DBCREATESCHEMAEM = logical())))
+  }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1910,16 +2001,25 @@ tryCatchLog::tryCatchLog({
 dbExistsDbaseEM <- function(conn, dbname, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(conn, x = dbname), ");")
-
-  Result <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && unlist(Result)) {
-    return(TRUE)
-  } else if(!exec) {
-    return(FALSE)
-  } else {
-    return(FALSE)
+  if(missing(conn)) {
+    stop("Parameter \"conn\" is required.")
   }
+  if(missing(dbname)) {
+    stop("Parameter \"dbname\" is required.")
+  }
+
+
+  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(conn, x = dbname), ");")
+  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  if(exec && NROW(Results)) {
+    return(data.frame(DBEXISTSDBASEEM = unlist(Results)))
+  } else if(!exec) {
+    return(invisible(data.frame(DBEXISTSDBASEEM = logical())))
+  } else {
+    return(data.frame(DBEXISTSDBASEEM = FALSE))
+  }
+
+  return(invisible(data.frame(DBEXISTSDBASEEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1949,21 +2049,26 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' name <- c("schema","table")
-#' dbObjectNameFix(conn, name)
+#' dbObjectNameFixEM(conn, name)
 #'
 #' #current search path schema is added to single-length character object (if only table is given)
 #' name<-"table"
-#' dbObjectNameFix(conn,name)
+#' dbObjectNameFixEM(conn,name)
 #'
 #' #schema or table names with double quotes should be given exactly as they are
 #' (make sure to wrap in single quotes in R):
 #' name <- c('sch"ema','"table"')
-#' dbObjectNameFix(conn,name)
+#' dbObjectNameFixEM(conn,name)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier ANSI
-dbObjectNameFix <- function(conn = NULL, o.nm, as.identifier = TRUE, dbQuote = "Identifier", display = TRUE, exec = TRUE) {
+dbObjectNameFixEM <- function(conn, o.nm, as.identifier = TRUE, dbQuote = "Identifier", display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
+
+  if(missing(conn)) {
+    stop("Parameter \"conn\" must be provided.")
+  }
+
   # case of no schema provided
   if (length(o.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
     schemalist <- dbGetQueryEM(conn, Statement = "SELECT nspname AS s FROM pg_catalog.pg_namespace;", display = display, exec = exec)$S
@@ -2028,13 +2133,29 @@ tryCatchLog::tryCatchLog({
   # “ERROR: must be member of role” When creating schema in PostgreSQL
   # 2014
   # https://stackoverflow.com/questions/26684643/error-must-be-member-of-role-when-creating-schema-in-postgresql
-  CurrentUser <- unlist(dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER;", display = display, exec = exec))
-  tmp.query <- paste0("GRANT ", owner, " TO ", CurrentUser, ";")
 
-    Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-    if (exec && inherits(Results, "try-error")) {
-      stop(paste0("Failed to grant: ", tmp.query))
-    }
+  tmp.query <- "SELECT CURRENT_USER;"
+  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  if(exec && NROW(Results)) {
+    CurrentUser <- Results
+    # return(data.frame(DBCREATEDBASEEM = unlist(Result)))
+  } else if(!exec) {
+    # return(invisible(logical()))
+  } else {
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
+  }
+
+  tmp.query <- paste0("GRANT ", owner, " TO ", unlist(CurrentUser), ";")
+  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
+  if(exec && !inherits(Results, "try-error")) {
+    # return(data.frame(DBCREATEDBASEEM = unlist(Results)))
+  } else if(!exec) {
+    # return(invisible(data.frame(DBCREATEDBASEEM = logical())))
+  } else {
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
+  }
 
   # Note: SUPERUSER postgres - does not require THIS
   # (but I am not "filtering out" SUPERUSERs)
@@ -2058,28 +2179,33 @@ tryCatchLog::tryCatchLog({
   ## Build the query
   RestOfDbCreate <- "ENCODING  = 'UTF-8' LC_COLLATE = 'C' LC_CTYPE  = 'C' CONNECTION_LIMIT = -1"
   tmp.query <- paste0("CREATE DATABASE ", dbname, " ", " WITH OWNER ", owner, " ",  RestOfDbCreate, ";")
-
   Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
   if(exec && !inherits(Results, "try-error")) {
-    return(TRUE)
+    # return(data.frame(DBCREATEDBASEEM = unlist(Results)))
   } else if(!exec) {
-    return(FALSE)
+    # return(invisible(data.frame(DBCREATEDBASEEM = logical())))
   } else {
-    stop("Failed to create the database.")
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
   }
 
   tmp.query <- paste0("ALTER DATABASE ", dbname, " SET TIME ZONE 'UTC';", display = display, exec = exec)
-
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query)})
+  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
   if(exec && !inherits(Results, "try-error")) {
-    return(TRUE)
+    # return(data.frame(DBCREATEDBASEEM = unlist(Results)))
   } else if(!exec) {
-    return(FALSE)
+    # return(invisible(data.frame(DBCREATEDBASEEM = logical())))
   } else {
-    stop("Failed to alter the database.")
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
   }
 
-  invisible()
+  if(exec) {
+    return(data.frame(DBCREATEDBASEEM = TRUE))
+  }
+  if(display) {
+    return(invisible(data.frame(DBCREATEDBASEEM = logical())))
+  }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2111,16 +2237,13 @@ tryCatchLog::tryCatchLog({
   drv  <- DBI::dbDriver("PostgreSQL")
   conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
   NotDatabase <- DBI::dbQuoteLiteral(conn, x = getOption("econmodel_db_dbname"))
+
   tmp.query <-  paste0("SELECT datname FROM pg_catalog.pg_database WHERE datname LIKE 'rtmp%' AND datname != ", NotDatabase, ";")
-
-  Databases <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-
-  if(exec) {
-    Databases  <- unlist(Databases)
-  } else {
-    Databases  <- list()
-  }
+  Databases <- dbGetQueryEM(conn, Statement = tmp.query, display = TRUE, exec = TRUE)
+  Databases  <- unlist(Databases)
   dbDisconnectEM(conn)
+
+  AllResults <- logical()
 
   lapply(Databases, function(dbname) {
     try({
@@ -2129,12 +2252,8 @@ tryCatchLog::tryCatchLog({
       conn <- DBI::dbConnect(drv, user = dbname, password = dbname, dbname = "r_user_econmodel")
       # trying to drop my own database
       tmp.query <- paste0("DROP DATABASE ", dbname, ";")
-
       Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-      if(exec && inherits(Results, "try-error")) {
-        message(paste0("Failed to drop database ", dbname, "."))
-      }
-
+      AllResults <<- c(AllResults, unlist(Results))
       dbDisconnectEM(conn)
 
     }, silent = TRUE)
@@ -2147,17 +2266,24 @@ tryCatchLog::tryCatchLog({
       # trying to drop those users (with the same name as the database)
       tmp.query <- paste0("DROP USER ", dbname, ";")
       Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-      if(exec && inherits(Results, "try-error")) {
-        message(paste0("Failed to drop user ", dbname, "."))
-      }
-
+      AllResults <<- c(AllResults, unlist(Results))
     }, silent = TRUE)
     invisible()
   })
   dbDisconnectEM(conn)
 
   options(ops)
-  return(TRUE)
+
+  if(exec) {
+    if(all(AllResults)) {
+      return(data.frame(DBREMOVEOLDWORKDBASESEM = TRUE))
+    } else {
+      return(data.frame(DBREMOVEOLDWORKDBASESEM = FALSE))
+    }
+  }
+  if(display) {
+    return(invisible(data.frame(DBREMOVEOLDWORKDBASESEM = logical())))
+  }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2206,7 +2332,7 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"name\" is required.")
   }
 
-  SchemaAndName <- dbObjectNameFix(conn, o.nm = name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
+  SchemaAndName <- dbObjectNameFixEM(conn, o.nm = name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
 
   if(side == "parent") {
     Restriction <-
@@ -2248,14 +2374,14 @@ WHERE", Restriction, ";")
   Results <- dbGetQueryEM(conn, Statement = Statement, display = display, exec = exec)
 
   if(NROW(Results)) {
-    return(Results[, , drop = FALSE])
+    return(Results)
   } else {
     return(data.frame(list(PARENT_SCHEMA = "", PARENT = "", PARENT_RELKIND = "", PARENT_PART_KEY_DEF = "", PARENT_PART_BOUND = "", INHSEQNO = 0L, CHILD_SCHEMA = "", CHILD = "", CHILD_REL_KIND = "", CHILD_PART_KEY_DEF = "", CHILD_PART_BOUND = ""))[FALSE, , drop = F])
   }
 
+  return(invisible(data.frame(DBLISTINHERITEM = logical())))
+
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
-
-
 
 
 
@@ -2276,7 +2402,7 @@ WHERE", Restriction, ";")
 #'   keeps generalization ??
 #' }
 #' @param x	The source dataframe, table, vector, or factor
-#' @param name	The column name you would like to pull out as a named vector. OR the names of the vector (if x is a vector)
+#' @param name The column name you would like to pull out as a named vector. OR the names of the vector (if x is a vector)
 #' @returns a named vector or factor
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -2344,7 +2470,7 @@ tryCatchLog::tryCatchLog({
 dbCreatePartBoundTableEM <- function(conn, name, temporary = FALSE, if.not.exists = FALSE, like.name = character() , like.name.defaults = FALSE, like.name.constraints = FALSE,  fields, part.by = character(), part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  table <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  table <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2357,7 +2483,7 @@ tryCatchLog::tryCatchLog({
 
   like.tableque <- character()
   if(length(like.name)) {
-    like.table <- dbObjectNameFix(conn, o.nm = like.name, display = display, exec = exec)
+    like.table <- dbObjectNameFixEM(conn, o.nm = like.name, display = display, exec = exec)
     if(temporary) {
       if(length(table) == 2) {
         like.tableque <- paste0(last(like.table))
@@ -2525,7 +2651,7 @@ tryCatchLog::tryCatchLog({
 dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  table <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  table <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2613,7 +2739,7 @@ tryCatchLog::tryCatchLog({
 dbRClmnsClassesEM <- function(conn, name, temporary = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  table <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  table <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2673,7 +2799,7 @@ tryCatchLog::tryCatchLog({
 
   if(if.not.exists && length(const.name)) {
 
-    SchemaAndName <- dbObjectNameFix(conn, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
+    SchemaAndName <- dbObjectNameFixEM(conn, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
 
     Restriction <-
       paste0("
@@ -2719,7 +2845,7 @@ tryCatchLog::tryCatchLog({
 
   }
 
-  name <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
 
   colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
@@ -2731,7 +2857,7 @@ tryCatchLog::tryCatchLog({
   else if (type == "FOREIGN") {
     colref <- paste(DBI::dbQuoteIdentifier(conn, colref),
                     collapse = ", ")
-    reference <- dbObjectNameFix(conn, o.nm = reference, display = display, exec = exec)
+    reference <- dbObjectNameFixEM(conn, o.nm = reference, display = display, exec = exec)
     references <- paste0(" REFERENCES ", paste(reference,
                                                collapse = "."), " (", colref, ")")
   }
@@ -2777,7 +2903,7 @@ tryCatchLog::tryCatchLog({
   else {
     idxname <- DBI::dbQuoteIdentifier(conn, idxname)
   }
-  name <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
   colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
   unique <- ifelse(unique, "UNIQUE ", "")
@@ -2816,7 +2942,7 @@ dbColumnEM <- function (conn, name, colname, action = c("add", "drop"), coltype 
                         cascade = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  name <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
   colname <- DBI::dbQuoteIdentifier(conn, colname)
   action <- toupper(match.arg(action))
@@ -2856,10 +2982,10 @@ dbAttachPartEM <- function (conn, dbobject = "table", name, partition, if.not.ex
                             display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  name <- dbObjectNameFix(conn, o.nm = name, display = display, exec = exec)
+  name <- dbObjectNameFixEM(conn, o.nm = name, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
 
-  partition <- dbObjectNameFix(conn, o.nm = partition, display = display, exec = exec)
+  partition <- dbObjectNameFixEM(conn, o.nm = partition, display = display, exec = exec)
   partitionque <- paste(partition, collapse = ".")
 
   if(if.not.exists) {

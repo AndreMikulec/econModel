@@ -6,6 +6,8 @@
 \usage{
 dbLoginEM(
   driver,
+  conn,
+  connName,
   user,
   password = user,
   host,
@@ -14,15 +16,17 @@ dbLoginEM(
   tty,
   options,
   forceISOdate,
-  connName,
   env,
-  auto.assign = TRUE,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
 \item{driver}{String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.}
+
+\item{conn}{Maybe a PostgreSQLConnection.  Its validility and active status is checked (and re-used if valid and active).}
+
+\item{connName}{String.  Name of the database connection object.  The default is "connEM".}
 
 \item{user}{String. Defaults to getOption("econmodel_db_user").}
 
@@ -40,37 +44,22 @@ dbLoginEM(
 
 \item{forceISOdate}{Logical. Default is getOption("econmodel_db_forceISOdate").}
 
-\item{connName}{String.  Name of the database connection object.  The default is "connEM".}
-
 \item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
-
-\item{auto.assign}{Logical. Should the results be loaded to "env" as variable "connEM" If FALSE, then results are returned from the function  normally.}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
+
+\item{String.}{Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 }
 \value{
-DBI connection object named "connEM" is created, connected and assigned to the environment "env".
+1. invisibly a DBI connection 2. Object named "connEM" is created, connected, and assigned to the environment "env".
 }
 \description{
 Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
 }
 \details{
-This function tries to return a new "DBI" connection object to the environment "env".
-
-First, this function will try to connect to the database using the user name "user" specified from getOption("econmodel_db_*") parameters listed in the "parameters" section.
-
-If the connection can be made, then next the connection is tried to be made using the user/password/dbname of "r_user_econmodel".
-If the connection is made, then next the schema "r_user_econmodel" is attempted to be made..
-
-If the connection can not be made, then next the connection is tried to be made using the user/password/dbname of "postgres".
-If the connection can be made, the the user/password/dbname/schema of "r_user_econmodel" will be made.
-Next, disconnect. Connect as "r_user_econmodel".
-Create the user/password/dbname of "user"
-Next, disconnect. Connect as "user".
-Create the schema "user".
-Store the new connection object connName in "env".
+Try to connect or try to connect as "user".  If the user (or its support structure) does not exists, then create the support structure and the "user".
 }
 \examples{
 \dontrun{
