@@ -26,6 +26,9 @@ dbGetQueryEM(
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
+\value{
+SQL results.  Otherwise, an error is returned.  The results column names are always in uppercase.
+}
 \description{
 Thin wrapper over R CRAN package DBI function dbGetQuery
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/AmerAssocIndividInvestorsAAII.R
 \name{dbdfMatchColsEM}
 \alias{dbdfMatchColsEM}
-\title{Create New Columns In the Data.frame or On the Server Table}
+\title{Bind New Columns to a Server or Local and Re-Order Columns}
 \usage{
 dbdfMatchColsEM(
   conn,
@@ -30,10 +30,16 @@ dbdfMatchColsEM(
 data.frame with more columns and/or re-ordered columns. The server "name" may get more columns.
 }
 \description{
+\preformatted{
+Based on the idea of the  R CRAN package caroline function dbWriteTable2.
+
+\url{https://github.com/cran/caroline/blob/af201137e4a31d675849291a1c9c07a0933b85de/R/database.R}
+
 Match the the Server/data.frame columns with each other.
 Create new columns as necessary. Verify/Make the data.frame
 columns order match that of the Server table order.
 Inspired by the R CRAN package Caroline.
+}
 }
 \examples{
 \dontrun{
@@ -49,16 +55,20 @@ mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
 rownames(mtcars2) <- NULL
 #
 # Creates the table (with zero rows).
-# Appends data (with the value(data.frame) having the same columns that the server).
+# Appends data (with the value(data.frame) having the same columns
+# on the server).
 mtcars2s <- mtcars2[1:5,]
 dbdfMatchColsEM(conn, name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
-# Appends data (with the value(data.frame) having less columns that the server database).
-# Those server columns, that are not found in the value(data.frame), are added to the value(data.frame).
+# Appends data (with the value(data.frame) having less columns
+# than that of the server database).
+# Those server columns, that are not found in the value(data.frame),
+# are added to the value(data.frame).
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
 dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lDf)
 
-# Appends data (with the server database having less columns that the value(data.frame)).
+# Appends data (with the server database having less columns
+# than that of the value(data.frame)).
 # Those value(data.frame) columns, that are not found in the server, are added to the server.
 mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                colnames(DfNew) <- paste0(colnames(DfNew),"_new")

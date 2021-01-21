@@ -19,10 +19,10 @@ dbRClmnsClassesEM(conn, name, temporary = FALSE, display = TRUE, exec = TRUE)
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
-data.frame. Variables are "name" and "type"
+data.frame. Variables are "name" and "type".  If the number of rows in "name" is zero, then, instead of "numeric" being returned, "double" is returned.  The reason is because a "fallback" is used.
 }
 \description{
 R Classes depend upon what the server supports.
 SQLite R equivalents typically are "character", "integer", and "real".
-PostgreSQL R equivalents typically are "character", integer", real", "Date", (and may be others: POSIXct?).
+PostgreSQL R equivalents typically are "character", "integer", "numeric/double", "logical", "Date", (and may be others: POSIXct?).
 }

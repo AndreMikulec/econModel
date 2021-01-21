@@ -8,7 +8,7 @@ dbServerFieldsCClassesEM(
   conn,
   name,
   temporary = FALSE,
-  sclass = FALSE,
+  others = FALSE,
   display = TRUE,
   exec = TRUE
 )
@@ -20,14 +20,14 @@ dbServerFieldsCClassesEM(
 
 \item{temporary}{Logical.  This is a temporary table or not.}
 
-\item{sclass}{Logical. Default is FALSE.  Using PostgreSQL, Whether or not to also return the column and values "sclass". Values are in lowercase.}
+\item{others}{Logical. Default is FALSE.  Using PostgreSQL, Whether or not to also return the "others" column and values  (e.g."sclass"). Values are in lowercase. Note, the returned column order may be mixed.}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
-data.frame. Variables are "name" and "type" (optionally some others)
+data.frame. Variables are "name" and "type" (optionally some "others"). "type" column values are lowercase.
 }
 \description{
 Get the internal table of database server columns.
@@ -41,7 +41,7 @@ NAME(chr)  TYPE(chr)
 Typical SQLite column TYPE values:
 TYPE: character double integer
 
-Typical PostgreSQL  columns:
+Typical PostgreSQL  columns (others = TRUE):
 NAME(chr), SCLASS(chr), TYPE(chr),
 LEN(int), PRECISION(int), SCALE(int) NULLOK(logi)
 

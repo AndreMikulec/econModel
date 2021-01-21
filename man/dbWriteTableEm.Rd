@@ -2,92 +2,88 @@
 % Please edit documentation in R/AmerAssocIndividInvestorsAAII.R
 \name{dbWriteTableEM}
 \alias{dbWriteTableEM}
-\title{Insert or Append to a New or Current Table or Table partition.}
+\title{Creates PostgreSQL Partitioned Table/Indexes and Partitions}
 \usage{
 dbWriteTableEM(
   conn,
   name = substitute(value),
   value,
-  PartitionOf = character(),
-  PartBoundValue = character(),
-  PartKeyCol = character(),
-  PrimaryKey = character(),
-  Indexes = list(),
-  lowerDfName = TRUE,
-  lowerColNames = TRUE,
-  replaceDotUsingUnderscore = TRUE,
+  partition.of = character(),
+  part.key.col = character(),
+  primary.key = character(),
+  indexes = list(),
+  lower.df.name = TRUE,
+  lower.col.names = TRUE,
+  dots.to.underscores = TRUE,
   display = TRUE,
   exec = TRUE,
   ...
 )
 }
 \arguments{
-\item{conn}{A DBIConnection object, as returned by dbConnect().}
+\item{conn}{A "PostgreSQL" connection object.}
 
 \item{name}{String.  Default is substitute(value). The name of the table to which the data frame is to be loaded.}
 
 \item{value, }{data.frame. Required. To be loaded to the database.}
 
-\item{PartitionOf}{String.  If the table is (or to be) a participant as a Partition, then this table is a partion of the this partitioned table "PartitionOf".}
+\item{partition.of}{String.  If the table is (or to be) a participant as a Partition, then this table is a partition of the this partitioned table "partition.of".}
 
-\item{PartBoundValue}{String. If the table is (or to be) a participant as a Partition, then this is a partition bound as a List value.}
+\item{part.key.col}{String.  If the table is (or to be is) a Partitioned table is of that List partition and the partition key column.}
 
-\item{PartKeyCol}{String.  If the table is (or to be is) a Partitioned table is of that List partition and the partition key column.}
+\item{primary.key}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector of values (in order) that are [to be] the primary-keyed columns.}
 
-\item{PrimaryKey}{Vector of Strings.  If present, then of the [to be] primary-keyed table, this is the the vector values (in order) are the primary-keyed columns. The name of the primary key is taken from the name of the vector.}
+\item{indexes}{List of "Vector of Strings".  If present, then of the [to be] indexed table, this is the the vector of values (in order) that are [to be] the indexed columns. The name of the index is taken from the name of the vector.}
 
-\item{Indexes}{List of "Vector of Strings".  If present, then of the [to be] indexed table, this is the the vector values (in order) are the indexed columns. The name of the index is taken from the name of the vector.}
+\item{lower.df.name}{Logical. Default is TRUE. Make the target database table name to be in lowercase.}
 
-\item{lowerDfName}{Logical. Default is TRUE. Make the target database table name to be in lowercase.}
+\item{lower.col.names}{Logical. Default is TRUE. Make the target database table column names to be in lowercase.}
 
-\item{lowerColNames}{Logical. Default is TRUE. Make the target database table column names to be in lowercase.}
-
-\item{replaceDotUsingUnderscore}{Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).}
+\item{dots.to.underscores}{Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).'}
 
-\item{...}{Dots. Other parameters passed to R CRAN package DBI dbWriteTable.}
+\item{...}{Dots. Other parameters passed to R CRAN package DBI function dbWriteTable.}
 }
 \description{
 \preformatted{
-Thick wrapper over R CRAN package caroline function dbWriteTable2.
+Creates a "partitioned table/index" (of "LIST" partitions) and its
+"table/index partitions"
 
-This is R cran package "caroline" function "dbWriteTable2" with modifications
-JAN 2021
-https://github.com/cran/caroline/blob
-/af201137e4a31d675849291a1c9c07a0933b85de/R/database.R
+Basically, this is the method (from "much of" the URL reference):
 
-modifications
+create table a(c1 int, c2 int, c3 int, c4 int) partition by list(c1);
+create index a_c1c2c3c on only a(c1,c2,c3);
+-- Needed to be able to do: UPDATE a . . . ON CONFICT a_pk DO UPDATE . . .
+alter table only a add constraint a_pk primary key(c1, c2);
 
-1. add.id domain specific feature is removed
-2. pg.update.seq domain specific feature is removed
-3. "ORDER BY id DESC LIMIT 1" is replaced by " WHERE FALSE "
-4. function "names" upon "df" is replaced with the modern "colnames"
-   where appropriate
-5. function "names" is replaced with the safer "Names"
-6. "nv" is replaced with "nameVect".
-7. Calls to DBI are called through "PACKAGE::".
-   These are the (working) dbListFields, dbSendQuery, dbColumnInfo,
-   dbClearResult, and dbWriteTable
-8. If a column exists in the local table.name(data.frame) but does not
-   exist on the server
-   then it is added to the server's table fields.
-9. Fix and Put back the type mismatch test.
-10. Added drop = F to prevent dropping to a vector.
-11. Changed message - not in fields of '", table.name,"' table. Omiting
-                 To - not in fields of '", table.name,"' Adding.
+create table     a_1(like a including defaults);
+create index     a_1_c1c2c3c on a_1(c1,c2,c3);
+alter table only a_1 add constraint a_1_pk    primary key(c1, c2);
+alter table only a_1 add constraint a_1_check check(c1 = 1);
 
-For consistency and understandability renamed db.col.info to fields.info.
-For consistency and understandability renamed db.precisions to fields.precisions.
-For consistency and understandability renamed db.sclasses to fields.sclasses.
-Since static, moved closer to the top calls to DBI::dbSendQuery, DBI::dbColumnInfo and DBI::dbClearResult
-Moved other non-changing code to near the top.
+DBI::dbWriteTable (to load data or any other data loading method)
+
+alter table a         attach partition a_1 for values in (1);
+alter index a_c1c2c3c attach partition a_1_c1c2c3c;
+
+Note, the following is needed for an efficient query plan:
+
+SET constraint_exclusion TO partition;
+SET enable_partition_pruning TO on;
+
+-- SQL statements follow: "where c1 = 1"
+-- "UPDATE a . . . ON CONFICT a_pk DO UPDATE" statements follow
+
 }
 }
 \examples{
 \dontrun{
+
+conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user = "postgres")
+
 mtcars2 <- mtcars
 mtcars2[["model"]] <- rownames(mtcars2)
 mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
@@ -97,23 +93,51 @@ mtcars2[["carb"]] <- zoo::as.Date(mtcars2[["carb"]])
 rownames(mtcars2) <- NULL
 #
 # Creates the table (with zero rows).
-# Appends data (with the value(data.frame) having the same columns that the server).
+# Appends data (with the value(data.frame) having the same columns
+# on the server).
 mtcars2s <- mtcars2[1:5,]
-dbWriteTableEM(get("connEM"), name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
-# Appends data (with the value(data.frame) having less columns that the server database).
-# Those server columns, that are not found in the value(data.frame), are added to the value(data.frame).
+dbWriteTableEM(conn, name = "mtcars",  value = mtcars2s,
+  part.key.col = "gear", primary.key = c("gear", "model"),
+  indexes = list(gear_model_vs = c("gear", "model", "vs"))
+)
+
+# Appends data (with the value(data.frame) having less columns
+# than that of the server database).
+# Those server columns, that are not found in the value(data.frame),
+# are added to the value(data.frame).
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-dbWriteTableEM(get("connEM"), name = "mtcars", value = mtcars2lDf)
 
-# Appends data (with the server database having less columns that the value(data.frame)).
-# Those value(data.frame) columns, that are not found in the server, are added to the sever.
+dbWriteTableEM(conn, name = "mtcars",  value = mtcars2lDf,
+  part.key.col = "gear", primary.key = c("gear", "model"),
+  indexes = list(gear_model_vs = c("gear", "model", "vs"))
+)
+
+# Appends data (with the server database having less columns
+# than that of the value(data.frame)).
+# Those value(data.frame) columns, that are not found in the server,
+# are added to the sever.
 mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                colnames(DfNew) <- paste0(colnames(DfNew),"_new")
                DfNew[["model"]] <- DfNew[["model_new"]]
                DfNew <- DataCombine::MoveFront(DfNew, Var = "model")
                DfNew
               }; rm(DfNew)
-dbWriteTableEM(get("connEM"), DfName = "mtcars", value = mtcars2lSv)
+
+dbWriteTableEM(conn, name = "mtcars",  value = mtcars2lSv,
+  part.key.col = "gear", primary.key = c("gear", "model"),
+  indexes = list(gear_model_vs = c("gear", "model", "vs"))
+)
+
+
+# to query
+dbExecuteEM(conn, Statement = "SET constraint_exclusion TO partition;")
+dbExecuteEM(conn, Statement = "SET enable_partition_pruning TO on;")
+
+}
+}
+\references{
+\cite{5.11. Table Partitioning
+\url{https://www.postgresql.org/docs/13/ddl-partitioning.html}
 }
 }
