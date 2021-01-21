@@ -8,6 +8,7 @@ dbServerFieldsCClassesEM(
   conn,
   name,
   temporary = FALSE,
+  sclass = FALSE,
   display = TRUE,
   exec = TRUE
 )
@@ -18,6 +19,8 @@ dbServerFieldsCClassesEM(
 \item{name}{Table name string, length 1-2.}
 
 \item{temporary}{Logical.  This is a temporary table or not.}
+
+\item{sclass}{Logical. Default is FALSE.  Using PostgreSQL, Whether or not to also return the column and values "sclass". Values are in lowercase.}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 

@@ -1158,6 +1158,7 @@ tryCatchLog::tryCatchLog({
 #' @param client_encoding Execution encoding. Default is "UTF8".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @returns SQL results.  Otherwise, an error is returned.  The results column names are always in uppercase.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery
 #' @export
@@ -1190,14 +1191,16 @@ tryCatchLog::tryCatchLog({
   }
   if(exec && !inherits(Results, "try-error")) {
     # catch all
-    return(data.frame(Results))
+    Results <- data.frame(Results)
+    colnames(Results) <- toupper(colnames(Results))
+    return(Results)
   } else if(!exec) {
     return(invisible(data.frame(DBGETQUERYEM = logical())))
   } else if(exec && inherits(Results, "try-error")) {
-     # SPECIAL
      stop(paste0("Statement failed: ", tmp.query))
   } else {}
 
+  # ONLY SO "display = TRUE" with "exec = FALSE" has something useful
   return(invisible(data.frame(DBGETQUERYEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -2049,9 +2052,9 @@ tryCatchLog::tryCatchLog({
 
   # case of no schema provided
   if (length(o.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
-    schemalist <- dbGetQueryEM(conn, Statement = "SELECT nspname AS s FROM pg_catalog.pg_namespace;", display = display, exec = exec)$S
-    user <- dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER AS user;", display = display, exec = exec)$USER
-    schema <- dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;", display = display, exec = exec)$SEARCH_PATH
+    schemalist <- unlist(dbGetQueryEM(conn, Statement = "SELECT nspname AS s FROM pg_catalog.pg_namespace;", display = display, exec = exec)$S)
+    user <- unlist(dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER AS user;", display = display, exec = exec)$USER)
+    schema <- unlist(dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;", display = display, exec = exec)$SEARCH_PATH)
     schema <- gsub(" ","",unlist(strsplit(schema,",",fixed=TRUE)),fixed=TRUE)
     # use user schema if available
     if ("\"$user\"" == schema[1] && user %in% schemalist) {
@@ -2664,7 +2667,7 @@ tryCatchLog::tryCatchLog({
 #' Typical SQLite column TYPE values:
 #' TYPE: character double integer
 #'
-#' Typical PostgreSQL  columns:
+#' Typical PostgreSQL  columns (others = TRUE):
 #' NAME(chr), SCLASS(chr), TYPE(chr),
 #' LEN(int), PRECISION(int), SCALE(int) NULLOK(logi)
 #'
@@ -2675,13 +2678,14 @@ tryCatchLog::tryCatchLog({
 #' @param conn A connection object.
 #' @param name Table name string, length 1-2.
 #' @param temporary Logical.  This is a temporary table or not.
+#' @param others Logical. Default is FALSE.  Using PostgreSQL, Whether or not to also return the "others" column and values  (e.g."sclass"). Values are in lowercase. Note, the returned column order may be mixed.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns data.frame. Variables are "name" and "type" (optionally some others)
+#' @returns data.frame. Variables are "name" and "type" (optionally some "others"). "type" column values are lowercase.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbColumnInfo
 #' @export
-dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE, display = TRUE, exec = TRUE) {
+dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE, others = FALSE, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
   if(missing(conn)) {
@@ -2702,6 +2706,8 @@ tryCatchLog::tryCatchLog({
     tableque <- paste(table, collapse = ".")
   }
 
+  # PostgreSQL: # " WHERE 'f';"
+  # more portable: " WHERE 1 = 0;"
   tmp.query <- paste0("SELECT * FROM ", tableque , " WHERE 1 = 0;")
   ## Display the query
   if (display) {
@@ -2714,6 +2720,10 @@ tryCatchLog::tryCatchLog({
     Server.fields.C.classes <- DBI::dbColumnInfo(r)
     DBI::dbClearResult(r)
     colnames(Server.fields.C.classes) <- toupper(colnames(Server.fields.C.classes))
+    Server.fields.C.classes$TYPE <- tolower(Server.fields.C.classes$TYPE)
+    if(!others) {
+      Server.fields.C.classes <- Server.fields.C.classes[c("NAME", "TYPE")]
+    }
     return(Server.fields.C.classes) # NAME TYPE
   }
 
@@ -2774,14 +2784,14 @@ tryCatchLog::tryCatchLog({
 #'
 #' R Classes depend upon what the server supports.
 #' SQLite R equivalents typically are "character", "integer", and "real".
-#' PostgreSQL R equivalents typically are "character", integer", real", "Date", (and may be others: POSIXct?).
+#' PostgreSQL R equivalents typically are "character", "integer", "numeric/double", "logical", "Date", (and may be others: POSIXct?).
 #'
 #' @param conn A connection object.
 #' @param name Table name string, length 1-2. Requires at least one row.
 #' @param temporary Logical.  This is a temporary table or not.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns data.frame. Variables are "name" and "type"
+#' @returns data.frame. Variables are "name" and "type".  If the number of rows in "name" is zero, then, instead of "numeric" being returned, "double" is returned.  The reason is because a "fallback" is used.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbSendQuery dbClearResult
 #' @export
@@ -2806,22 +2816,39 @@ tryCatchLog::tryCatchLog({
     tableque <- paste(table, collapse = ".")
   }
 
-  # !! [ ] High consider adding CClasses fallback when the rowcount is zero(0)
-  tmp.query <- paste0("SELECT * FROM ", tableque , " LIMIT 1;")
-  ## Display the query
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
+  tmp.query <- paste0("SELECT COUNT(1) count FROM ", tableque , ";")
+  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  if(exec && NROW(Results)) {
+   TotalRowCount <- unlist(Results)
+  } else if(!exec) {
+  } else {
+    stop(paste0("Statement failed: ", tmp.query))
   }
 
-  if(exec) {
-  r <- DBI::dbSendQuery(conn, statement = tmp.query)
-    R.zero.rows <- DBI::dbFetch(r, n = 0)
-    DBI::dbClearResult(r)
-    R.clmns.classes <- data.frame(sapply(R.zero.rows, class))
-    R.clmns.classes <- cAppend(R.clmns.classes, list(name = row.names(R.clmns.classes)), after = 0L)
-    colnames(R.clmns.classes) <- c("NAME", "TYPE")
-    return(R.clmns.classes) # NAME TYPE
+  if(0L < TotalRowCount) {
+
+    tmp.query <- paste0("SELECT * FROM ", tableque , " LIMIT 1;")
+    ## Display the query
+    if (display) {
+      message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+      message(tmp.query)
+    }
+
+    if(exec) {
+      r <- DBI::dbSendQuery(conn, statement = tmp.query)
+      R.zero.rows <- DBI::dbFetch(r, n = 0)
+      DBI::dbClearResult(r)
+      R.clmns.classes <- data.frame(sapply(R.zero.rows, class))
+      R.clmns.classes <- cAppend(R.clmns.classes, list(name = row.names(R.clmns.classes)), after = 0L)
+      colnames(R.clmns.classes) <- c("NAME", "TYPE")
+      return(R.clmns.classes) # NAME TYPE # "numeric" is common
+    }
+
+  } else { # CClasses fallback when the TotalRowCount is zero(0)
+    CClases <- dbServerFieldsCClassesEM(conn, name = name, others = TRUE)
+    R.clmns.classes <- CClases[c("NAME", "SCLASS")]
+    colnames(R.clmns.classes)[2] <- "TYPE"
+    return(R.clmns.classes) # NAME TYPE # "double" is common
   }
 
   return(invisible(data.frame(NAME = character(), TYPE = character())))
