@@ -1673,6 +1673,10 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
+#' Tried to disconnect the R object "connEM" and remove it
+#' from the environment <environment: R_GlobalEnv>.
+#'
+#' # Others
 #' dbDisconnectEM(conn)
 #' dbDisconnectEM(connName = "connEM", env = .Globalenv)
 #' }
