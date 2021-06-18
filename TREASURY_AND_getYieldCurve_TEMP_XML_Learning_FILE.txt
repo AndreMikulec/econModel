@@ -1,0 +1,739 @@
+rowse[2]> fileName <- system.file("exampleData", "mtcars.xml", package="XML")
+Browse[2]> doc <- xmlTreeParse(fileName)
+Error in xmlTreeParse(fileName) : could not find function "xmlTreeParse"
+Browse[2]> doc <- XML::xmlTreeParse(fileName)
+Browse[2]> summary(doc)
+    Length Class              Mode
+doc 3      XMLDocumentContent list
+dtd 2      DTDList            list
+Browse[2]> class(doc)
+[1] "XMLDocument"         "XMLAbstractDocument"
+
+Browse[2]> XML::xmlSize(doc)
+[1] 2
+
+rowse[2]> names(doc)
+[1] "doc" "dtd"
+
+Browse[2]> summary(doc)
+    Length Class              Mode
+doc 3      XMLDocumentContent list
+dtd 2      DTDList            list
+Browse[2]> 
+
+Browse[2]> str(summary(doc))
+ 'summaryDefault' chr [1:2, 1:3] "3" "2" "XMLDocumentContent" "DTDList" "list" ...
+ - attr(*, "dimnames")=List of 2
+  ..$ : chr [1:2] "doc" "dtd"
+  ..$ : chr [1:3] "Length" "Class" "Mode"
+Browse[2]> 
+
+
+
+
+     
+Browse[2]> XML::xmlSize(doc$doc)
+[1] 3
+     
+XML::xmlSize(doc[["doc"]])
+[1] 3
+
+rowse[2]> names(doc$doc)
+[1] "file"     "version"  "children"
+     
+     
+Browse[2]> XML::xmlSize(doc$doc$file)
+[1] 1
+Browse[2]> names(doc$doc$file)
+NULL
+Browse[2]> class(doc$doc$file)
+[1] "character"
+Browse[2]> show(doc$doc$file)
+[1] "C:/APPLICATIONS/R-4.0._/R_LIBS_USER_4.0._/XML/exampleData/mtcars.xml"
+Browse[2]>
+     
+     
+Browse[2]> XML::xmlSize(doc$doc$version)
+[1] 1
+Browse[2]> names(doc$doc$version)
+NULL
+Browse[2]> class(doc$doc$version)
+[1] "character"
+Browse[2]> show(doc$doc$version)
+[1] "1.0"
+Browse[2]> 
+
+
+Browse[2]> XML::xmlSize(doc$doc$children)
+[1] 2
+Browse[2]> names(doc$doc$children)
+[1] "comment" "dataset"
+Browse[2]> class(doc$doc$children)
+[1] "list"
+
+Browse[2]> summary(doc$doc$children)
+        Length Class          Mode
+comment  0     XMLCommentNode list
+dataset 33     XMLNode        list
+Browse[2]> 
+
+
+
+Browse[2]> XML::xmlSize(doc$doc$children$comment)
+[1] 0
+Browse[2]> length(doc$doc$children$comment)
+[1] 0
+Browse[2]> class(doc$doc$children$comment)
+[1] "XMLCommentNode"   "XMLNode"          "RXMLAbstractNode" "XMLAbstractNode" 
+[5] "oldClass"
+
+[1] 0
+Browse[2]> names(doc$doc$children$comment)
+list()
+
+Browse[2]> XML::xmlSize(doc$doc$children$dataset)
+[1] 33
+
+Browse[2]> XML::xmlSize(doc$doc$children[["dataset"]])
+[1] 33
+
+Browse[2]> names(doc$doc$children$dataset)
+  variables      record      record      record      record      record      record 
+"variables"    "record"    "record"    "record"    "record"    "record"    "record" 
+     record      record      record      record      record      record      record 
+   "record"    "record"    "record"    "record"    "record"    "record"    "record" 
+     record      record      record      record      record      record      record 
+   "record"    "record"    "record"    "record"    "record"    "record"    "record" 
+     record      record      record      record      record      record      record 
+   "record"    "record"    "record"    "record"    "record"    "record"    "record" 
+     record      record      record      record      record 
+   "record"    "record"    "record"    "record"    "record" 
+Browse[2]> class(doc$doc$children$dataset)
+[1] "XMLNode"          "RXMLAbstractNode" "XMLAbstractNode"  "oldClass"        
+Browse[2]> 
+
+Browse[2]> str(doc$doc$children$dataset)
+List of 33
+ $ variables:List of 11
+  ..$ variable:List of 1
+  .. ..$ text: Named list()
+  .. .. ..- attr(*, "class")= chr [1:5] "XMLTextNode" "XMLNode" "RXMLAbstractNode" "XMLAbstractNode" ...
+  .. ..- attr(*, "class")= chr [1:4] "XMLNode" "RXMLAbstractNode" "XMLAbstractNode" "oldClass"
+  ..$ variable:List of 1
+  .. ..$ text: Named list()
+  .. .. ..- attr(*, "class")= chr [1:5] "XMLTextNode" "XMLNode" "RXMLAbstractNode" "XMLAbstractNode" ...
+  .. ..- attr(*, "class")= chr [1:4] "XMLNode" "RXMLAbstractNode" "XMLAbstractNode" "oldClass"
+ETC
+
+Browse[2]> XML::xmlSize(doc$doc$children$dataset$variables)
+[1] 0
+
+Browse[2]> length(doc$doc$children$dataset$variables)
+[1] 0
+
+Browse[2]> names(doc$doc$children$dataset$variables)
+NULL
+
+# so if one gets a name (fast) then use the name
+Browse[2]> XML::xmlSize(doc$doc$children[["dataset"]][["variables"]])
+[1] 11
+
+
+Browse[2]> length(doc$doc$children[["dataset"]][["variables"]])
+[1] 11
+Browse[2]> class(doc$doc$children[["dataset"]][["variables"]])
+[1] "XMLNode"          "RXMLAbstractNode" "XMLAbstractNode"  "oldClass"        
+Browse[2]> names(doc$doc$children[["dataset"]][["variables"]])
+  variable   variable   variable   variable   variable   variable   variable   variable 
+"variable" "variable" "variable" "variable" "variable" "variable" "variable" "variable" 
+  variable   variable   variable 
+"variable" "variable" "variable" 
+Browse[2]> 
+
+     length            length OK
+test NROW(unique(x)) = NROW(x)
+
+Browse[2]> NROW(doc$doc$children[["dataset"]][["variables"]])
+[1] 11
+
+Browse[2]> names(doc$doc$children[["dataset"]][["variables"]][[1]])
+  text 
+"text" 
+Browse[2]> class(doc$doc$children[["dataset"]][["variables"]][[1]])
+[1] "XMLNode"          "RXMLAbstractNode" "XMLAbstractNode"  "oldClass" 
+
+Browse[2]>       length(doc$doc$children[["dataset"]][["variables"]][[1]])
+[1] 1
+
+Browse[2]> XML::xmlSize(doc$doc$children[["dataset"]][["variables"]][[1]])
+[1] 1
+
+    methods(class = "XMLNode")
+     [1] [           [[          [[<-        [<-         append      coerce      initialize  length     
+     [9] names       names<-     print       show        slotsFromS3 toString   
+    see '?methods' for accessing help and source code
+           
+          
+    toString(doc$doc$children[["dataset"]][["variables"]][[1]])
+    [1] "<variable unit=\"Miles/gallon\">mpg</variable>"
+           
+    SUBLIST
+    Browse[2]> class(doc$doc$children[["dataset"]][["variables"]][[1]]["text"])
+    [1] "XMLNodeList"
+
+    Browse[2]> methods(class = "XMLNodeList")
+    no methods found
+
+Browse[2]> names(doc$doc$children[["dataset"]][["variables"]][[1]][["text"]])
+list()
+Browse[2]> class(doc$doc$children[["dataset"]][["variables"]][[1]][["text"]])
+[1] "XMLTextNode"      "XMLNode"          "RXMLAbstractNode" "XMLAbstractNode" 
+[5] "oldClass"        
+Browse[2]> 
+
+Browse[2]> methods(class = "XMLTextNode")
+[1] coerce      initialize  print       show        slotsFromS3
+see '?methods' for accessing help and source code
+
+Browse[2]> slotsFromS3(doc$doc$children[["dataset"]][["variables"]][[1]][["text"]])
+$.S3Class
+[1] "character"
+attr(,"package")
+[1] "methods"
+
+Browse[2]> as.character((doc$doc$children[["dataset"]][["variables"]][[1]][["text"]]))
+[1] "text" "NULL" "NULL" "NULL" "NULL" "mpg" 
+Browse[2]> names((doc$doc$children[["dataset"]][["variables"]][[1]][["text"]]))
+list()
+Browse[2]> length((doc$doc$children[["dataset"]][["variables"]][[1]][["text"]]))
+[1] 0
+rowse[2]> XML::xmlSize(doc$doc$children[["dataset"]][["variables"]][[1]][["text"]])
+[1] 0
+
+**
+xmlSize	The number of sub-elements within an XML node.
+xmlSize.default	The number of sub-elements within an XML node.
+xmlSize.XMLDocument	The number of sub-elements within an XML node.
+xmlSize.XMLNode	The number of sub-elements within an XML node.
+
+
+**
+xmlChildren(x, addNames= TRUE, ...)
+Arguments
+x	
+an object of class XMLNode.
+Value
+A list whose elements are sub-nodes of the user-specified XMLNode. 
+These are also of class XMLNode.
+
+    xmlSize(obj)
+    Arguments
+    obj	
+    An an object of class XMLNode or XMLDocument.
+    Value
+    an integer which is the length of the value from xmlChildren.
+
+**
+xmlAttrs(node, ...)
+ 'xmlAttrs<-'(node, append = TRUE, suppressNamespaceWarning =
+              getOption("suppressXMLNamespaceWarning", FALSE), value)
+Arguments
+node	
+The XMLNode object whose attributes are to be extracted.
+
+Value
+This returns a named character vector 
+giving the name-value pairs of attributes of an XMLNode object 
+which is part of an XML document.
+. . .
+Value
+A named character vector, 
+where the 
+  names are the attribute names 
+    and the elements are the 
+  corresponding values. 
+  
+This corresponds to the (attr<i>, "value<i>") pairs 
+  in the XML tag <tag attr1="value1" attr2="value2"
+
+**
+xmlName(node, full = FALSE)
+Arguments
+node	
+The XMLNode object whose tag name is being requested.
+
+full	
+a logical value indicating whether to 
+  prepend the namespace prefix, if there is one, 
+  or 
+  return just the name of the XML element/node. 
+  
+TRUE means prepend the prefix.
+
+
+Value
+Each XMLNode object has an element or tag name introduced in the 
+<name ...> entry in an XML document. This function returns that name.
+Value
+A character vector of length 1 which is the node$name entry.
+
+
+WORKHORSE
+getNodeSet {XML}	R Documentation
+Find matching nodes in an internal XML tree/DOM
+
+
+xpathApply which attempts to simplify the result 
+if it can be converted to a vector or matrix rather than left as a list.
+
+getNodeSet(doc, path, namespaces = xmlNamespaceDefinitions(doc, simplify = TRUE), 
+                    fun = NULL, sessionEncoding = CE_NATIVE, addFinalizer = NA, ...)
+                    
+                    
+--------------------------------
+--------------------------------
+
+
+
+getYieldCurve
+xmlToDF alternatives
+--------------------
+*** VERYLOW ***
+SEE MY SHEET
+  getYieldCurve_XML_learning_SCRATCH.txt
+XML(Treasury.gov) to DCF(St Louis FRED.gov)
+-------------------------------------------
+SEE MY SHEET
+  getYieldCurve_XML_learning_SCRATCH.txt
+  
+[x] need treasury RATE curves to ABOVE getData 
+  getYieldCurve
+    speed improvements (MAY OR MAY NOT DO)
+      [ ] instead of ONE by ONE collect each item into long vectors (GREAT IDEA)
+      [ ] store in .fst
+      [ ] append recent data: detect daily at the end of a business day
+
+SINCE 2000 (NOTE XML is much work: I THINK THE XML is still since 2000)
+           (MAY WANT TO "JUST GET THE DATA FROM FRED")
+Treasury Inflation-Indexed Long-Term Average Yield (DLTIIT)
+https://fred.stlouisfed.org/series/DLTIIT
+. .  . 
+. . .
+. . .
+*** VERYLOW ***
+XML(Treasury.gov) to DCF(St Louis FRED.gov)
+-------------------------------------------
+
+DCFcast(XML)
+
+  BUT READ THIS
+  R Fast XML Parsing
+  xmlToDF took 16.7 seconds on my machine
+     xmlToDF development
+     Faster XML conversion to Data Frames
+     January 14, 2014 by strictlystat
+     https://hopstat.wordpress.com/2014/01/14/faster-xml-conversion-to-data-frames
+  0.4 sec solution (different computer)
+  1.1 sec solution (yet another different computer)
+  I found this solution using data.table to be even faster  data.table::rbindlist
+  R Fast XML Parsing
+  2014
+  https://stackoverflow.com/questions/22888949/r-fast-xml-parsing
+
+DEC 2020 CONCEPT
+
+
+(REORGANIZEME)
+xmlToDF alternatives
+--------------------
+
+# my econModel::vinDates solution mey be faster
+
+library(XML)
+
+<row>
+  <ID>001</ID>
+  <age>50</age>
+  <field3>blah</field3>
+  <field4 />
+</row>
+<row>
+  <ID>001</ID>
+  <age>50</age>
+  <field4 />
+</row>
+
+# 0.4 secs
+# getChildrenStrings does work much faster. 
+# However, it returns a list of named vectors. 
+# Converting that list to a data.frame or data.table (using rbind.fill.dt)
+# takes a very long time, making the whole process even longer than xmlToDF
+
+d = xmlRoot(doc)
+size = xmlSize(d)
+
+names = NULL
+for(i in 1:size){
+    v = getChildrenStrings(d[[i]])
+    names = unique(c(names, names(v)))
+}
+
+for(i in 1:size){
+    v = getChildrenStrings(d[[i]])
+    cat(paste(v[names], collapse=","), "\n", file="a.csv", append=TRUE)
+}
+
+# construct the data.frame dynamically
+# 1.2 secs
+
+m = data.table::data.table(matrix(NA,nc=length(names), nr=size))
+setnames(m, names)
+for (n in names) mode(m[[n]]) = "character"
+for(i in 1:size){
+    v = getChildrenStrings(d[[i]])
+    m[i, names(v):= as.list(v), with=FALSE]
+}
+for (n in names) m[, n:= type.convert(m[[n]], as.is=TRUE), with=FALSE]
+
+# even faster in my use case, 
+# as it only converts data to data.table once is has finished looping over the rows:
+
+library(XML)
+library(data.table)
+
+doc <- xmlParse(filename)
+d <- getNodeSet(doc,  "//Data")
+size <- xmlSize(d)
+
+dt <- rbindlist(lapply(1:size, function(i) {
+    as.list(getChildrenStrings(d[[i]]))
+}))
+
+R Fast XML Parsing
+xmlToDF took 16.7 seconds on my machine
+   xmlToDF development
+   Faster XML conversion to Data Frames
+   January 14, 2014 by strictlystat
+   https://hopstat.wordpress.com/2014/01/14/faster-xml-conversion-to-data-frames
+0.4 sec solution (different computer)
+1.1 sec solution (yet another different computer)
+I found this solution using data.table to be even faster  data.table::rbindlist
+R Fast XML Parsing
+2014
+https://stackoverflow.com/questions/22888949/r-fast-xml-parsing
+
+
+
+------------------------------------------------
+------------------------------------------------
+
+TRYING TO REWORK
+
+getYieldCurve
+
+OLD (ORIGINAL ANDRE WROTE   )
+TRYING TO REWRITE TO BE FASTER
+
+https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=billrates
+
+TEN DATA ELEMENTS(WEEKDAY NIGHT OF MON DEC 14 2020)
+https://data.treasury.gov/feed.svc/DailyTreasuryBillRateData?$filter=month(INDEX_DATE)%20eq%2012%20and%20year(INDEX_DATE)%20eq%202020
+
+Browse[2]> match.call()
+getYieldCurve(base = "https://data.treasury.gov/feed.svc/DailyTreasuryBillRateData?$filter=month(INDEX_DATE)%20eq%2012%20and%20year(INDEX_DATE)%20eq%202020")
+
+
+Browse[2]> class(doc)
+[1] "XMLInternalDocument" "XMLAbstractDocument"
+
+Browse[2]> methods(class ="XMLInternalDocument" )
+[1] [           [[          coerce      initialize  print       show        slotsFromS3 summary    
+see '?methods' for accessing help and source code
+Browse[2]> methods(class = "XMLAbstractDocument")
+[1] coerce      initialize  show        slotsFromS3
+see '?methods' for accessing help and source code
+
+methods(summary)
+[175] summary.XMLInternalDocument*
+                
+                
+SEE ABOVE: 
+methods(summary)
+[175] summary.XMLInternalDocument*
+summary(doc)
+
+BUT not as useful in XML package example mtcars
+    Browse[2]> summary(doc)
+        Length Class              Mode
+    doc 3      XMLDocumentContent list
+    dtd 2      DTDList            list
+
+    <?xml version="1.0"?>
+    <!DOCTYPE dataset SYSTEM "../DatasetByRecord.dtd">
+
+    <!-- Taken from the R distribution, in turn taken from Henderson and Velleman 1981, 
+         Building multiple regression models interactively, Biometrics 37 391-411 .  
+    -->
+
+    <dataset name="mtcars" numRecords="32" source="R Project">
+     <variables count="11">
+        <variable unit="Miles/gallon">mpg</variable> 
+        <variable>cyl</variable>  
+        <variable>disp</variable> 
+        <variable>hp</variable> 
+        <variable>drat</variable>
+        <variable>wt</variable>
+        <variable>qsec</variable>
+        <variable>vs</variable>
+        <variable type="FactorVariable" levels="automatic,manual">am</variable>
+        <variable>gear</variable>
+        <variable>carb</variable>
+      </variables>
+     <record id="Mazda RX4">   21.0   6 160.0 110 3.90 2.620 16.46  0  1    4    4</record>
+     <record id="Mazda RX4 Wag"> 21.0   6 160.0 110 3.90 2.875 17.02  0  1    4    4</record>
+    </dataset>
+
+
+TREASURY XML
+https://www.treasury.gov/resource-center/data-chart-center/interest-rates/Pages/TextView.aspx?data=billrates
+https://data.treasury.gov/feed.svc/DailyTreasuryBillRateData?$filter=month(INDEX_DATE)%20eq%2012%20and%20year(INDEX_DATE)%20eq%202020
+
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<feed xml:base="http://data.treasury.gov/Feed.svc/" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns="http://www.w3.org/2005/Atom">
+  <title type="text">DailyTreasuryBillRateData</title>
+  <id>http://data.treasury.gov/feed.svc/DailyTreasuryBillRateData</id>
+  <updated>2020-12-15T04:00:17Z</updated>
+  <link rel="self" title="DailyTreasuryBillRateData" href="DailyTreasuryBillRateData" />
+  <entry>
+    <id>http://data.treasury.gov/Feed.svc/DailyTreasuryBillRateData(4735)</id>
+    <title type="text"></title>
+    <updated>2020-12-15T04:00:17Z</updated>
+    <author>
+      <name />
+    </author>
+    <link rel="edit" title="DailyTreasuryBillRateDatum" href="DailyTreasuryBillRateData(4735)" />
+    <category term="TreasuryDataWarehouseModel.DailyTreasuryBillRateDatum" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme" />
+    <content type="application/xml">
+      <m:properties>
+        <d:DailyTreasuryBillRateDataId m:type="Edm.Int32">4735</d:DailyTreasuryBillRateDataId>
+        <d:INDEX_DATE m:type="Edm.DateTime">2020-12-01T00:00:00</d:INDEX_DATE>
+        <d:ROUND_B1_CLOSE_4WK_2 m:type="Edm.Double">0.07</d:ROUND_B1_CLOSE_4WK_2>
+        <d:ROUND_B1_YIELD_4WK_2 m:type="Edm.Double">0.07</d:ROUND_B1_YIELD_4WK_2>
+        <d:ROUND_B1_CLOSE_8WK_2 m:type="Edm.Double">0.07</d:ROUND_B1_CLOSE_8WK_2>
+        <d:ROUND_B1_YIELD_8WK_2 m:type="Edm.Double">0.07</d:ROUND_B1_YIELD_8WK_2>
+        <d:ROUND_B1_CLOSE_13WK_2 m:type="Edm.Double">0.09</d:ROUND_B1_CLOSE_13WK_2>
+        <d:ROUND_B1_YIELD_13WK_2 m:type="Edm.Double">0.09</d:ROUND_B1_YIELD_13WK_2>
+        <d:ROUND_B1_CLOSE_26WK_2 m:type="Edm.Double">0.1</d:ROUND_B1_CLOSE_26WK_2>
+        <d:ROUND_B1_YIELD_26WK_2 m:type="Edm.Double">0.1</d:ROUND_B1_YIELD_26WK_2>
+        <d:ROUND_B1_CLOSE_52WK_2 m:type="Edm.Double">0.12</d:ROUND_B1_CLOSE_52WK_2>
+        <d:ROUND_B1_YIELD_52WK_2 m:type="Edm.Double">0.12</d:ROUND_B1_YIELD_52WK_2>
+        <d:BOND_MKT_UNAVAIL_REASON></d:BOND_MKT_UNAVAIL_REASON>
+        <d:MATURITY_DATE_4WK m:type="Edm.DateTime">2020-12-29T00:00:00</d:MATURITY_DATE_4WK>
+        <d:MATURITY_DATE_8WK m:type="Edm.DateTime">2021-01-26T00:00:00</d:MATURITY_DATE_8WK>
+        <d:MATURITY_DATE_13WK m:type="Edm.DateTime">2021-03-04T00:00:00</d:MATURITY_DATE_13WK>
+        <d:MATURITY_DATE_26WK m:type="Edm.DateTime">2021-06-03T00:00:00</d:MATURITY_DATE_26WK>
+        <d:MATURITY_DATE_52WK m:type="Edm.DateTime">2021-12-02T00:00:00</d:MATURITY_DATE_52WK>
+        <d:CUSIP_4WK>9127965F2</d:CUSIP_4WK>
+        <d:CUSIP_8WK>912796A82</d:CUSIP_8WK>
+        <d:CUSIP_13WK>9127964F3</d:CUSIP_13WK>
+        <d:CUSIP_26WK>912796A41</d:CUSIP_26WK>
+        <d:CUSIP_52WK>9127965G0</d:CUSIP_52WK>
+        <d:QUOTE_DATE m:type="Edm.DateTime">2020-12-01T00:00:00</d:QUOTE_DATE>
+        <d:CF_NEW_DATE>12/01/2020</d:CF_NEW_DATE>
+        <d:CS_4WK_CLOSE_AVG m:type="Edm.Double">0.07</d:CS_4WK_CLOSE_AVG>
+        <d:CS_4WK_YIELD_AVG m:type="Edm.Double">0.07</d:CS_4WK_YIELD_AVG>
+        <d:CS_8WK_CLOSE_AVG m:type="Edm.Double">0.07</d:CS_8WK_CLOSE_AVG>
+        <d:CS_8WK_YIELD_AVG m:type="Edm.Double">0.07</d:CS_8WK_YIELD_AVG>
+        <d:CS_13WK_CLOSE_AVG m:type="Edm.Double">0.09</d:CS_13WK_CLOSE_AVG>
+        <d:CS_13WK_YIELD_AVG m:type="Edm.Double">0.09</d:CS_13WK_YIELD_AVG>
+        <d:CS_26WK_CLOSE_AVG m:type="Edm.Double">0.1</d:CS_26WK_CLOSE_AVG>
+        <d:CS_26WK_YIELD_AVG m:type="Edm.Double">0.1</d:CS_26WK_YIELD_AVG>
+        <d:CS_52WK_CLOSE_AVG m:type="Edm.Double">0.12</d:CS_52WK_CLOSE_AVG>
+        <d:CS_52WK_YIELD_AVG m:type="Edm.Double">0.12</d:CS_52WK_YIELD_AVG>
+        <d:CF_WEEK m:type="Edm.Int32">202049</d:CF_WEEK>
+      </m:properties>
+    </content>
+  </entry
+
+----
+
+Browse[2]> 
+Browse[2]> methods(summary)
+
+Browse[2]> summary(doc)
+$nameCounts
+
+                         id                        link                       title 
+                         11                          11                          11 
+                    updated                      author     BOND_MKT_UNAVAIL_REASON 
+                         11                          10                          10 
+                   category                 CF_NEW_DATE                     CF_WEEK 
+                         10                          10                          10 
+                    content           CS_13WK_CLOSE_AVG           CS_13WK_YIELD_AVG 
+                         10                          10                          10 
+          CS_26WK_CLOSE_AVG           CS_26WK_YIELD_AVG            CS_4WK_CLOSE_AVG 
+                         10                          10                          10 
+           CS_4WK_YIELD_AVG           CS_52WK_CLOSE_AVG           CS_52WK_YIELD_AVG 
+                         10                          10                          10 
+           CS_8WK_CLOSE_AVG            CS_8WK_YIELD_AVG                  CUSIP_13WK 
+                         10                          10                          10 
+                 CUSIP_26WK                   CUSIP_4WK                  CUSIP_52WK 
+                         10                          10                          10 
+                  CUSIP_8WK DailyTreasuryBillRateDataId                       entry 
+                         10                          10                          10 
+                 INDEX_DATE          MATURITY_DATE_13WK          MATURITY_DATE_26WK 
+                         10                          10                          10 
+          MATURITY_DATE_4WK          MATURITY_DATE_52WK           MATURITY_DATE_8WK 
+                         10                          10                          10 
+                       name                  properties                  QUOTE_DATE 
+                         10                          10                          10 
+      ROUND_B1_CLOSE_13WK_2       ROUND_B1_CLOSE_26WK_2        ROUND_B1_CLOSE_4WK_2 
+                         10                          10                          10 
+      ROUND_B1_CLOSE_52WK_2        ROUND_B1_CLOSE_8WK_2       ROUND_B1_YIELD_13WK_2 
+                         10                          10                          10 
+      ROUND_B1_YIELD_26WK_2        ROUND_B1_YIELD_4WK_2       ROUND_B1_YIELD_52WK_2 
+                         10                          10                          10 
+       ROUND_B1_YIELD_8WK_2                        feed 
+                         10                           1 
+
+$numNodes
+[1] 465
+
+Browse[2]> str(summary(doc))
+List of 2
+ $ nameCounts: 'table' int [1:47(1d)] 11 11 11 11 10 10 10 10 10 10 ...
+  ..- attr(*, "dimnames")=List of 1
+  .. ..$ : chr [1:47] "id" "link" "title" "updated" ...
+ $ numNodes  : int 465
+Browse[2]>
+
+
+getNodeSet
+
+<?xml version="1.0"?>
+
+<book>
+ <chapter><title>XML</title>
+   <section><title>The elements of an XML document</title>
+   </section>
+   <section><title>Parsing XML</title>
+    <section><title>DOM</title></section>
+    <section><title>SAX</title></section>
+   </section>
+ </chapter>
+ <chapter><title>XSL</title>
+     <section><title>templates</title></section>
+     <section><title>XPath expressions</title></section>
+     <section><title>named templates</title></section>
+ </chapter>
+</book>
+
+    f = system.file("exampleData", "book.xml", package = "XML")
+    doc = xmlParse(f)
+    ch = getNodeSet(doc, "//chapter")
+    xpathApply(ch[[2]], "//section/title", xmlValue)
+
+XML::xpathApply(ch[[2]], "//section/title", XML::xmlValue)
+[[1]]
+[1] "The elements of an XML document"
+
+[[2]]
+[1] "Parsing XML"
+
+[[3]]
+[1] "DOM"
+
+[[4]]
+[1] "SAX"
+
+[[5]]
+[1] "templates"
+
+[[6]]
+[1] "XPath expressions"
+
+[[7]]
+[1] "named templates"
+
+Browse[2]> str(.Last.value)
+List of 7
+ $ : chr "The elements of an XML document"
+ $ : chr "Parsing XML"
+ $ : chr "DOM"
+ $ : chr "SAX"
+ $ : chr "templates"
+ $ : chr "XPath expressions"
+ $ : chr "named templates"
+Browse[2]> XML::xpathApply(ch[[2]], "//section/title", identity)
+[[1]]
+<title>The elements of an XML document</title> 
+
+[[2]]
+<title>Parsing XML</title> 
+
+[[3]]
+<title>DOM</title> 
+
+[[4]]
+<title>SAX</title> 
+
+[[5]]
+<title>templates</title> 
+
+[[6]]
+<title>XPath expressions</title> 
+
+[[7]]
+<title>named templates</title> 
+
+Browse[2]> 
+
+rowse[2]> XML::xpathApply(ch[[2]], "//section/title", getChildrenStrings)
+[[1]]
+                             text 
+"The elements of an XML document" 
+
+[[2]]
+         text 
+"Parsing XML" 
+
+[[3]]
+ text 
+"DOM" 
+
+[[4]]
+ text 
+"SAX" 
+
+[[5]]
+       text 
+"templates" 
+
+[[6]]
+               text 
+"XPath expressions" 
+
+[[7]]
+             text 
+"named templates" 
+
+Browse[2]> str(.Last.value)
+List of 7
+ $ : Named chr "The elements of an XML document"
+  ..- attr(*, "names")= chr "text"
+ $ : Named chr "Parsing XML"
+  ..- attr(*, "names")= chr "text"
+ $ : Named chr "DOM"
+  ..- attr(*, "names")= chr "text"
+ $ : Named chr "SAX"
+  ..- attr(*, "names")= chr "text"
+ $ : Named chr "templates"
+  ..- attr(*, "names")= chr "text"
+ $ : Named chr "XPath expressions"
+  ..- attr(*, "names")= chr "text"
+ $ : Named chr "named templates"
+  ..- attr(*, "names")= chr "text"
+Browse[2]> 
+
+--------------------------------
+--------------------------------

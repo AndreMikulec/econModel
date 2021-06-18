@@ -131,6 +131,9 @@ formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18565))
 formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18596))
 formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18627))
 
+formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18684))
+formatDBFs(paste0("C:/DATA/AAIISIPRO/MONTHDATE","/", 18656))
+
 # View some
 # e.g.
 # viewSIPRO("Base", Source = "Repository", SubDir = "C:\\DATA\\AAIISIPRO\\MONTHDATE\\18565", Ext = "FST")
