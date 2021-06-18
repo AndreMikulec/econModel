@@ -5,8 +5,7 @@
 #' Try to connect or try to connect as "user".  If the user (or its support structure) does not exists, then create the support structure and the "user".
 #'
 #' @param driver String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
-#' @param conn Maybe a PostgreSQLConnection.  Its validility and active status is checked (and re-used if valid and active).
-#' @param String.  Contains the name of the variable that contains the name of the "connection" in the environment "env".
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param user String. Defaults to getOption("econmodel_db_user").
 #' @param password String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_password") .
 #' @param host String. Defaults to getOption("econmodel_db_host").
@@ -35,7 +34,7 @@
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
 #' @export
-dbLoginEM <- function(driver, conn, connName, user, password = user, host, dbname = user, port,
+dbLoginEM <- function(driver, connName, user, password = user, host, dbname = user, port,
                       tty, options, forceISOdate, env, display = TRUE, exec = TRUE) {
   tryCatchLog::tryCatchLog({
 
@@ -54,20 +53,20 @@ dbLoginEM <- function(driver, conn, connName, user, password = user, host, dbnam
       ReturnTo <- paste0("environment ", capture.output(env))
     }
 
-    if(!missing(conn)) {
-      Results <- dbIsConnectedEM(conn, display = display, exec = exec)
-      if(exec) {
-        if(unlist(Results)) {
-          if(unlist(dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec))) {
-            dbDisconnectEM(connName = connName, env = env)
-          }
-          # re-use
-          assign(connName, conn, envir = env)
-          return(invisible(conn))
-        }
-
-      }
-    }
+    # if(!missing(conn)) {
+    #   Results <- dbIsConnectedEM(conn, display = display, exec = exec)
+    #   if(exec) {
+    #     if(unlist(Results)) {
+    #       if(unlist(dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec))) {
+    #         dbDisconnectEM(connName = connName, env = env)
+    #       }
+    #       # re-use
+    #       assign(connName, conn, envir = env)
+    #       return(invisible(conn))
+    #     }
+    #
+    #   }
+    # }
 
     if(missing(driver)) {
       driver <- getOption("econmodel_db_driver")
