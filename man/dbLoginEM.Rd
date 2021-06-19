@@ -6,7 +6,6 @@
 \usage{
 dbLoginEM(
   driver,
-  conn,
   connName,
   user,
   password = user,
@@ -24,13 +23,11 @@ dbLoginEM(
 \arguments{
 \item{driver}{String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.}
 
-\item{conn}{Maybe a PostgreSQLConnection.  Its validility and active status is checked (and re-used if valid and active).}
-
 \item{connName}{String.  Name of the database connection object.  The default is "connEM".}
 
 \item{user}{String. Defaults to getOption("econmodel_db_user").}
 
-\item{password}{String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_password") .}
+\item{password}{String. Defaults to "user". If missing, then defaults to getOption("econmodel_db_password").}
 
 \item{host}{String. Defaults to getOption("econmodel_db_host").}
 
@@ -49,20 +46,24 @@ dbLoginEM(
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
-
-\item{String.}{Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 }
 \value{
-1. invisibly a DBI connection 2. Object named "connEM" is created, connected, and assigned to the environment "env".
+Invisibly a DBI connection in an object named "connEM" is created, connected, and assigned to the environment "env".
 }
 \description{
 Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
-}
-\details{
-Try to connect or try to connect as "user".  If the user (or its support structure) does not exists, then create the support structure and the "user".
+Try to connect or try to connect as "user".
 }
 \examples{
 \dontrun{
+# by default, this the lowercase name of the tempdir()
+options(econmodel_db_storage_name = "postgres")
+getOption("econmodel_db_user")
+# In rstudio to a Restart of R
+devtools::load_all(".")
+getOption("econmodel_db_user")
+[1] "postgres"
 dbLoginEM()
+# User login succeeded
 }
 }

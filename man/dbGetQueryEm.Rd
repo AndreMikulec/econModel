@@ -5,22 +5,25 @@
 \title{Results column names are always in UPPERCASE.}
 \usage{
 dbGetQueryEM(
-  conn,
+  connName,
   Statement,
   time_zone = "UTC",
   client_encoding = "UTF8",
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A DBIConnection object, as returned by dbConnect().}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{Statement}{a character string containing SQL. The statement "SELECT 1;" will test if a database connection is non-expired or is-valid. Then, the returned value is either data.frame(DBISCONNECTEDEM = TRUE) or data.frame(DBISCONNECTEDEM = TRUE).}
 
 \item{time_zone}{Execution time zone. Default is "UTC".}
 
 \item{client_encoding}{Execution encoding. Default is "UTF8".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 

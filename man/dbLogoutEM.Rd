@@ -15,7 +15,7 @@ dbLogoutEM(connName, env)
 Disconnects "connEM" from the database or disconnects "connName" from the database and removes it from the environment "env".
 }
 \description{
-Disconnect from the econModel database
+Disconnect and remove the DBI connection object connName (default is "connEM") from the environment "env".
 }
 \examples{
 \dontrun{

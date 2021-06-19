@@ -4,11 +4,9 @@
 \alias{dbDisconnectEM}
 \title{Disconnect from and econModel database}
 \usage{
-dbDisconnectEM(conn, connName, env)
+dbDisconnectEM(connName, env)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".}
-
 \item{connName}{String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".}
 
 \item{env}{Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".}
@@ -17,14 +15,14 @@ dbDisconnectEM(conn, connName, env)
 Disconnects "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
 }
 \description{
-Disconnects the R object passed "conn".
-Alternately, can disconnect and remove the DBI connection object connName (default is "connEM") from the environment "env".
-The function will just do one or the other, but not both.  Does NOT remove the passed R object "conn".
+Disconnects.
 }
 \examples{
 \dontrun{
 dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
-dbDisconnectEM(conn)
+# Tried to disconnect the R object "connEM" and remove it
+# from the environment <environment: R_GlobalEnv>.
+
 dbDisconnectEM(connName = "connEM", env = .Globalenv)
 }
 }

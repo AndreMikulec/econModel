@@ -5,22 +5,25 @@
 \title{Executes in the  database}
 \usage{
 dbExecuteEM(
-  conn,
+  connName,
   Statement,
   time_zone = "UTC",
   client_encoding = "UTF8",
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Optional. This may be "passed" instead of  "connName".}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{Statement}{String. Required.  DML/DDL/DCL to execute}
 
 \item{time_zone}{Execution time zone. Default is "UTC".}
 
 \item{client_encoding}{Execution encoding. Default is "UTF8".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -36,6 +39,6 @@ The function will just do one or the other, but not both.  Does NOT remove the p
 }
 \examples{
 \dontrun{
-dbExecuteEM(get("connEM"), Statement = "CREATE TABLE xyz();")
+dbExecuteEM(Statement = "CREATE TABLE xyz();")
 }
 }

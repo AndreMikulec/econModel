@@ -4,10 +4,12 @@
 \alias{dbSetPerformanceEM}
 \title{PostgreSQL Performance}
 \usage{
-dbSetPerformanceEM(conn, exec = TRUE, display = TRUE)
+dbSetPerformanceEM(connName, env, exec = TRUE, display = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 
@@ -21,6 +23,6 @@ Set PostgreSQL memory parameters.
 }
 \examples{
 \dontrun{
-dbSetPerformanceEM(get("connEM"))
+dbSetPerformanceEM()
 }
 }
