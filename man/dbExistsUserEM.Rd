@@ -4,12 +4,14 @@
 \alias{dbExistsUserEM}
 \title{User Existence?}
 \usage{
-dbExistsUserEM(conn, user, display = TRUE, exec = TRUE)
+dbExistsUserEM(connName, user, env, display = TRUE, exec = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{user}{String. Required.  Potential user in the database.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -23,7 +25,6 @@ Determine if a user exists in the database.
 }
 \examples{
 \dontrun{
- dbExistsUserEM(conn, user = "r_user_econmodel")
- dbExistsUserEM(conn, user = "rtmp")
+ dbExistsUserEM(user = "r_user")
 }
 }

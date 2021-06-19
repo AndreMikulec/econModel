@@ -1239,6 +1239,7 @@ tryCatchLog::tryCatchLog({
   if(missing(env)) {
     env <- .GlobalEnv
   }
+
   assign("conn", get(connName, envir = env))
 
   # DELL HOME "COMPUTER" ( 2017 / WINDOWS 10 PROFESSIONAL )
@@ -1299,6 +1300,7 @@ tryCatchLog::tryCatchLog({
   if(missing(env)) {
     env <- .GlobalEnv
   }
+
   assign("conn", get(connName, envir = env))
 
   Results <- dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER;", display = display, exec = exec)
@@ -1792,6 +1794,8 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
       env <- .GlobalEnv
     }
 
+    assign("conn", get(connName, envir = env))
+
     oldtz <- Sys.getenv("TZ")
     Sys.setenv(TZ=time_zone)
     on.exit({Sys.setenv(TZ=oldtz)})
@@ -1806,7 +1810,6 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
     }
 
     if(exec) {
-      assign("conn", get(connName, envir = env))
       DBI::dbExecute(conn, statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
       Results <- try({DBI::dbExecute(conn, statement = tmp.query)}, silent = T)
       if(!inherits(Results, "try-error")) {
@@ -1835,37 +1838,39 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
 #'
 #' Determine if a user exists in the database.
 #'
-#' @param conn PostgreSQL DBI connection. Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param user String. Required.  Potential user in the database.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
 #' \dontrun{
-#'  dbExistsUserEM(conn, user = "r_user_econmodel")
-#'  dbExistsUserEM(conn, user = "rtmp")
+#'  dbExistsUserEM(user = "r_user")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsUserEM <- function(conn, user, display = TRUE, exec = TRUE) {
+dbExistsUserEM <- function(connName, user, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
-
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
 
   if(missing(user)) {
     stop("Parameter \"user\" is required.")
   }
+
+  if(missing(connName)) {
+    connName <- "connEM"
+  }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
+  assign("conn", get(connName, envir = env))
 
   tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, x = user), ");")
 
   Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
   if(exec && NROW(Results)) {
    return(invisible(data.frame(DBEXISTSUSEREM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBEXISTSUSEREM = logical())))
-  } else {
-    return(invisible(data.frame(DBEXISTSUSEREM = FALSE)))
   }
 
   return(invisible(data.frame(DBEXISTSUSEREM = logical())))
