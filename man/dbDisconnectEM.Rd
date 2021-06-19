@@ -23,6 +23,5 @@ dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
 # Tried to disconnect the R object "connEM" and remove it
 # from the environment <environment: R_GlobalEnv>.
 
-dbDisconnectEM(connName = "connEM", env = .Globalenv)
 }
 }

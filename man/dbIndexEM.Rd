@@ -5,7 +5,7 @@
 \title{Create an index}
 \usage{
 dbIndexEM(
-  conn,
+  connName,
   name,
   colname,
   if.not.exists = FALSE,
@@ -13,12 +13,13 @@ dbIndexEM(
   idxname,
   unique = FALSE,
   method = c("btree", "hash", "rtree", "gist"),
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{A character string specifying a PostgreSQL table name.}
 
@@ -33,6 +34,8 @@ dbIndexEM(
 \item{unique}{Logical. Causes the system to check for duplicate values in the table when the index is created (if data already exist) and each time data is added. Attempts to insert or update data which would result in duplicate entries will generate an error.}
 
 \item{method}{The name of the method to be used for the index. Choices are "btree", "hash", "rtree", and "gist". The default method is "btree", although "gist" should be the index of choice for PostGIS spatial types (geometry, geography, raster).}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 

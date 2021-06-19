@@ -4,12 +4,14 @@
 \alias{dbExistsDbaseEM}
 \title{Database Existence?}
 \usage{
-dbExistsDbaseEM(conn, dbname, display = TRUE, exec = TRUE)
+dbExistsDbaseEM(connName, dbname, env, display = TRUE, exec = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{dbname}{String. Required.  Potential database in the cluster.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -23,7 +25,6 @@ Determine if a database exists in the cluster.
 }
 \examples{
 \dontrun{
- dbExistsDbaseEM(conn, dbname = "r_user_econmodel")
- dbExistsDbaseEM(conn, dbname = "rtmp")
+ dbExistsDbaseEM(dbname = "r_user")
 }
 }

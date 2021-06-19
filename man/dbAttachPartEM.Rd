@@ -5,19 +5,20 @@
 \title{Add or Remove a Partition}
 \usage{
 dbAttachPartEM(
-  conn,
+  connName,
   dbobject = "table",
   name,
   partition,
   if.not.exists = FALSE,
   part.bound.value,
   action = c("attach", "drop"),
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{dbobject}{A character string specifying if the the type of the parent database object.  This can be "table"(default) or "index".}
 
@@ -30,6 +31,8 @@ dbAttachPartEM(
 \item{part.bound.value}{Of the attaching the partition, the partitions partition bound single value.}
 
 \item{action}{A character string specifying if the column is to be added ("attach", default) or removed ("drop").}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 

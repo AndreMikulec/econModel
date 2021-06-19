@@ -5,18 +5,21 @@
 \title{Schema Creation}
 \usage{
 dbCreateSchemaEM(
-  conn,
+  connName,
   schema,
   role_specification = schema,
   grant_all_roles = schema,
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{schema}{String. Required.  Potential schema in the database.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -34,7 +37,6 @@ Create a schema in the database.
 }
 \examples{
 \dontrun{
- dbCreateSchemaEM(conn, schema = "r_user_econmodel")
- dbCreateSchemaEM(conn, schema = "rtmp")
+ dbCreateSchemaEM(schema = "r_user")
 }
 }

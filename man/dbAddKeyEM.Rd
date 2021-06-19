@@ -5,7 +5,7 @@
 \title{Add Key or Check Constraint}
 \usage{
 dbAddKeyEM(
-  conn,
+  connName,
   name,
   colname,
   if.not.exists = FALSE,
@@ -15,12 +15,13 @@ dbAddKeyEM(
   check.by = character(),
   reference,
   colref,
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{A character string, or a character vector, specifying a PostgreSQL table name.}
 
@@ -39,6 +40,8 @@ dbAddKeyEM(
 \item{reference}{A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").}
 
 \item{colref}{A character string specifying the name of the primary key in the foreign table to which the foreign key will be associated; alternatively, a character vector specifying the name of the columns for keys spanning more than one column (ignored if type == "primary").}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 

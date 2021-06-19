@@ -5,7 +5,7 @@
 \title{Creates PostgreSQL Partitioned Table/Indexes and Partitions}
 \usage{
 dbWriteTableEM(
-  conn,
+  connName,
   name = substitute(value),
   value,
   partition.of = character(),
@@ -15,13 +15,14 @@ dbWriteTableEM(
   lower.df.name = TRUE,
   lower.col.names = TRUE,
   dots.to.underscores = TRUE,
+  env,
   display = TRUE,
   exec = TRUE,
   ...
 )
 }
 \arguments{
-\item{conn}{A "PostgreSQL" connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{String.  Default is substitute(value). The name of the table to which the data frame is to be loaded.}
 
@@ -40,6 +41,8 @@ dbWriteTableEM(
 \item{lower.col.names}{Logical. Default is TRUE. Make the target database table column names to be in lowercase.}
 
 \item{dots.to.underscores}{Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -82,7 +85,6 @@ SET enable_partition_pruning TO on;
 \examples{
 \dontrun{
 
-conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user = "postgres")
 
 mtcars2 <- mtcars
 mtcars2[["model"]] <- rownames(mtcars2)
@@ -97,7 +99,7 @@ rownames(mtcars2) <- NULL
 # on the server).
 mtcars2s <- mtcars2[1:5,]
 
-dbWriteTableEM(conn, name = "mtcars",  value = mtcars2s,
+dbWriteTableEM(name = "mtcars",  value = mtcars2s,
   part.key.col = "gear", primary.key = c("gear", "model"),
   indexes = list(gear_model_vs = c("gear", "model", "vs"))
 )
@@ -108,7 +110,7 @@ dbWriteTableEM(conn, name = "mtcars",  value = mtcars2s,
 # are added to the value(data.frame).
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
 
-dbWriteTableEM(conn, name = "mtcars",  value = mtcars2lDf,
+dbWriteTableEM(name = "mtcars",  value = mtcars2lDf,
   part.key.col = "gear", primary.key = c("gear", "model"),
   indexes = list(gear_model_vs = c("gear", "model", "vs"))
 )
@@ -124,15 +126,15 @@ mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                DfNew
               }; rm(DfNew)
 
-dbWriteTableEM(conn, name = "mtcars",  value = mtcars2lSv,
+dbWriteTableEM(name = "mtcars",  value = mtcars2lSv,
   part.key.col = "gear", primary.key = c("gear", "model"),
   indexes = list(gear_model_vs = c("gear", "model", "vs"))
 )
 
 
 # to query
-dbExecuteEM(conn, Statement = "SET constraint_exclusion TO partition;")
-dbExecuteEM(conn, Statement = "SET enable_partition_pruning TO on;")
+dbExecuteEM(Statement = "SET constraint_exclusion TO partition;")
+dbExecuteEM(Statement = "SET enable_partition_pruning TO on;")
 
 }
 }

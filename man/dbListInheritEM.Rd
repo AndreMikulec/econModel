@@ -4,14 +4,23 @@
 \alias{dbListInheritEM}
 \title{Of a PostgreSQL Object, Get Inherited or Inherit_From Objects}
 \usage{
-dbListInheritEM(conn, name, side = "parent", display = TRUE, exec = TRUE)
+dbListInheritEM(
+  connName,
+  name,
+  side = "parent",
+  env,
+  display = TRUE,
+  exec = TRUE
+)
 }
 \arguments{
-\item{conn}{PostgreSQLConnection . Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{String. Required. Name of the object.}
 
 \item{side}{String. View from the "parent side. Default is "parent".  Alternately, the view from the "child side" is the value "child".}
+
+\item{env}{Environment.  Default is the .Global environment.}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -31,7 +40,7 @@ Of column results named like '_PART_KEY_DEF' and '_PART_BOUND', these are the pa
 }
 \examples{
 \dontrun{
-dbListInheritEM(conn, name = "sample")
+dbListInheritEM(name = "sample")
 }
 }
 \references{

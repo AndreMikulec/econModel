@@ -5,16 +5,17 @@
 \title{Format input for database schema/object names.}
 \usage{
 objectNameFixEM(
-  conn,
+  connName,
   o.nm,
   as.identifier = TRUE,
   dbQuote = "Identifier",
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A connection object. Must be provided but can be set NULL,
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 where a dummy connection will be used.}
 
 \item{o.nm}{Object name string, length 1-2.}
@@ -23,6 +24,8 @@ where a dummy connection will be used.}
 sanitized identifiers (TRUE) or as regular character (FALSE)}
 
 \item{dbQuote}{String. Only used when "as.identifier = TRUE". Default is "Identifier". Alternately, this value can be "Literal."}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 
@@ -43,16 +46,16 @@ inputs.
 \examples{
 \dontrun{
 name <- c("schema","table")
-objectNameFixEM(conn, name)
+objectNameFixEM(o.nm = name)
 
 #current search path schema is added to single-length character object (if only table is given)
 name<-"table"
-objectNameFixEM(conn,name)
+objectNameFixEM(o.nm = name)
 
 #schema or table names with double quotes should be given exactly as they are
 (make sure to wrap in single quotes in R):
 name <- c('sch"ema','"table"')
-objectNameFixEM(conn,name)
+objectNameFixEM(o.nm = name)
 }
 }
 \keyword{internal}

@@ -5,22 +5,25 @@
 \title{Bind New Columns to a Server or Local and Re-Order Columns}
 \usage{
 dbdfMatchColsEM(
-  conn,
+  connName,
   name = substitute(value),
   value,
   temporary = FALSE,
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A DBIConnection PostgreSQL object, as returned by DBI::dbConnect().}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{a character string specifying a table name.}
 
 \item{value}{a data.frame (or coercible to data.frame).}
 
 \item{temporary}{Logical. Default is FALSE, If TRUE, then look for the "conn" object "name" in the temporary namespace.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 
@@ -44,8 +47,6 @@ Inspired by the R CRAN package Caroline.
 \examples{
 \dontrun{
 
-conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user = "postgres")
-
 mtcars2 <- mtcars
 mtcars2[["model"]] <- rownames(mtcars2)
 mtcars2 <- DataCombine::MoveFront(mtcars2, Var = "model")
@@ -58,14 +59,14 @@ rownames(mtcars2) <- NULL
 # Appends data (with the value(data.frame) having the same columns
 # on the server).
 mtcars2s <- mtcars2[1:5,]
-dbdfMatchColsEM(conn, name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+dbdfMatchColsEM(name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 
 # Appends data (with the value(data.frame) having less columns
 # than that of the server database).
 # Those server columns, that are not found in the value(data.frame),
 # are added to the value(data.frame).
 mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lDf)
+dbdfMatchColsEM(name = "mtcars", value = mtcars2lDf)
 
 # Appends data (with the server database having less columns
 # than that of the value(data.frame)).
@@ -77,6 +78,6 @@ mtcars2lSv <- {DfNew <- mtcars2[11:15, c("model","vs", "am", "gear", "carb")]
                DfNew
               }; rm(DfNew)
 
-dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lSv)
+dbdfMatchColsEM(name = "mtcars", value = mtcars2lSv)
 }
 }

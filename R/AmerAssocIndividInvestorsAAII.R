@@ -1180,7 +1180,6 @@ tryCatchLog::tryCatchLog({
   if(missing(env)) {
     env <- .GlobalEnv
   }
-  assign("conn", get(connName, envir = env))
 
   oldtz <- Sys.getenv("TZ")
   Sys.setenv(TZ=time_zone)
@@ -1194,10 +1193,10 @@ tryCatchLog::tryCatchLog({
   }
 
   if(exec) {
-    DBI::dbExecute(conn, statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
+    DBI::dbExecute(get(connName, envir = env), statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
   }
   if(exec) {
-    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
+    Results <- try({DBI::dbGetQuery(get(connName, envir = env), statement = tmp.query)}, silent = TRUE)
     if(!inherits(Results, "try-error")) {
       # catch all
       Results <- data.frame(Results)
@@ -1240,38 +1239,38 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  assign("conn", get(connName, envir = env))
 
   # DELL HOME "COMPUTER" ( 2017 / WINDOWS 10 PROFESSIONAL )
   # HAS 16GB of RAM AND 4 CORES
 
   # EXPERIMENT ( memory for disk caching ) -- 2048(GUESSING) + 4096(shared buffers)
-  dbExecuteEM(conn, Statement = "SET effective_cache_size  TO '6144MB';", display = display, exec = exec)
+  dbExecuteEM(connName, Statement = "SET effective_cache_size  TO '6144MB';", env = env, display = display, exec = exec)
 
   # windows LIMIT 2047
   # A good rule of thumb is to keep: work_mem*max_connections*2 < 1/4 of memory
   # NOTE: WATCH OUT FOR 'R language: parallel. Each process GETS 'work_mem' limit
-  dbExecuteEM(conn, Statement = "SET work_mem TO '2047MB';", display = display, exec = exec)
+  dbExecuteEM(connName, Statement = "SET work_mem TO '2047MB';", env = env, display = display, exec = exec)
 
   # maximum amount of memory to be used by maintenance operations, such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY
   # https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
-  dbExecuteEM(conn, Statement = "SET maintenance_work_mem TO '2047MB';", display = display, exec = exec)
+  dbExecuteEM(connName, Statement = "SET maintenance_work_mem TO '2047MB';", env = env, display = display, exec = exec)
 
   # Controls the query planner's use of table constraints
   # to optimize queries.
-  dbExecuteEM(conn, Statement = "SET constraint_exclusion TO partition;", display = display, exec = exec)
+  dbExecuteEM(connName, Statement = "SET constraint_exclusion TO partition;", env = env, display = display, exec = exec)
 
   # excludes (prunes) the partition from the query plan
   # can also be applied [not only to query planning and] during query execution
-  dbExecuteEM(conn, Statement = "SET enable_partition_pruning TO on;", display = display, exec = exec)
+  dbExecuteEM(connName, Statement = "SET enable_partition_pruning TO on;", env = env, display = display, exec = exec)
 
   # Postgresql 9.6
-  dbExecuteEM(conn, Statement = "SET max_parallel_workers_per_gather TO 4;", display = display, exec = exec)
+  dbExecuteEM(connName, Statement = "SET max_parallel_workers_per_gather TO 4;", env = env, display = display, exec = exec)
 
   # always TRUE
   return(invisible(data.frame(DBSETPERFORMANCEEM = TRUE)))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
 
 
 
@@ -1301,9 +1300,7 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  assign("conn", get(connName, envir = env))
-
-  Results <- dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER;", display = display, exec = exec)
+  Results <- dbGetQueryEM(connName, Statement = "SELECT CURRENT_USER;", env = env, display = display, exec = exec)
   if(exec) {
     if(NROW(Results)) {
       colnames(Results)[1] <- "DBCURRENTUSEREM"
@@ -1329,7 +1326,7 @@ tryCatchLog::tryCatchLog({
 #' @returns TRUE(connected) or FALSE(otherwise)
 #' @examples
 #' \dontrun{
-#' isConnectedEM()
+#' dbIsConnectedEM()
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1344,9 +1341,6 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  assign("conn", get(connName, envir = env))
-
-
   if(inherits(conn, "PostgreSQLConnection")) {
 
     tmp.query <- "SELECT 1;"
@@ -1357,7 +1351,7 @@ tryCatchLog::tryCatchLog({
     }
 
     if(exec) {
-      Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
+      Results <- try({DBI::dbGetQuery(get(connName, envir = env), statement = tmp.query)}, silent = TRUE)
       if(!inherits(Results, "try-error")) {
         return(invisible(data.frame(DBISCONNECTEDEM = TRUE)))
       } else{
@@ -1404,15 +1398,13 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  assign("conn", get(connName, envir = env))
-
   Results <- list()
 
   if(inherits(conn, "PostgreSQLConnection")) {
 
-    Results[["current_schema"]] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT current_schema();", display = display, exec = exec)))
-    Results[["search_path"]]    <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;", display = display, exec = exec)))
-    InterimResult               <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", display = display, exec = exec)))
+    Results[["current_schema"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_schema();", env = env, display = display, exec = exec)))
+    Results[["search_path"]]    <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW SEARCH_PATH;", env = env, display = display, exec = exec)))
+    InterimResult               <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", env = env, display = display, exec = exec)))
     if(length(InterimResult)) {
       Results[["temp_dbname"]]  <- InterimResult
     } else {
@@ -1423,8 +1415,8 @@ tryCatchLog::tryCatchLog({
     } else {
       Results[["econmodel_db_dbname"]] <- NA_character_
     }
-    Results[["client_encoding"]] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW client_encoding;", display = display, exec = exec)))
-    Results[["time_zone"]] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW TIMEZONE;", display = display, exec = exec)))
+    Results[["client_encoding"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW client_encoding;", env = env, display = display, exec = exec)))
+    Results[["time_zone"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW TIMEZONE;", env = env, display = display, exec = exec)))
   } else {
     stop("Need a \"PostgreSQLConnection\"")
   }
@@ -1492,21 +1484,6 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
       ReturnTo <- paste0("environment ", capture.output(env))
     }
 
-    # if(!missing(conn)) {
-    #   Results <- dbIsConnectedEM(conn, display = display, exec = exec)
-    #   if(exec) {
-    #     if(unlist(Results)) {
-    #       if(unlist(dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec))) {
-    #         dbDisconnectEM(connName = connName, env = env)
-    #       }
-    #       # re-use
-    #       assign(connName, conn, envir = env)
-    #       return(invisible(conn))
-    #     }
-    #
-    #   }
-    # }
-
     if(missing(driver)) {
       driver <- getOption("econmodel_db_driver")
     }
@@ -1539,54 +1516,6 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
       forceISOdate <- getOption("econmodel_db_forceISOdate")
     }
 
-
-    # # (survey of the) current connection, if any
-    #
-    # connNameExists  <- exists(connName, envir = env, inherits = FALSE)
-    # connNameConnected <- FALSE
-    # if(connNameExists) {
-    #   connNameConnected <- dbIsConnectedEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec)
-    # }
-    # if(connNameConnected) {
-    #   CurrentUser <- dbGetCurrentuserEM(get(connName, envir = env, inherits = FALSE), display = display, exec = exec)
-    #   if(exec) {
-    #     if(unlist(CurrentUser) == user) {
-    #       if(!unlist(dbExistsSchemaEM(get(connName, envir = env, inherits = FALSE), schema = user, display = display, exec = exec)))
-    #         dbCreateSchemaEM(get(connName, envir = env, inherits = FALSE), schema = user, display = display, exec = exec)
-    #       return(invisible(get(connName, envir = env, inherits = FALSE)))
-    #     }
-    #   }
-    # }
-
-    # # try to find or create a connection . . .
-    #
-    # SessionConn <- try({DBI::dbConnect(driver,
-    #                                    user = user, password = password,
-    #                                    host = host, dbname = dbname, port = port,
-    #                                    tty = tty, options = dboptions, forceISOdate = forceISOdate)},
-    #                    silent = TRUE)
-    # if(inherits(SessionConn, "try-error")) {
-    #   SessionConnLoginWorks <- FALSE
-    #   message("User login failed.")
-    # } else {
-    #   SessionConnLoginWorks <- TRUE
-    #   message("User login succeeded.")
-    #   if(exec) {
-    #     if(!unlist(dbExistsSchemaEM(SessionConn, schema = user, display = display, exec = exec)))
-    #       dbCreateSchemaEM(SessionConn, schema = user, display = display, exec = exec)
-    #     assign(connName, SessionConn, envir = env)
-    #     return(invisible(SessionConn))
-    #   }
-    # }
-
-
-    #
-    # Connections are TOO volatile
-    # and the DBI API is too unconsistent in the return value
-    # to be able to write smart wrappers around it.
-    # Therefore, just try to create a connection and return it
-    # to the environment.
-    #
     # try create a connection . . .
 
     conn <- try({DBI::dbConnect(driver,
@@ -1682,7 +1611,6 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
 #' # Tried to disconnect the R object "connEM" and remove it
 #' # from the environment <environment: R_GlobalEnv>.
 #'
-#' dbDisconnectEM(connName = "connEM", env = .Globalenv)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1743,10 +1671,8 @@ dbLogoutEM <- function(connName, env) {
 
     # always returns TRUE
     Results <- dbDisconnectEM(connName = connName, env = env)
-    if(exec && !inherits(Results, "try-error")) {
+    if(!inherits(Results, "try-error")) {
       return(invisible(data.frame(DBLOGOUTEM = unlist(Results))))
-    } else if(!exec) {
-      return(invisible(data.frame(DBLOGOUTEM = logical())))
     } else {
       message(paste0("Statement failed: ", tmp.query))
       return(invisible(data.frame(DBLOGOUTEM = FALSE)))
@@ -1794,8 +1720,6 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
       env <- .GlobalEnv
     }
 
-    assign("conn", get(connName, envir = env))
-
     oldtz <- Sys.getenv("TZ")
     Sys.setenv(TZ=time_zone)
     on.exit({Sys.setenv(TZ=oldtz)})
@@ -1810,8 +1734,8 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
     }
 
     if(exec) {
-      DBI::dbExecute(conn, statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
-      Results <- try({DBI::dbExecute(conn, statement = tmp.query)}, silent = T)
+      DBI::dbExecute(get(connName, envir = env), statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
+      Results <- try({DBI::dbExecute(get(connName, envir = env), statement = tmp.query)}, silent = T)
       if(!inherits(Results, "try-error")) {
         return(invisible(data.frame(DBEXECUTEEM = TRUE)))
       } else {
@@ -1864,11 +1788,9 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  assign("conn", get(connName, envir = env))
+  tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(get(connName, envir = env), x = user), ");")
 
-  tmp.query <- paste0("SELECT EXISTS(SELECT usename FROM pg_catalog.pg_user WHERE usename = ", DBI::dbQuoteLiteral(conn, x = user), ");")
-
-  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
   if(exec && NROW(Results)) {
    return(invisible(data.frame(DBEXISTSUSEREM = unlist(Results))))
   }
@@ -1883,25 +1805,29 @@ tryCatchLog::tryCatchLog({
 #'
 #' Create a user exists in the database.
 #'
-#' @param conn PostgreSQL DBI connection. Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param user String. Required.  Potential user in the database.
 #' @param attributes  vector of Strings. User attributes.
 #' @param password String. Defaults to "user".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
-#' dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
-#' dbCreateUserEM(conn, user = "rtmp")
+#' dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateUserEM <- function(conn, user, attributes = c("LOGIN"), password = user, display = TRUE, exec = TRUE) {
+dbCreateUserEM <- function(connName, user, attributes = c("LOGIN"), password = user, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
+  }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
   }
 
   if(missing(user)) {
@@ -1912,17 +1838,17 @@ tryCatchLog::tryCatchLog({
     attributes <- paste0(attributes , collapse = " ")
   }
 
-  password <- paste0("password ", DBI::dbQuoteLiteral(conn, x = password))
+  password <- paste0("password ", DBI::dbQuoteLiteral(get(connName, envir = env), x = password))
 
   tmp.query <- paste0("CREATE ROLE ", user, " ", attributes, " NOINHERIT ", password, ";")
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-  if(exec && !inherits(Results, "try-error")) {
-    return(invisible(data.frame(DBCREATEUSEREM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBCREATEUSEREM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEUSEREM = FALSE)))
+  Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
+  if(exec) {
+    if(!inherits(Results, "try-error")) {
+      return(invisible(data.frame(DBCREATEUSEREM = unlist(Results))))
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCREATEUSEREM = FALSE)))
+    }
   }
 
   return(invisible(data.frame(DBCREATEUSEREM = logical())))
@@ -1935,36 +1861,39 @@ tryCatchLog::tryCatchLog({
 #'
 #' Determine if a schema exists in the database.
 #'
-#' @param conn PostgreSQL DBI connection. Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param schema String. Required.  Potential schema in the database.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
 #' \dontrun{
-#'  dbExistsSchemaEM(conn, schema = "r_user_econmodel")
-#'  dbExistsSchemaEM(conn, schema = "rtmp")
+#'  dbExistsSchemaEM(schema = "r_user")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsSchemaEM <- function(conn, schema, display = TRUE, exec = TRUE) {
+dbExistsSchemaEM <- function(connName, schema, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
 
   if(missing(schema)) {
     stop("Parameter \"schema\" is required.")
   }
 
-  tmp.query <-  paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ", DBI::dbQuoteLiteral(conn, x = schema), ");")
+  tmp.query <-  paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ", DBI::dbQuoteLiteral(get(connName, envir = env), x = schema), ");")
 
-  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
+  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
   if(exec && NROW(Results)) {
     return(invisible(data.frame(DBEXISTSSCHEMAEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBEXISTSSCHEMAEM = logical())))
   } else {
+    message(paste0("Statement failed: ", tmp.query))
     return(invisible(data.frame(DBEXISTSSCHEMAEM = FALSE)))
   }
 
@@ -1978,25 +1907,29 @@ tryCatchLog::tryCatchLog({
 #'
 #' Create a schema in the database.
 #'
-#' @param conn PostgreSQL DBI connection. Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param schema String. Required.  Potential schema in the database.
 #' @param role_specification.  String. The schema role specification.  Defaults to "schema".
 #' @param grant_all vector of Strings. Roles to be GRANT ALLed to this schema.  Defaults to "schema".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
-#'  dbCreateSchemaEM(conn, schema = "r_user_econmodel")
-#'  dbCreateSchemaEM(conn, schema = "rtmp")
+#'  dbCreateSchemaEM(schema = "r_user")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateSchemaEM <- function(conn, schema, role_specification = schema, grant_all_roles = schema, display = TRUE, exec = TRUE) {
+dbCreateSchemaEM <- function(connName, schema, role_specification = schema, grant_all_roles = schema, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
+  }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
   }
 
   if(missing(schema)) {
@@ -2009,11 +1942,9 @@ tryCatchLog::tryCatchLog({
 
   tmp.query <- paste0("CREATE SCHEMA ", schema, " AUTHORIZATION ", role_specification, ";")
   # Execute the query
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
+  Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
   if(exec && !inherits(Results, "try-error")) {
     # return(invisible(data.frame(DBCREATESCHEMAEM = unlist(Results))))
-  } else if(!exec) {
-    # return(invisible(data.frame(DBCREATESCHEMAEM = logical())))
   } else {
     message(paste0("Statement failed: ", tmp.query))
     return(invisible(data.frame(DBCREATESCHEMAEM = FALSE)))
@@ -2023,24 +1954,16 @@ tryCatchLog::tryCatchLog({
 
     tmp.query <- paste0("GRANT ALL ON SCHEMA ", schema, " TO ", grant_all_role, ";")
     # Execute the query
-    Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
+    Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
     if(exec && !inherits(Results, "try-error")) {
-      # return(invisible(data.frame(DBCREATESCHEMAEM = unlist(Results))))
-    } else if(!exec) {
-      # return(invisible(data.frame(DBCREATESCHEMAEM = logical())))
+      return(invisible(data.frame(DBCREATESCHEMAEM = TRUE)))
     } else {
       message(paste0("Statement failed: ", tmp.query))
       return(invisible(data.frame(DBCREATESCHEMAEM = FALSE)))
     }
-
   })
 
-  if(exec) {
-    return(invisible(data.frame(DBCREATESCHEMAEM = TRUE)))
-  }
-  if(display) {
-    return(invisible(data.frame(DBCREATESCHEMAEM = logical())))
-  }
+  return(invisible(data.frame(DBCREATESCHEMAEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2050,35 +1973,41 @@ tryCatchLog::tryCatchLog({
 #'
 #' Determine if a database exists in the cluster.
 #'
-#' @param conn PostgreSQL DBI connection. Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param dbname String. Required.  Potential database in the cluster.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(exists) or FALSE(not exists)
 #' @examples
 #' \dontrun{
-#'  dbExistsDbaseEM(conn, dbname = "r_user_econmodel")
-#'  dbExistsDbaseEM(conn, dbname = "rtmp")
+#'  dbExistsDbaseEM(dbname = "r_user")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
-dbExistsDbaseEM <- function(conn, dbname, display = TRUE, exec = TRUE) {
+dbExistsDbaseEM <- function(connName, dbname, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
   if(missing(dbname)) {
     stop("Parameter \"dbname\" is required.")
   }
 
-  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(conn, x = dbname), ");")
-  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && NROW(Results)) {
-    return(invisible(data.frame(DBEXISTSDBASEEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBEXISTSDBASEEM = logical())))
-  } else {
-    return(invisible(data.frame(DBEXISTSDBASEEM = FALSE)))
+  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(get(connName, envir = env), x = dbname), ");")
+  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(NROW(Results)) {
+      return(invisible(data.frame(DBEXISTSDBASEEM = unlist(Results))))
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBEXISTSDBASEEM = FALSE)))
+    }
   }
 
   return(invisible(data.frame(DBEXISTSDBASEEM = logical())))
@@ -2095,7 +2024,7 @@ tryCatchLog::tryCatchLog({
 #' and table name vector from various table and schema + table name
 #' inputs.
 #'
-#' @param conn A connection object. Must be provided but can be set NULL,
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' where a dummy connection will be used.
 #' @param o.nm Object name string, length 1-2.
 #' @param as.identifier Boolean whether to return (schema,table) name as database
@@ -2103,6 +2032,7 @@ tryCatchLog::tryCatchLog({
 #' @param dbQuote String. Only used when "as.identifier = TRUE". Default is "Identifier". Alternately, this value can be "Literal."
 #' @return character vector of length 2. Each character element is in
 #'     (escaped) double-quotes when as.identifier = TRUE.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display	Logical. Whether to display the query (defaults to TRUE).
 #' @param exec	Logical. Whether to execute the query (defaults to TRUE).
 #' @keywords internal
@@ -2111,31 +2041,35 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' name <- c("schema","table")
-#' objectNameFixEM(conn, name)
+#' objectNameFixEM(o.nm = name)
 #'
 #' #current search path schema is added to single-length character object (if only table is given)
 #' name<-"table"
-#' objectNameFixEM(conn,name)
+#' objectNameFixEM(o.nm = name)
 #'
 #' #schema or table names with double quotes should be given exactly as they are
 #' (make sure to wrap in single quotes in R):
 #' name <- c('sch"ema','"table"')
-#' objectNameFixEM(conn,name)
+#' objectNameFixEM(o.nm = name)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier ANSI
-objectNameFixEM <- function(conn, o.nm, as.identifier = TRUE, dbQuote = "Identifier", display = TRUE, exec = TRUE) {
+objectNameFixEM <- function(connName, o.nm, as.identifier = TRUE, dbQuote = "Identifier", env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" must be provided.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
 
   # case of no schema provided
-  if (length(o.nm) == 1 && !is.null(conn) && !inherits(conn, what = "AnsiConnection")) {
-    schemalist <- unlist(dbGetQueryEM(conn, Statement = "SELECT nspname AS s FROM pg_catalog.pg_namespace;", display = display, exec = exec)$S)
-    user <- unlist(dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER AS user;", display = display, exec = exec)$USER)
-    schema <- unlist(dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;", display = display, exec = exec)$SEARCH_PATH)
+  if (length(o.nm) == 1 && !is.null(get(connName, envir = env)) && !inherits(get(connName, envir = env), what = "AnsiConnection")) {
+    schemalist <- unlist(dbGetQueryEM(connName, Statement = "SELECT nspname AS s FROM pg_catalog.pg_namespace;", env = env, display = display, exec = exec)$S)
+    user       <- unlist(dbGetQueryEM(connName, Statement = "SELECT CURRENT_USER AS user;", env = env, display = display, exec = exec)$USER)
+    schema     <- unlist(dbGetQueryEM(connName, Statement = "SHOW SEARCH_PATH;", env = env, display = display, exec = exec)$SEARCH_PATH)
     schema <- gsub(" ","",unlist(strsplit(schema,",",fixed=TRUE)),fixed=TRUE)
     # use user schema if available
     if ("\"$user\"" == schema[1] && user %in% schemalist) {
@@ -2148,13 +2082,13 @@ tryCatchLog::tryCatchLog({
   if (length(o.nm) > 2) {
     stop("Invalid PostgreSQL object name. Must be provided as one ('object') or two-length c('schema','object') character vector.")
   }
-  if (is.null(conn)) {conn<-DBI::ANSI()}
+  if (is.null(get(connName, envir = env))) {assign(connName, DBI::ANSI(), envir = env)}
   if (!as.identifier) {return(o.nm)} else {
     if (dbQuote == "Identifier") {
-      o.nm <- DBI::dbQuoteIdentifier(conn, o.nm)
+      o.nm <- DBI::dbQuoteIdentifier(get(connName, envir = env), o.nm)
     }
     if (dbQuote == "Literal") {
-      o.nm <- DBI::dbQuoteLiteral(conn, o.nm)
+      o.nm <- DBI::dbQuoteLiteral(get(connName, envir = env), o.nm)
     }
     return(o.nm)
   }
@@ -2166,25 +2100,30 @@ tryCatchLog::tryCatchLog({
 #'
 #' Create a a database in the cluster.
 #'
-#' @param conn PostgreSQL DBI connection. Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param dbname String. Required.  Potential database in the cluster.
 #' @param owner String. Database owner. Defaults to parameter "dbname".
+#' @param env Environment.  Default is the .Global environment.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
-#' dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
-#' dbCreateDbaseEM(conn, dbname = "rtmp")
+#' dbCreateDbaseEM(dbname = "r_user")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateDbaseEM <- function(conn, dbname, owner = dbname, display = TRUE, exec = TRUE) {
+dbCreateDbaseEM <- function(connName, dbname, owner = dbname, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
   if(missing(dbname)) {
     stop("Parameter \"dbname\" is required.")
   }
@@ -2197,28 +2136,26 @@ tryCatchLog::tryCatchLog({
   # https://stackoverflow.com/questions/26684643/error-must-be-member-of-role-when-creating-schema-in-postgresql
 
   tmp.query <- "SELECT CURRENT_USER;"
-  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && NROW(Results)) {
-    CurrentUser <- Results
-    # return(data.frame(DBCREATEDBASEEM = Result))
-  } else if(!exec) {
-    # return(data.frame(DBCREATEDBASEEM = logical()))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(NROW(Results)) {
+      CurrentUser <- unlist(Results)
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+    }
   }
 
-  tmp.query <- paste0("GRANT ", owner, " TO ", unlist(CurrentUser), ";")
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-  if(exec && !inherits(Results, "try-error")) {
-    # return(invisible(data.frame(DBCREATEDBASEEM = unlist(Results))))
-  } else if(!exec) {
-    # return(invisible(data.frame(DBCREATEDBASEEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  tmp.query <- paste0("GRANT ", owner, " TO ", CurrentUser, ";")
+  Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
+  if(exec) {
+    if(!inherits(Results, "try-error")) {
+      #
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+    }
   }
-
   # Note: SUPERUSER postgres - does not require THIS
   # (but I am not "filtering out" SUPERUSERs)
   #
@@ -2241,114 +2178,36 @@ tryCatchLog::tryCatchLog({
   ## Build the query
   RestOfDbCreate <- "ENCODING  = 'UTF-8' LC_COLLATE = 'C' LC_CTYPE  = 'C' CONNECTION_LIMIT = -1"
   tmp.query <- paste0("CREATE DATABASE ", dbname, " ", " WITH OWNER ", owner, " ",  RestOfDbCreate, ";")
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-  if(exec && !inherits(Results, "try-error")) {
-    # return(invisible(data.frame(DBCREATEDBASEEM = unlist(Results))))
-  } else if(!exec) {
-    # return(invisible(data.frame(DBCREATEDBASEEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
+  if(exec) {
+    if(!inherits(Results, "try-error")) {
+      #
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+    }
   }
 
   tmp.query <- paste0("ALTER DATABASE ", dbname, " SET TIME ZONE 'UTC';", display = display, exec = exec)
-  Results <- try({dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)})
-  if(exec && !inherits(Results, "try-error")) {
-    # return(invisible(data.frame(DBCREATEDBASEEM = unlist(Results))))
-  } else if(!exec) {
-    # return(invisible(data.frame(DBCREATEDBASEEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
+  if(exec) {
+    if(!inherits(Results, "try-error")) {
+      #
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+    }
   }
 
   if(exec) {
-    return(data.frame(DBCREATEDBASEEM = TRUE))
+    return(invisible(data.frame(DBCREATEDBASEEM = TRUE)))
   }
+
   if(display) {
     return(invisible(data.frame(DBCREATEDBASEEM = logical())))
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
-
-
-
-#' From the Cluster, Remove Old Work Databases
-#'
-#' In the cluster, logs on to the database "r_user_econmodel" as user "rtmp%" and (tries to) drop the "rtmp%" database.
-#' Does not drop the "current work database": "getOption("econmodel_db_dbname")".
-#'
-#' Note, is also attempt to drop the Old User.
-#'
-#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
-#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns TRUE(always).  Will attempt to drop each 'rtmp%' database (but not the current work database).
-#' @examples
-#' \dontrun{
-#' clRemoveOldWorkDbasesEM()
-#' }
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DBI dbDriver dbConnect dbQuoteLiteral dbDisconnect
-#' @export
-clRemoveOldWorkDbasesEM <- function(display = TRUE, exec = TRUE) {
-tryCatchLog::tryCatchLog({
-
-  ops <- options()
-  options(warn = 1L)
-
-  drv  <- DBI::dbDriver("PostgreSQL")
-  conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
-  NotDatabase <- DBI::dbQuoteLiteral(conn, x = getOption("econmodel_db_dbname"))
-
-  tmp.query <-  paste0("SELECT datname FROM pg_catalog.pg_database WHERE datname LIKE 'rtmp%' AND datname != ", NotDatabase, ";")
-  Databases <- dbGetQueryEM(conn, Statement = tmp.query, display = TRUE, exec = TRUE)
-  Databases  <- unlist(Databases)
-  dbDisconnectEM(conn)
-
-  AllResults <- logical()
-
-  lapply(Databases, function(dbname) {
-    try({
-      # I can not be "in" the database I am trying to drop
-      # Avoid the error: ERROR:  cannot drop the currently open database
-      conn <- DBI::dbConnect(drv, user = dbname, password = dbname, dbname = "r_user_econmodel")
-      # trying to drop my own database
-      tmp.query <- paste0("DROP DATABASE ", dbname, ";")
-      Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-      AllResults <<- c(AllResults, unlist(Results))
-      dbDisconnectEM(conn)
-
-    }, silent = TRUE)
-  })
-
-  conn <- DBI::dbConnect(drv, user = "r_user_econmodel", password = "r_user_econmodel", dbname = "r_user_econmodel")
-  lapply(Databases, function(dbname) {
-    try({
-      # trying to drop those users (with the same name as the database)
-      tmp.query <- paste0("DROP USER ", dbname, ";")
-      Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-      AllResults <<- c(AllResults, unlist(Results))
-    }, silent = TRUE)
-  })
-  dbDisconnectEM(conn)
-
-  options(ops)
-
-  if(exec) {
-    if(all(AllResults)) {
-      return(invisible(data.frame(DBREMOVEOLDWORKDBASESEM = TRUE)))
-    } else {
-      return(invisible(data.frame(DBREMOVEOLDWORKDBASESEM = FALSE)))
-    }
-  }
-  if(display) {
-    return(invisible(data.frame(DBREMOVEOLDWORKDBASESEM = logical())))
-  }
-
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
-
-
-
 
 
 
@@ -2361,9 +2220,10 @@ tryCatchLog::tryCatchLog({
 #'
 #' Of column results named like '_PART_KEY_DEF' and '_PART_BOUND', these are the partition object key (LISTs, RANGEs, and HASHs) and the partitions (child objects) bounds (FOR VALUES . . .) (of the partition object).  See the references.
 #'
-#' @param conn PostgreSQLConnection . Required.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name String. Required. Name of the object.
 #' @param side String. View from the "parent side. Default is "parent".  Alternately, the view from the "child side" is the value "child".
+#' @param env Environment.  Default is the .Global environment.
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns Dataframe of inherited or inherit_from "objects" (if any) (with schema name).
@@ -2377,22 +2237,26 @@ tryCatchLog::tryCatchLog({
 #' }
 #' @examples
 #' \dontrun{
-#' dbListInheritEM(conn, name = "sample")
+#' dbListInheritEM(name = "sample")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbListInheritEM <- function(conn, name, side = "parent", display = TRUE, exec = TRUE) {
+dbListInheritEM <- function(connName, name, side = "parent", env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
 
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
 
-  SchemaAndName <- objectNameFixEM(conn, o.nm = name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
+  SchemaAndName <- objectNameFixEM(connName, o.nm = name, as.identifier = TRUE, dbQuote = "Literal", env = env, display = display, exec = exec)
 
   if(side == "parent") {
     Restriction <-
@@ -2431,7 +2295,7 @@ SELECT q.* FROM (
 ) q
 WHERE", Restriction, ";")
 
-  Results <- dbGetQueryEM(conn, Statement = Statement, display = display, exec = exec)
+  Results <- dbGetQueryEM(connName, Statement = Statement, env = env, display = display, exec = exec)
 
   if(NROW(Results)) {
     return(Results)
@@ -2503,7 +2367,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' NOTE: In PostgreSQL, one can not convert a table to a partitioned table and vice-versa.
 #'
-#' @param conn A PostgreSQL database connection.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param temporary Logical. Create a temporary table.  Default is FALSE.
 #' @param if.not.exists Logical. Default is FALSE. If TRUE, add the " IF NOT EXISTS " clause.
 #' @param name Name of the table. Escaped with.
@@ -2524,27 +2388,36 @@ tryCatchLog::tryCatchLog({
 #' @param part.by String. `PARTITION OF parent_table`
 #' @param part.bound String. `[ ({ column_name [ WITH OPTIONS ] [ column_constraint [ ... ] ] | table_constraint } [, ... ] ) ] { FOR VALUES partition_bound_spec | DEFAULT }`.
 #' @param part.key.def String. `[ PARTITION BY { RANGE | LIST | HASH } ( { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [, ... ] ) ]`.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @examples
 #' \dontrun{
-#' conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user="postgres", password="postgres", dbname="postgres")
-#' dbCreatePartBoundTableEM(conn, "mtcars", mtcars, part.key.def = "LIST(CAST(gear AS INTEGER))")
+#' dbCreatePartBoundTableEM(name = "mtcars", part.key.def = "LIST(CAST(gear AS INTEGER))")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbDataType dbQuoteIdentifier
 #' @export
-dbCreatePartBoundTableEM <- function(conn, name, temporary = FALSE, if.not.exists = FALSE, like.name = character() , like.name.defaults = FALSE, like.name.constraints = FALSE,  fields = character(), part.by = character(), part.bound = character(), part.key.def = character(), display = TRUE, exec = TRUE) {
+dbCreatePartBoundTableEM <- function(connName, name, temporary = FALSE, if.not.exists = FALSE, like.name = character() , like.name.defaults = FALSE, like.name.constraints = FALSE,  fields = character(), part.by = character(), part.bound = character(), part.key.def = character(), env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
-  if(missing(name)) {
-    stop("Parameter \"name\" is required.")
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
+  if(!NROW(fields)) {
+    stop("Parameter \"fields\" must have values xor parameter \"like.name\" must have values.")
   }
 
-  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  if(is.data.frame(fields)) {
+    fields <- vapply(fields, function(x) DBI::dbDataType(get(connName, envir = env), x), character(1))
+  }
+
+  table <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2557,7 +2430,7 @@ tryCatchLog::tryCatchLog({
 
   like.tableque <- character()
   if(length(like.name)) {
-    like.table <- objectNameFixEM(conn, o.nm = like.name, display = display, exec = exec)
+    like.table <- objectNameFixEM(connName, o.nm = like.name, env = env, display = display, exec = exec)
     if(temporary) {
       if(length(table) == 2) {
         like.tableque <- paste0(last(like.table))
@@ -2576,29 +2449,19 @@ tryCatchLog::tryCatchLog({
                         if(like.name.defaults)    " INCLUDING DEFAULTS ",
                         if(like.name.constraints) " INCLUDING CONSTRAINTS ",
                          ");")
-    Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-    # short circuit
-    if(exec && !inherits(Results, "try-error")) {
-      return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = unlist(Results))))
-    } else if(!exec) {
-      return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = logical())))
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = FALSE)))
+    Success <- dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+    if(exec) {
+      if(Success) {
+        #
+      } else {
+        message(paste0("Statement failed: ", tmp.query))
+        return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = FALSE)))
+      }
     }
 
   }
 
-
-  if(!NROW(fields)) {
-    stop("Parameter \"fields\" must have values xor parameter \"like.name\" must have values.")
-  }
-
-  if(is.data.frame(fields)) {
-    fields <- vapply(fields, function(x) DBI::dbDataType(conn, x), character(1))
-  }
-
-  field_names <- DBI::dbQuoteIdentifier(conn, names(fields))
+  field_names <- DBI::dbQuoteIdentifier(get(connName, envir = env), names(fields))
   field_types <- unname(fields)
   fields <- paste0(field_names, " ", field_types)
 
@@ -2620,17 +2483,23 @@ tryCatchLog::tryCatchLog({
     "  ", paste(fields, collapse = ",\n  "), " \n)", part.by, part.bound, part.key.def, "\n"
   )
 
-  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && !inherits(Results, "try-error")) {
-    return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = FALSE)))
+  Success <- dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(Success) {
+      #
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = FALSE)))
+    }
   }
 
-  return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = logical())))
+  if(exec) {
+    return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = TRUE)))
+  }
+
+  if(display) {
+    return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = logical())))
+  }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2645,29 +2514,35 @@ tryCatchLog::tryCatchLog({
 #' Will work: "PARTITION BY LIST (c1)" is stored as "LIST (c1)".
 #' Will not work: "PARTITION BY LIST (CAST(c1) AS INTEGER)" is stored as "LIST (((c1)::integer))".
 #'
-#' @param conn PostgreSQLConnection.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name String. Name of the PostgreSQL object.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns vector of size 1 of the partition key definition.
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbPartKeyColEM <- function(conn, name, display = TRUE, exec = TRUE) {
+dbPartKeyColEM <- function(connName, name, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
 
   DetectedPartKeyDef <- character()
-  Results <- dbListInheritEM(conn, name)
+  Results <- dbListInheritEM(connName, name = name, env = env, display = display, exec = exec)
   if(!NROW(Results)) {
     stop(paste0("Object ", name, " is missing from the database."))
   }
-  PARENT_PART_KEY_DEF <- dbListInheritEM(conn, name = name, display = display, exec = exec)$PARENT_PART_KEY_DEF
+  PARENT_PART_KEY_DEF <- dbListInheritEM(connName, name = name, env = env, display = display, exec = exec)$PARENT_PART_KEY_DEF
   if(is.na(PARENT_PART_KEY_DEF)) {
     # not a "p" - partitioned. (is "r" - regular)
     DetectedPartKeyCol <- character()
@@ -2692,29 +2567,35 @@ tryCatchLog::tryCatchLog({
 #'
 #' This is only designed to work on List paritions the non-expression partition bounds.
 #'
-#' @param conn PostgreSQLConnection.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name String. Name of the PostgreSQL object.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns vector of partiton bound list values.
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbPartBoundEM <- function(conn, name, display = TRUE, exec = TRUE) {
+dbPartBoundEM <- function(connName, name, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
 
   DetectedPartBound <- character()
-  Results <- dbListInheritEM(conn, name = name)
+  Results <- dbListInheritEM(connName, name = name, env = env, display = display, exec = exec)
   if(!NROW(Results)) {
     stop(paste0("Object ", name, " is missing from the database."))
   }
-  PARENT_PART_BOUND <- dbListInheritEM(conn, name = name, display = display, exec = exec)$PARENT_PART_BOUND
+  PARENT_PART_BOUND <- dbListInheritEM(connName, name = name, env = env, display = display, exec = exec)$PARENT_PART_BOUND
   if(is.na(PARENT_PART_BOUND)) {
     # does not have a parent
     DetectedPartBound <- character()
@@ -2756,27 +2637,33 @@ tryCatchLog::tryCatchLog({
 #' SCLASS: character double integer logical Date
 #' TYPE: TEXT FLOAT8 INTEGER BOOL DATE
 #' }
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name Table name string, length 1-2.
 #' @param temporary Logical.  This is a temporary table or not.
 #' @param others Logical. Default is FALSE.  Using PostgreSQL, Whether or not to also return the "others" column and values  (e.g."sclass"). Values are in lowercase. Note, the returned column order may be mixed.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns data.frame. Variables are "name" and "type" (optionally some "others"). "type" column values are lowercase.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbColumnInfo
 #' @export
-dbServerFieldsCClassesEM <- function(conn, name, temporary = FALSE, others = FALSE, display = TRUE, exec = TRUE) {
+dbServerFieldsCClassesEM <- function(connName, name, temporary = FALSE, others = FALSE, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
 
-  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  table <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2797,7 +2684,7 @@ tryCatchLog::tryCatchLog({
   }
 
   if(exec) {
-    r <- DBI::dbSendQuery(conn, statement = tmp.query)
+    r <- DBI::dbSendQuery(get(connName, envir = env), statement = tmp.query)
     Server.fields.C.classes <- DBI::dbColumnInfo(r)
     DBI::dbClearResult(r)
     colnames(Server.fields.C.classes) <- toupper(colnames(Server.fields.C.classes))
@@ -2827,27 +2714,33 @@ tryCatchLog::tryCatchLog({
 #' typical PostgreSQL results of TYPE values:
 #' "text"  "float8" "bool"  "integer" "date"
 #' }
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param value data.frame
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns data.frame. Variables are "name" and "type"
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbDataType
 #' @export
-dfServerFieldsClassesEM <- function(conn, value, exec = TRUE, display = TRUE) {
+dfServerFieldsClassesEM <- function(connName, value, env, exec = TRUE, display = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
   if(missing(value)) {
     stop("Parameter \"value\" is required.")
   }
 
   if(exec) {
     # as would have been stored on the server
-    Server.fields.classes <- data.frame(sapply(value, function(x) DBI::dbDataType(conn, x)))
+    Server.fields.classes <- data.frame(sapply(value, function(x) DBI::dbDataType(get(connName, envir = env), x)))
     Server.fields.classes <- cAppend(Server.fields.classes, list(name = row.names(Server.fields.classes)), after = 0L)
     colnames(Server.fields.classes) <- c("NAME", "TYPE")
     return(Server.fields.classes) # NAME TYPE
@@ -2867,26 +2760,32 @@ tryCatchLog::tryCatchLog({
 #' SQLite R equivalents typically are "character", "integer", and "real".
 #' PostgreSQL R equivalents typically are "character", "integer", "numeric/double", "logical", "Date", (and may be others: POSIXct?).
 #'
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name Table name string, length 1-2. Requires at least one row.
 #' @param temporary Logical.  This is a temporary table or not.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns data.frame. Variables are "name" and "type".  If the number of rows in "name" is zero, then, instead of "numeric" being returned, "double" is returned.  The reason is because a "fallback" is used.
+#' @returns data.frame. Variables are "NAME" and "TYPE".  If the number of rows in "NAME" is zero, then, instead of "numeric" being returned, "double" is returned.  The reason is because a "fallback" is used.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbSendQuery dbClearResult
 #' @export
-dbRClmnsClassesEM <- function(conn, name, temporary = FALSE, display = TRUE, exec = TRUE) {
+dbRClmnsClassesEM <- function(connName, name, temporary = FALSE, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
 
-  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  table <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -2897,13 +2796,14 @@ tryCatchLog::tryCatchLog({
     tableque <- paste(table, collapse = ".")
   }
 
-  tmp.query <- paste0("SELECT COUNT(1) count FROM ", tableque , ";")
-  Results <- dbGetQueryEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && NROW(Results)) {
-   TotalRowCount <- unlist(Results)
-  } else if(!exec) {
-  } else {
-    stop(paste0("Statement failed: ", tmp.query))
+  tmp.query <- paste0("SELECT COUNT(1) count FROM ", tableque, ";")
+  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(NROW(Results)) {
+     TotalRowCount <- unlist(Results)
+    } else {
+      stop(paste0("Statement failed: ", tmp.query))
+    }
   }
 
   if(0L < TotalRowCount) {
@@ -2916,7 +2816,7 @@ tryCatchLog::tryCatchLog({
     }
 
     if(exec) {
-      r <- DBI::dbSendQuery(conn, statement = tmp.query)
+      r <- DBI::dbSendQuery(get(connName, envir = env), statement = tmp.query)
       R.zero.rows <- DBI::dbFetch(r, n = 0)
       DBI::dbClearResult(r)
       R.clmns.classes <- data.frame(sapply(R.zero.rows, class))
@@ -2943,7 +2843,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' Add a primary or foreign key or check constraint to a table column.
 #'
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name A character string, or a character vector, specifying a PostgreSQL table name.
 #' @param colname	A character string specifying the name of the column to which the key will be assign; alternatively, a character vector specifying the name of the columns for keys spanning more than one column.
 #' @param if.not.exists Logical. Default is FALSE. If TRUE, use pg_ tables to check that in the namespace(schema) the constraint name does not exist.  Needed for the check to work is that parameter "const.name" must also be provided.
@@ -2953,20 +2853,26 @@ tryCatchLog::tryCatchLog({
 #' @param check.by If type = "check", then the value of the "check".  Ignored otherwise.
 #' @param reference	A character string specifying a foreign table name to which the foreign key will be associated (ignored if type == "primary").
 #' @param colref A character string specifying the name of the primary key in the foreign table to which the foreign key will be associated; alternatively, a character vector specifying the name of the columns for keys spanning more than one column (ignored if type == "primary").
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display	Logical. Whether to display the query (defaults to TRUE).
 #' @param exec	Logical. Whether to execute the query (defaults to TRUE).
 #' @returns TRUE if the key was successfully added.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
-dbAddKeyEM <- function(conn, name, colname, if.not.exists = FALSE, only = FALSE, const.name = characater(),
+dbAddKeyEM <- function(connName, name, colname, if.not.exists = FALSE, only = FALSE, const.name = characater(),
                        type = c("primary", "foreign" , "check"), check.by = character(), reference, colref,
-                       display = TRUE, exec = TRUE) {
+                       env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
@@ -2974,10 +2880,9 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"colname\" is required.")
   }
 
-
   if(if.not.exists && length(const.name)) {
 
-    SchemaAndName <- objectNameFixEM(conn, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal", display = display, exec = exec)
+    SchemaAndName <- objectNameFixEM(connName, o.nm = const.name, as.identifier = TRUE, dbQuote = "Literal", env = env, display = display, exec = exec)
 
     Restriction <-
       paste0("
@@ -3014,32 +2919,30 @@ tryCatchLog::tryCatchLog({
     ) q
     WHERE", Restriction, ";")
 
-    Results <- dbGetQueryEM(conn, Statement = Statement, display = display, exec = exec)
-    if(exec && NROW(Results)) {
-      message(paste0("Constraint ", toupper(paste0(SchemaAndName, collapse = ".")) , " already exists, so skipping . . ."))
-      # SKIP IS OK
-      return(invisible(data.frame(DBADDKEYEM = TRUE)))
-    } else if(!exec) {
-      # return(data.frame(DBADDKEYEM = logical()))
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBADDKEYEM = FALSE)))
+    Results <- dbGetQueryEM(connName, Statement = Statement, env = env, display = display, exec = exec)
+    if(exec) {
+      if(NROW(Results)) {
+        message(paste0("Constraint ", toupper(paste0(SchemaAndName, collapse = ".")) , " already exists, so skipping . . ."))
+        # SKIP IS OK
+        return(invisible(data.frame(DBADDKEYEM = TRUE)))
+      }
     }
+
   }
 
-  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
 
-  colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
+  colname <- paste(DBI::dbQuoteIdentifier(get(connName, envir = env), colname), collapse = ", ")
   type <- toupper(match.arg(type))
   if (type == "PRIMARY") {
     colref <- ""
     references <- ""
   }
   else if (type == "FOREIGN") {
-    colref <- paste(DBI::dbQuoteIdentifier(conn, colref),
+    colref <- paste(DBI::dbQuoteIdentifier(get(connName, envir = env), colref),
                     collapse = ", ")
-    reference <- objectNameFixEM(conn, o.nm = reference, display = display, exec = exec)
+    reference <- objectNameFixEM(connName, o.nm = reference, env = env, display = display, exec = exec)
     references <- paste0(" REFERENCES ", paste(reference,
                                                collapse = "."), " (", colref, ")")
   }
@@ -3047,17 +2950,23 @@ tryCatchLog::tryCatchLog({
                       if(type != "check") " KEY ",
                       " (", colname, if(type == "check") paste0(" = ", check.by) , ")", references, ";")
 
-  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exect)
-  if(exec && !inherits(Results, "try-error")) {
-    return(invisible(data.frame(DFADDKEYEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DFADDKEYEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DFADDKEYEM = FALSE)))
+  Success <- dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exect)
+  if(exec) {
+    if(Success) {
+      #
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DFADDKEYEM = FALSE)))
+    }
   }
 
-  return(invisible(data.frame(DFADDKEYEM = logical())))
+  if(exec) {
+    return(invisible(data.frame(DFADDKEYEM = TRUE)))
+  }
+
+  if(display) {
+    return(invisible(data.frame(DFADDKEYEM = logical())))
+  }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -3067,7 +2976,7 @@ tryCatchLog::tryCatchLog({
 #'
 #' Defines a new index on a PostgreSQL table.
 #'
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name A character string specifying a PostgreSQL table name.
 #' @param colname A character string, or a character vector specifying the name of the column to which the key will be associated; alternatively, a character vector specifying the name of the columns to build the index.
 #' @param if.not.exists Logical. Default is FALSE. If TRUE, add the " IF NOT EXISTS " clause.
@@ -3075,20 +2984,26 @@ tryCatchLog::tryCatchLog({
 #' @param idxname A character string specifying the name of the index to be created. By default, this uses the name of the table (without the schema) and the name of the columns as follows: <table_name>_<column_names>_idx.
 #' @param unique Logical. Causes the system to check for duplicate values in the table when the index is created (if data already exist) and each time data is added. Attempts to insert or update data which would result in duplicate entries will generate an error.
 #' @param method The name of the method to be used for the index. Choices are "btree", "hash", "rtree", and "gist". The default method is "btree", although "gist" should be the index of choice for PostGIS spatial types (geometry, geography, raster).
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display	Logical. Whether to display the query (defaults to TRUE).
 #' @param exec	Logical. Whether to execute the query (defaults to TRUE).
 #' @returns TRUE if the index was successfully created.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
-dbIndexEM <- function(conn, name, colname, if.not.exists = FALSE, only = FALSE, idxname, unique = FALSE,
+dbIndexEM <- function(connName, name, colname, if.not.exists = FALSE, only = FALSE, idxname, unique = FALSE,
                       method = c("btree","hash", "rtree", "gist"),
-                      display = TRUE, exec = TRUE) {
+                      env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
-  }
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
@@ -3097,15 +3012,15 @@ tryCatchLog::tryCatchLog({
   }
 
   if (missing(idxname)) {
-    idxname <- DBI::dbQuoteIdentifier(conn, paste(name[length(name)],
+    idxname <- DBI::dbQuoteIdentifier(get(connName, envir = env), paste(name[length(name)],
                                                   paste(colname, collapse = "_"), "idx", sep = "_"))
   }
   else {
-    idxname <- DBI::dbQuoteIdentifier(conn, idxname)
+    idxname <- DBI::dbQuoteIdentifier(get(connName, envir = env), idxname)
   }
-  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
-  colname <- paste(DBI::dbQuoteIdentifier(conn, colname), collapse = ", ")
+  colname <- paste(DBI::dbQuoteIdentifier(get(connName, envir = env), colname), collapse = ", ")
   unique <- ifelse(unique, "UNIQUE ", "")
   method <- match.arg(method)
   usemeth <- ifelse(method == "btree", " ", paste(" USING ",
@@ -3113,14 +3028,14 @@ tryCatchLog::tryCatchLog({
   tmp.query <- paste0("CREATE ", unique, " INDEX ", if(if.not.exists) " IF NOT EXISTS ", if(only) " ON ONLY ", idxname,
                       " ON ", nameque, usemeth, " (", colname, ");")
 
-  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && !inherits(Results, "try-error")) {
-    return(invisible(data.frame(DBADDINDEXEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBADDINDEXEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBADDINDEXEM = FALSE)))
+  Success <- dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(Success) {
+      return(invisible(data.frame(DBADDINDEXEM = TRUE)))
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBADDINDEXEM = FALSE)))
+    }
   }
 
   return(invisible(data.frame(DBADDINDEXEM = logical())))
@@ -3134,25 +3049,32 @@ tryCatchLog::tryCatchLog({
 #'
 #' Add or remove a column to/from a table.
 #'
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name A character string specifying a PostgreSQL table name.
 #' @param colname A character string specifying the name of the column
 #' @param action A character string specifying if the column is to be added ("add", default) or removed ("drop").
 #' @param coltype A character string indicating the type of the column, if action = "add".
 #' @param cascade Logical. Whether to drop foreign key constraints of other tables, if action = "drop".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to TRUE).
 #' @param exec Logical. Whether to execute the query (defaults to TRUE).
 #' @returns TRUE if the column was successfully added or removed.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
-dbColumnEM <- function (conn, name, colname, action = c("add", "drop"), coltype = "integer",
-                        cascade = FALSE, display = TRUE, exec = TRUE) {
+dbColumnEM <- function (connName, name, colname, action = c("add", "drop"), coltype = "integer",
+                        cascade = FALSE,
+                        env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
@@ -3160,23 +3082,23 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"colname\" is required.")
   }
 
-  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
-  colname <- DBI::dbQuoteIdentifier(conn, colname)
+  colname <- DBI::dbQuoteIdentifier(get(connName, envir = env), colname)
   action <- toupper(match.arg(action))
   args <- ifelse(action == "ADD", coltype, ifelse(cascade,
                                                   "CASCADE", ""))
   tmp.query <- paste0("ALTER TABLE ", nameque, " ", toupper(action),
                       " COLUMN ", colname, " ", args, ";")
 
-  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && !inherits(Results, "try-error")) {
-    return(invisible(data.frame(DBCOLUMNEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBCOLUMNEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCOLUMNEM = FALSE)))
+  Success <- dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(Success) {
+      return(invisible(data.frame(DBCOLUMNEM = TRUE)))
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBCOLUMNEM = FALSE)))
+    }
   }
 
   return(invisible(data.frame(DBCOLUMNEM = logical())))
@@ -3189,26 +3111,32 @@ tryCatchLog::tryCatchLog({
 #'
 #' From a partitioned table or partitioned index add or remove a partition.
 #'
-#' @param conn A connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param dbobject A character string specifying if the the type of the parent database object.  This can be "table"(default) or "index".
 #' @param name A character string specifying a PostgreSQL already partitioned table or index name. Note, a table can not be converted to a partitioned table and vice-versa.  ALTER has no option.
 #' @param partition A character string specifying the name of the partition.
 #' @param if.not.exists Logical. Default is FALSE. If TRUE, use pg_ tables to check that in the (potential target partition) object exists and is not attached, before the partitioned table or partitioned index tries to attach to it.
 #' @param part.bound.value Of the attaching the partition, the partitions partition bound single value.
 #' @param action A character string specifying if the column is to be added ("attach", default) or removed ("drop").
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to TRUE).
 #' @param exec Logical. Whether to execute the query (defaults to TRUE).
 #' @returns TRUE if the partition was successfully added or removed.
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbQuoteIdentifier
 #' @export
-dbAttachPartEM <- function (conn, dbobject = "table", name, partition, if.not.exists = FALSE, part.bound.value, action = c("attach", "drop"),
-                            display = TRUE, exec = TRUE) {
+dbAttachPartEM <- function (connName, dbobject = "table", name, partition, if.not.exists = FALSE, part.bound.value, action = c("attach", "drop"),
+                            env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
   if(missing(name)) {
     stop("Parameter \"name\" is required.")
   }
@@ -3219,14 +3147,14 @@ tryCatchLog::tryCatchLog({
     stop("Parameter \"part.bound.value\" is required.")
   }
 
-  name <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  name <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   nameque <- paste(name, collapse = ".")
 
-  partition <- objectNameFixEM(conn, o.nm = partition, display = display, exec = exec)
+  partition <- objectNameFixEM(connName, o.nm = partition, env = env, display = display, exec = exec)
   partitionque <- paste(partition, collapse = ".")
 
   if(if.not.exists) {
-     Results <- dbListInheritEM(conn, name = name, display = display, exec = exec)
+     Results <- dbListInheritEM(connName, name = name, env = env, display = display, exec = exec)
      # SQL Results
      if(!NROW(Results)) {
        message(past0("Partitioned ", toupper(dbobject), " ", paste0(nameque, collapse = "."), " does not exist, so skipping . . ."))
@@ -3236,7 +3164,7 @@ tryCatchLog::tryCatchLog({
   }
 
   if(if.not.exists) {
-    Results <- dbListInheritEM(conn, name = name, display = display, exec = exec)
+    Results <- dbListInheritEM(connName, name = name, env = env, display = display, exec = exec)
     # SQL Results
     if(NROW(Results)) {
       MatchSchemaIdx <- match(noquote(paste0(first(nameque))) %in% Results$CHILD_SCHEMA)
@@ -3255,16 +3183,15 @@ tryCatchLog::tryCatchLog({
   tmp.query <- paste0("ALTER ", toupper(dbobject) , " ", nameque, " ", action,
                       " PARTITION ", partitionque, " ", args, ";")
 
-  Results <- dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-  if(exec && !inherits(Results, "try-error")) {
-    return(invisible(data.frame(DBATTACHPARTEM = unlist(Results))))
-  } else if(!exec) {
-    return(invisible(data.frame(DBATTACHPARTEM = logical())))
-  } else {
-    message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBATTACHPARTEM = FALSE)))
+  Success <- dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(Success) {
+      return(invisible(data.frame(DBATTACHPARTEM = TRUE)))
+    } else {
+      message(paste0("Statement failed: ", tmp.query))
+      return(invisible(data.frame(DBATTACHPARTEM = FALSE)))
+    }
   }
-
   return(invisible(data.frame(DBATTACHPARTEM = logical())))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
@@ -3305,7 +3232,7 @@ tryCatchLog::tryCatchLog({
 #' -- "UPDATE a . . . ON CONFICT a_pk DO UPDATE" statements follow
 #'
 #' }
-#' @param conn A "PostgreSQL" connection object.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name  String.  Default is substitute(value). The name of the table to which the data frame is to be loaded.
 #' @param value, data.frame. Required. To be loaded to the database.
 #' @param partition.of String.  If the table is (or to be) a participant as a Partition, then this table is a partition of the this partitioned table "partition.of".
@@ -3315,6 +3242,7 @@ tryCatchLog::tryCatchLog({
 #' @param lower.df.name Logical. Default is TRUE. Make the target database table name to be in lowercase.
 #' @param lower.col.names Logical. Default is TRUE. Make the target database table column names to be in lowercase.
 #' @param dots.to.underscores Logical. Default is TRUE. Make the target database table column names internal "dots" be converted to underscores(_).
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).'
 #' @param ... Dots. Other parameters passed to R CRAN package DBI function dbWriteTable.
@@ -3325,7 +3253,6 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #'
-#' conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user = "postgres")
 #'
 #' mtcars2 <- mtcars
 #' mtcars2[["model"]] <- rownames(mtcars2)
@@ -3340,7 +3267,7 @@ tryCatchLog::tryCatchLog({
 #' # on the server).
 #' mtcars2s <- mtcars2[1:5,]
 #'
-#' dbWriteTableEM(conn, name = "mtcars",  value = mtcars2s,
+#' dbWriteTableEM(name = "mtcars",  value = mtcars2s,
 #'   part.key.col = "gear", primary.key = c("gear", "model"),
 #'   indexes = list(gear_model_vs = c("gear", "model", "vs"))
 #' )
@@ -3351,7 +3278,7 @@ tryCatchLog::tryCatchLog({
 #' # are added to the value(data.frame).
 #' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
 #'
-#' dbWriteTableEM(conn, name = "mtcars",  value = mtcars2lDf,
+#' dbWriteTableEM(name = "mtcars",  value = mtcars2lDf,
 #'   part.key.col = "gear", primary.key = c("gear", "model"),
 #'   indexes = list(gear_model_vs = c("gear", "model", "vs"))
 #' )
@@ -3367,28 +3294,36 @@ tryCatchLog::tryCatchLog({
 #'                DfNew
 #'               }; rm(DfNew)
 #'
-#' dbWriteTableEM(conn, name = "mtcars",  value = mtcars2lSv,
+#' dbWriteTableEM(name = "mtcars",  value = mtcars2lSv,
 #'   part.key.col = "gear", primary.key = c("gear", "model"),
 #'   indexes = list(gear_model_vs = c("gear", "model", "vs"))
 #' )
 #'
 #'
 #' # to query
-#' dbExecuteEM(conn, Statement = "SET constraint_exclusion TO partition;")
-#' dbExecuteEM(conn, Statement = "SET enable_partition_pruning TO on;")
+#' dbExecuteEM(Statement = "SET constraint_exclusion TO partition;")
+#' dbExecuteEM(Statement = "SET enable_partition_pruning TO on;")
 #'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExistsTable dbWriteTable
 #' @export
-dbWriteTableEM <- function(conn, name = substitute(value), value,
+dbWriteTableEM <- function(connName, name = substitute(value), value,
                             partition.of = character(), part.key.col = character(),
                             primary.key = character(), indexes = list(),
                             lower.df.name = TRUE, lower.col.names = TRUE, dots.to.underscores = TRUE,
-                            display = TRUE, exec = TRUE,
+                            env, display = TRUE, exec = TRUE,
                             ...) {
 tryCatchLog::tryCatchLog({
 
+
+  if(missing(connName)) {
+    connName <- "connEM"
+  }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
 
   if(lower.df.name) {
     name       <- tolower(name)
@@ -3400,7 +3335,7 @@ tryCatchLog::tryCatchLog({
     colnames(value) <- gsub("[.]", "_", colnames(value))
   }
 
-  table <- objectNameFixEM(conn, o.nm = name, display = display, exec = exec)
+  table <- objectNameFixEM(connName, o.nm = name, env = env, display = display, exec = exec)
   if(temporary) {
     if(length(table) == 2) {
       tableque <- paste0(last(table))
@@ -3412,7 +3347,7 @@ tryCatchLog::tryCatchLog({
   }
 
   # DfName
-  if(!DBI::dbExistsTable(conn, name = tableque)) {
+  if(!DBI::dbExistsTable(get(connName, envir = env), name = tableque)) {
     # table does not exist
     # create partitioned table ("p" - partitioned table) (c1)
     #
@@ -3423,16 +3358,16 @@ tryCatchLog::tryCatchLog({
       # create the parent partitioned table and its indexes ONLYies
       if(length(SplittedDf)) {
         # create the empty partitioned (parent) table
-        Results <- dbCreatePartBoundTableEM(conn, name = name, fields = value,
+        Results <- dbCreatePartBoundTableEM(connName, name = name, fields = value,
                                             part.key.def = if(length(part.key.col)) { paste0(" LIST (", part.key.col, ") ") } else { character() },
-                                            display = display, exec = exec)
+                                            env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
 
         # create the partitioned parent table index ONLYies
         mapply(function(Index, IndexName) {
-          Results <- dbIndexEM(conn, name = name, colname = Index, only = TRUE, idxname = paste0(name , "_", IndexName, "_idx"))
+          Results <- dbIndexEM(connName, name = name, colname = Index, only = TRUE, idxname = paste0(name , "_", IndexName, "_idx"), env = env, display = display, exec = exec)
           if(NROW(Results) && !unlist(Results)) {
             return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
           }
@@ -3442,8 +3377,8 @@ tryCatchLog::tryCatchLog({
           # alter table add constraint x primary key(default)
           # so, I can do upon the partitioned table "name" . . .
           #   INSERT INTO name . . . ON CONFLICT ON CONSTRAINT name_pk DO UPDATE SET . . .
-          Results <- dbAddKeyEM(conn, name = name, colname = primary.key, const.name = paste0(name, "_pk"),
-                                display = display, exec = exec)
+          Results <- dbAddKeyEM(connName, name = name, colname = primary.key, const.name = paste0(name, "_pk"),
+                                env = env, display = display, exec = exec)
           if(NROW(Results) && !unlist(Results)) {
             return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
           }
@@ -3470,14 +3405,14 @@ tryCatchLog::tryCatchLog({
         DfPartName <- paste0(name, "_", DfPartNameSuffix)
 
         # create an "empty table" (to be a future "partition")
-        Results <- dbCreatePartBoundTableEM(conn, name = DfPartName, like = name,  like.name.defaults = TRUE,
-                                            display = display, exec = exec)
+        Results <- dbCreatePartBoundTableEM(connName, name = DfPartName, like = name,  like.name.defaults = TRUE,
+                                            env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
         # create "empty table" indexes
         mapply(function(Index, IndexName) {
-          Results <- dbIndexEM(conn, name = DfPartName, colname = Index, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+          Results <- dbIndexEM(connName, name = DfPartName, colname = Index, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"), env = env, display = display, exec = exec)
           if(NROW(Results) && !unlist(Results)) {
             return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
           }
@@ -3485,23 +3420,24 @@ tryCatchLog::tryCatchLog({
 
         if(length(primary.key)) {
           # alter table add constraint x primary key(default)
-          Results <- dbAddKeyEM(conn, name = DfPartName, colname = primary.key, const.name = paste0(DfPartName, "_pk"),
-                                display = display, exec = exec)
+          Results <- dbAddKeyEM(connName, name = DfPartName, colname = primary.key, const.name = paste0(DfPartName, "_pk"),
+                                env = env, display = display, exec = exec)
           if(NROW(Results) && !unlist(Results)) {
             return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
           }
         }
 
         # alter table add constraint x check
-        Results <- dbAddKeyEM(conn, name = DfPartName, colname = part.key.col, const.name = paste0(DfPartName, "_chk"),
+        Results <- dbAddKeyEM(connName, name = DfPartName, colname = part.key.col, const.name = paste0(DfPartName, "_chk"),
                               type = "check", check.by = DfPartBoundValue,
-                              display = display, exec = exec)
+                              env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
 
         # DfPart: data to be loaded
-        DfPart <- dbdfMatchColsEM(conn, name = name, value = DfPart, display = display, exec = exec)
+        DfPart <- dbdfMatchColsEM(connName, name = name, value = DfPart,
+                                  env = env, display = display, exec = exec)
 
         # DBI::dbWriteTable col.names: a character vector with column names;
         #   column names are quoted to work as SQL identifiers.
@@ -3511,13 +3447,13 @@ tryCatchLog::tryCatchLog({
         #   where names(field.types) provide the new table's column names
         #   (if missing, field types are inferred using dbDataType).
         # RPostgreSQL/html/dbReadTable-methods.html
-        Results <- DBI::dbWriteTable(conn, name = name, value = DfPart, append = TRUE, row.names = FALSE, ...)
+        Results <- DBI::dbWriteTable(get(connName, envir = env), name = name, value = DfPart, append = TRUE, row.names = FALSE, ...)
         if(NROW(Results) && !Results) {
           return(invisible(data.frame(DBWRITETABLEEM = Results)))
         }
         # alter "partition table" attach partition
-        Results <- dbAttachPartEM(conn, name = name, partition = DfPartName, part.bound.value = DfPartBoundValue,
-                                  display = display, exec = exec)
+        Results <- dbAttachPartEM(connName, name = name, partition = DfPartName, part.bound.value = DfPartBoundValue,
+                                  env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
@@ -3525,10 +3461,10 @@ tryCatchLog::tryCatchLog({
         # alter "partition index" attach partition
         mapply(function(IndexName) {
 
-          Results <- dbAttachPartEM(conn, dbobject = "index",
+          Results <- dbAttachPartEM(connName, dbobject = "index",
                                     name =  paste0(name , "_", IndexName, "_idx"),
                                     partition = paste0(DfPartName , "_", IndexName, "_idx"),
-                                    display = display, exec = exec)
+                                    env = env, display = display, exec = exec)
           if(NROW(Results) && !unlist(Results)) {
             return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
           }
@@ -3564,15 +3500,15 @@ tryCatchLog::tryCatchLog({
       DfPartName <- paste0(name, "_", DfPartNameSuffix)
 
       # create an empty table (to be a future partition)
-      Results <- dbCreatePartBoundTableEM(conn, if.not.exists = TRUE, name = DfPartName, like = name,  like.name.defaults = TRUE,
-                                          display = display, exec = exec)
+      Results <- dbCreatePartBoundTableEM(connName, if.not.exists = TRUE, name = DfPartName, like = name,  like.name.defaults = TRUE,
+                                          env = env, display = display, exec = exec)
       if(NROW(Results) && !unlist(Results)) {
         return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
       }
 
       # create empty table indexes
       mapply(function(Index, IndexName) {
-        Results <- dbIndexEM(conn, name = DfPartName, colname = Index, if.not.exists = TRUE, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"))
+        Results <- dbIndexEM(connName, name = DfPartName, colname = Index, if.not.exists = TRUE, only = TRUE, idxname = paste0(DfPartName , "_", IndexName, "_idx"), env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
@@ -3580,25 +3516,25 @@ tryCatchLog::tryCatchLog({
 
       if(length(primary.key)) {
         # alter table add constraint x primary key(default)
-        Results <- dbAddKeyEM(conn, name = DfPartName, colname = primary.key, if.not.exists = TRUE,
+        Results <- dbAddKeyEM(connName, name = DfPartName, colname = primary.key, if.not.exists = TRUE,
                               const.name = paste0(DfPartName, "_pk"),
-                              display = display, exec = exec)
+                              env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
       }
 
       # alter table add constraint x check
-      Results <- dbAddKeyEM(conn, name = DfPartName, colname = part.key.col, if.not.exists = TRUE,
+      Results <- dbAddKeyEM(connName, name = DfPartName, colname = part.key.col, if.not.exists = TRUE,
                             const.name = paste0(DfPartName, "_chk"),
                             type = "check", check.by = DfPartBoundValue,
-                            display = display, exec = exec)
+                            env = env, display = display, exec = exec)
       if(NROW(Results) && !unlist(Results)) {
         return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
       }
 
       # DfPart: data to be loaded
-      DfPart <- dbdfMatchColsEM(conn, name = name, value = DfPart, display = display, exec = exec)
+      DfPart <- dbdfMatchColsEM(connName, name = name, value = DfPart, env = env, display = display, exec = exec)
 
       # DBI::dbWriteTable col.names: a character vector with column names;
       #   column names are quoted to work as SQL identifiers.
@@ -3608,14 +3544,14 @@ tryCatchLog::tryCatchLog({
       #   where names(field.types) provide the new table's column names
       #   (if missing, field types are inferred using dbDataType).
       # RPostgreSQL/html/dbReadTable-methods.html
-      Results <- DBI::dbWriteTable(conn, name = name, value = DfPart, append = TRUE, row.names = FALSE)
+      Results <- DBI::dbWriteTable(get(connName, envir = env), name = name, value = DfPart, append = TRUE, row.names = FALSE)
       if(NROW(Results) && !Results) {
         return(invisible(data.frame(DBWRITETABLEEM = Results)))
       }
 
       # alter "partition table" attach partition
-      Results <- dbAttachPartEM(conn, name = name, partition = DfPartName, if.not.exists = TRUE, part.bound.value = DfPartBoundValue,
-                                display = display, exec = exec)
+      Results <- dbAttachPartEM(connName, name = name, partition = DfPartName, if.not.exists = TRUE, part.bound.value = DfPartBoundValue,
+                                env = env, display = display, exec = exec)
       if(NROW(Results) && !unlist(Results)) {
         return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
       }
@@ -3623,11 +3559,11 @@ tryCatchLog::tryCatchLog({
       # alter "partition index" attach partition
       mapply(function(IndexName) {
 
-        Results <- dbAttachPartEM(conn, dbobject = "index",
+        Results <- dbAttachPartEM(connName, dbobject = "index",
                                   name =  paste0(name , "_", IndexName, "_idx"),
                                   partition = paste0(DfPartName , "_", IndexName, "_idx"),
                                   if.not.exists = TRUE,
-                                  display = display, exec = exec)
+                                  env = env, display = display, exec = exec)
         if(NROW(Results) && !unlist(Results)) {
           return(invisible(data.frame(DBWRITETABLEEM = unlist(Results))))
         }
@@ -3660,17 +3596,16 @@ tryCatchLog::tryCatchLog({
 #' Inspired by the R CRAN package Caroline.
 #' }
 #'
-#' @param conn A DBIConnection PostgreSQL object, as returned by DBI::dbConnect().
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param name a character string specifying a table name.
 #' @param value a data.frame (or coercible to data.frame).
 #' @param temporary Logical. Default is FALSE, If TRUE, then look for the "conn" object "name" in the temporary namespace.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display	Logical. Whether to display the query (defaults to TRUE).
 #' @param exec	Logical. Whether to execute the query (defaults to TRUE).
 #' @return data.frame with more columns and/or re-ordered columns. The server "name" may get more columns.
 #' @examples
 #' \dontrun{
-#'
-#' conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user = "postgres")
 #'
 #' mtcars2 <- mtcars
 #' mtcars2[["model"]] <- rownames(mtcars2)
@@ -3684,14 +3619,14 @@ tryCatchLog::tryCatchLog({
 #' # Appends data (with the value(data.frame) having the same columns
 #' # on the server).
 #' mtcars2s <- mtcars2[1:5,]
-#' dbdfMatchColsEM(conn, name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
+#' dbdfMatchColsEM(name = "mtcars",  value = mtcars2s, PartKeyDef = "LIST (gear)", PrimaryKey = c("gear", "model"), Indexes = list(gear_model_vs = c("gear", "model", "vs")))
 #'
 #' # Appends data (with the value(data.frame) having less columns
 #' # than that of the server database).
 #' # Those server columns, that are not found in the value(data.frame),
 #' # are added to the value(data.frame).
 #' mtcars2lDf <- mtcars2[6:10, "model", drop = F]
-#' dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lDf)
+#' dbdfMatchColsEM(name = "mtcars", value = mtcars2lDf)
 #'
 #' # Appends data (with the server database having less columns
 #' # than that of the value(data.frame)).
@@ -3703,17 +3638,21 @@ tryCatchLog::tryCatchLog({
 #'                DfNew
 #'               }; rm(DfNew)
 #'
-#' dbdfMatchColsEM(conn, name = "mtcars", value = mtcars2lSv)
+#' dbdfMatchColsEM(name = "mtcars", value = mtcars2lSv)
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom zoo as.Date
 #' @export
-dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = FALSE,
-                            display = TRUE, exec = TRUE) {
+dbdfMatchColsEM <- function(connName, name = substitute(value), value, temporary = FALSE,
+                            env, display = TRUE, exec = TRUE) {
   tryCatchLog::tryCatchLog({
 
-    if(missing(conn)) {
-      stop("Parameter \"conn\" is required.")
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
     }
 
     if(missing(value)) {
@@ -3729,8 +3668,10 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = F
   # but do not exist in the value(data.frame)
 
   ColsToAddtoDfIndex <-
-    !dbRClmnsClassesEM(conn, name = name, temporary = temporary, display = display, exec = exec)$NAME  %in%
-     dfServerFieldsClassesEM(conn, value = value, display = display, exec = exec)$NAME
+    !dbRClmnsClassesEM(connName, name = name, temporary = temporary,
+                       env = env, display = display, exec = exec)$NAME  %in%
+     dfServerFieldsClassesEM(connName, value = value,
+                             env = env, display = display, exec = exec)$NAME
 
   as.Date <- zoo::as.Date
   mapply(function(Name, Type) {
@@ -3738,8 +3679,8 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = F
     value[[Name]] <- eval(parse(text = paste0("as.", Type, "(value[[Name]])")))
     invisible()
   },
-  dbRClmnsClassesEM(conn, name = name, temporary = temporary, display = display, exec = exec)$NAME[ColsToAddtoDfIndex],
-  dbRClmnsClassesEM(conn, name = name, temporary = temporary, display = display, exec = exec)$TYPE[ColsToAddtoDfIndex],
+  dbRClmnsClassesEM(connName, name = name, temporary = temporary, env = env, display = display, exec = exec)$NAME[ColsToAddtoDfIndex],
+  dbRClmnsClassesEM(connName, name = name, temporary = temporary, env = env, display = display, exec = exec)$TYPE[ColsToAddtoDfIndex],
   SIMPLIFY = FALSE)
 
   # add columns to the server "name",
@@ -3747,28 +3688,30 @@ dbdfMatchColsEM <- function(conn, name = substitute(value), value, temporary = F
   # but do not exist in the server "name".
 
   ColsToAddtoServerIndex <-
-    !dfServerFieldsClassesEM(conn, value = value, display = display, exec = exec)$NAME %in%
-     dbRClmnsClassesEM(conn, name = name, temporary = temporary, display = display, exec = exec)$NAME
+    !dfServerFieldsClassesEM(connName, value = value,
+                             env = env, display = display, exec = exec)$NAME %in%
+     dbRClmnsClassesEM(connName, name = name, temporary = temporary,
+                       env = env, display = display, exec = exec)$NAME
 
   mapply(function(Name, Type) {
-    Results <- dbColumnEM(conn, name = name, colname = Name, coltype = Type, display = display, exec = exec)
-    if(exec && !inherits(Results, "try-error")) {
-      # return(invisible(data.frame(DBDFMATCHOLSEM = unlist(Results))))
-    } else if(!exec) {
-      # return(invisible(data.frame(DBDFMATCHOLSEM = logical())))
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBDFMATCHOLSEM = FALSE)))
+    Success <- dbColumnEM(connName, name = name, colname = Name, coltype = Type, env = env, display = display, exec = exec)
+    if(exec) {
+      if(Success) {
+        #
+      } else {
+        message(paste0("Statement failed: ", tmp.query))
+        return(invisible(data.frame(DBDFMATCHOLSEM = FALSE)))
+      }
     }
   },
-  dfServerFieldsClassesEM(conn, value = value, display = display, exec = exec)$NAME[ColsToAddtoServerIndex],
-  dfServerFieldsClassesEM(conn, value = value, display = display, exec = exec)$TYPE[ColsToAddtoServerIndex],
+  dfServerFieldsClassesEM(connName, value = value, env = env, display = display, exec = exec)$NAME[ColsToAddtoServerIndex],
+  dfServerFieldsClassesEM(connName, value = value, env = env, display = display, exec = exec)$TYPE[ColsToAddtoServerIndex],
   SIMPLIFY = FALSE)
 
   # in the value(data.frame), re-order the columns
   # to match those of the server "name" column order
   #
-  value <- value[, cSort(colnames(value), InitOrder = dbRClmnsClassesEM(conn, name = name, temporary = temporary, display = display, exec = exec)$NAME)
+  value <- value[, cSort(colnames(value), InitOrder = dbRClmnsClassesEM(connName, name = name, temporary = temporary, env = env, display = display, exec = exec)$NAME)
            , drop = F]
 
   return(value)

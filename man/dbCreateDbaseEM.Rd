@@ -4,14 +4,23 @@
 \alias{dbCreateDbaseEM}
 \title{Database Creation}
 \usage{
-dbCreateDbaseEM(conn, dbname, owner = dbname, display = TRUE, exec = TRUE)
+dbCreateDbaseEM(
+  connName,
+  dbname,
+  owner = dbname,
+  env,
+  display = TRUE,
+  exec = TRUE
+)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{dbname}{String. Required.  Potential database in the cluster.}
 
 \item{owner}{String. Database owner. Defaults to parameter "dbname".}
+
+\item{env}{Environment.  Default is the .Global environment.}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -25,7 +34,6 @@ Create a a database in the cluster.
 }
 \examples{
 \dontrun{
-dbCreateDbaseEM(conn, dbname = "r_user_econmodel")
-dbCreateDbaseEM(conn, dbname = "rtmp")
+dbCreateDbaseEM(dbname = "r_user")
 }
 }

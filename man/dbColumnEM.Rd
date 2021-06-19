@@ -5,18 +5,19 @@
 \title{Add or Remove a Column}
 \usage{
 dbColumnEM(
-  conn,
+  connName,
   name,
   colname,
   action = c("add", "drop"),
   coltype = "integer",
   cascade = FALSE,
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{A character string specifying a PostgreSQL table name.}
 
@@ -27,6 +28,8 @@ dbColumnEM(
 \item{coltype}{A character string indicating the type of the column, if action = "add".}
 
 \item{cascade}{Logical. Whether to drop foreign key constraints of other tables, if action = "drop".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 

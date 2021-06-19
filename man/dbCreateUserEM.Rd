@@ -5,22 +5,25 @@
 \title{User Creation}
 \usage{
 dbCreateUserEM(
-  conn,
+  connName,
   user,
   attributes = c("LOGIN"),
   password = user,
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{user}{String. Required.  Potential user in the database.}
 
 \item{attributes}{vector of Strings. User attributes.}
 
 \item{password}{String. Defaults to "user".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -34,7 +37,6 @@ Create a user exists in the database.
 }
 \examples{
 \dontrun{
-dbCreateUserEM(conn, user = "r_user_econmodel", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
-dbCreateUserEM(conn, user = "rtmp")
+dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
 }
 }

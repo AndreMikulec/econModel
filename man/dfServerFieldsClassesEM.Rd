@@ -5,12 +5,14 @@
 \title{Given an R data.frame, Get The Equivalent Database Server Column Types
 If a data.frame would be promoted to be on a database server, then these would be the equivalent Server datatypes.}
 \usage{
-dfServerFieldsClassesEM(conn, value, exec = TRUE, display = TRUE)
+dfServerFieldsClassesEM(connName, value, env, exec = TRUE, display = TRUE)
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{value}{data.frame}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 

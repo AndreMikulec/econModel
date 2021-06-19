@@ -4,12 +4,14 @@
 \alias{dbPartBoundEM}
 \title{From a PostgreSQL Object Get Its Partition Bounds}
 \usage{
-dbPartBoundEM(conn, name, display = TRUE, exec = TRUE)
+dbPartBoundEM(connName, name, env, display = TRUE, exec = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQLConnection.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{String. Name of the PostgreSQL object.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 

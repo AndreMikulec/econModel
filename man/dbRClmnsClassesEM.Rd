@@ -5,21 +5,30 @@
 \title{Given a Server Table, Of Its Fields, Get the Equivalent R Object classes
 If a server table, of its fields,  would be demoted to be in R, then these would be the equivalent R Object classes.}
 \usage{
-dbRClmnsClassesEM(conn, name, temporary = FALSE, display = TRUE, exec = TRUE)
+dbRClmnsClassesEM(
+  connName,
+  name,
+  temporary = FALSE,
+  env,
+  display = TRUE,
+  exec = TRUE
+)
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{Table name string, length 1-2. Requires at least one row.}
 
 \item{temporary}{Logical.  This is a temporary table or not.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
 }
 \value{
-data.frame. Variables are "name" and "type".  If the number of rows in "name" is zero, then, instead of "numeric" being returned, "double" is returned.  The reason is because a "fallback" is used.
+data.frame. Variables are "NAME" and "TYPE".  If the number of rows in "NAME" is zero, then, instead of "numeric" being returned, "double" is returned.  The reason is because a "fallback" is used.
 }
 \description{
 R Classes depend upon what the server supports.

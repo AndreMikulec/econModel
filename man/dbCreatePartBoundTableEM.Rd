@@ -5,7 +5,7 @@
 \title{Create a PostgreSQL Partitioned and/or Bounded Table}
 \usage{
 dbCreatePartBoundTableEM(
-  conn,
+  connName,
   name,
   temporary = FALSE,
   if.not.exists = FALSE,
@@ -16,12 +16,13 @@ dbCreatePartBoundTableEM(
   part.by = character(),
   part.bound = character(),
   part.key.def = character(),
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A PostgreSQL database connection.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{Name of the table. Escaped with.}
 
@@ -51,6 +52,8 @@ dbCreatePartBoundTableEM(
 
 \item{part.key.def}{String. `[ PARTITION BY { RANGE | LIST | HASH } ( { column_name | ( expression ) } [ COLLATE collation ] [ opclass ] [, ... ] ) ]`.}
 
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
+
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to \code{TRUE}).}
@@ -66,7 +69,6 @@ NOTE: In PostgreSQL, one can not convert a table to a partitioned table and vice
 }
 \examples{
 \dontrun{
-conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), user="postgres", password="postgres", dbname="postgres")
-dbCreatePartBoundTableEM(conn, "mtcars", mtcars, part.key.def = "LIST(CAST(gear AS INTEGER))")
+dbCreatePartBoundTableEM(name = "mtcars", part.key.def = "LIST(CAST(gear AS INTEGER))")
 }
 }

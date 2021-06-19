@@ -4,12 +4,14 @@
 \alias{dbExistsSchemaEM}
 \title{Schema Existence?}
 \usage{
-dbExistsSchemaEM(conn, schema, display = TRUE, exec = TRUE)
+dbExistsSchemaEM(connName, schema, env, display = TRUE, exec = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection. Required.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{schema}{String. Required.  Potential schema in the database.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -23,7 +25,6 @@ Determine if a schema exists in the database.
 }
 \examples{
 \dontrun{
- dbExistsSchemaEM(conn, schema = "r_user_econmodel")
- dbExistsSchemaEM(conn, schema = "rtmp")
+ dbExistsSchemaEM(schema = "r_user")
 }
 }

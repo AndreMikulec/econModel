@@ -23,6 +23,6 @@ Is the connection not expired or not valid?
 }
 \examples{
 \dontrun{
-isConnectedEM()
+dbIsConnectedEM()
 }
 }

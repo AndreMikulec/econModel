@@ -5,22 +5,25 @@
 \title{Server Side Table Column Stored Type C Classes}
 \usage{
 dbServerFieldsCClassesEM(
-  conn,
+  connName,
   name,
   temporary = FALSE,
   others = FALSE,
+  env,
   display = TRUE,
   exec = TRUE
 )
 }
 \arguments{
-\item{conn}{A connection object.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
 
 \item{name}{Table name string, length 1-2.}
 
 \item{temporary}{Logical.  This is a temporary table or not.}
 
 \item{others}{Logical. Default is FALSE.  Using PostgreSQL, Whether or not to also return the "others" column and values  (e.g."sclass"). Values are in lowercase. Note, the returned column order may be mixed.}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
