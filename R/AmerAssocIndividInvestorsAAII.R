@@ -1244,66 +1244,28 @@ tryCatchLog::tryCatchLog({
   # DELL HOME "COMPUTER" ( 2017 / WINDOWS 10 PROFESSIONAL )
   # HAS 16GB of RAM AND 4 CORES
 
-  tmp.query <- "SET effective_cache_size  TO '6144MB';"
-  ## Display the query
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
-
   # EXPERIMENT ( memory for disk caching ) -- 2048(GUESSING) + 4096(shared buffers)
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-
-  tmp.query <- "SET work_mem TO '2047MB';"
-  ## Display the query
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
+  dbExecuteEM(conn, Statement = "SET effective_cache_size  TO '6144MB';", display = display, exec = exec)
 
   # windows LIMIT 2047
   # A good rule of thumb is to keep: work_mem*max_connections*2 < 1/4 of memory
   # NOTE: WATCH OUT FOR 'R language: parallel. Each process GETS 'work_mem' limit
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-
-  tmp.query <- "SET maintenance_work_mem TO '2047MB';"
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
+  dbExecuteEM(conn, Statement = "SET work_mem TO '2047MB';", display = display, exec = exec)
 
   # maximum amount of memory to be used by maintenance operations, such as VACUUM, CREATE INDEX, and ALTER TABLE ADD FOREIGN KEY
   # https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-
-  tmp.query <- "SET constraint_exclusion TO partition;"
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
+  dbExecuteEM(conn, Statement = "SET maintenance_work_mem TO '2047MB';", display = display, exec = exec)
 
   # Controls the query planner's use of table constraints
   # to optimize queries.
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-
-  tmp.query <- "SET enable_partition_pruning TO on;"
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
+  dbExecuteEM(conn, Statement = "SET constraint_exclusion TO partition;", display = display, exec = exec)
 
   # excludes (prunes) the partition from the query plan
   # can also be applied [not only to query planning and] during query execution
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
-
-  tmp.query <- "SET max_parallel_workers_per_gather TO 4;"
-  if (display) {
-    message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
-    message(tmp.query)
-  }
+  dbExecuteEM(conn, Statement = "SET enable_partition_pruning TO on;", display = display, exec = exec)
 
   # Postgresql 9.6
-  dbExecuteEM(conn, Statement = tmp.query, display = display, exec = exec)
+  dbExecuteEM(conn, Statement = "SET max_parallel_workers_per_gather TO 4;", display = display, exec = exec)
 
   # always TRUE
   return(invisible(data.frame(DBSETPERFORMANCEEM = TRUE)))
@@ -1316,22 +1278,28 @@ tryCatchLog::tryCatchLog({
 #'
 #' Get PostgreSQL CURRENT_USER.
 #'
-#' @param conn PostgreSQL DBI connection.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns Current user
 #' @examples
 #' \dontrun{
-#' dbGetCurrentuserEM(get("connEM"))
+#' dbGetCurrentUserEM()
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbGetCurrentuserEM <- function(conn, exec = TRUE, display = TRUE) {
+dbGetCurrentUserEM <- function(connName, env, exec = TRUE, display = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop("Parameter \"conn\" is required.")
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+  assign("conn", get(connName, envir = env))
 
   Results <- dbGetQueryEM(conn, Statement = "SELECT CURRENT_USER;", display = display, exec = exec)
   if(exec) {
@@ -1352,28 +1320,34 @@ tryCatchLog::tryCatchLog({
 #'
 #' Is the connection not expired or not valid?
 #'
-#' @param conn PostgreSQL DBI connection.
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns TRUE(connected) or FALSE(otherwise)
 #' @examples
 #' \dontrun{
-#' isConnectedEM(conn)
+#' isConnectedEM()
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbIsConnectedEM <- function(conn, display = TRUE, exec = TRUE) {
+dbIsConnectedEM <- function(connName, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop(paste0("Parameter \"conn\" is required."))
+  if(missing(connName)) {
+    connName <- "connEM"
   }
 
-  Statement <- "SELECT 1;"
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
+  assign("conn", get(connName, envir = env))
+
 
   if(inherits(conn, "PostgreSQLConnection")) {
 
-    tmp.query <- Statement
+    tmp.query <- "SELECT 1;"
     ## Display the query
     if (display) {
       message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
@@ -1382,19 +1356,15 @@ tryCatchLog::tryCatchLog({
 
     if(exec) {
       Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
+      if(!inherits(Results, "try-error")) {
+        return(invisible(data.frame(DBISCONNECTEDEM = TRUE)))
+      } else{
+        return(invisible(data.frame(DBISCONNECTEDEM = FALSE)))
+      }
     }
-    Results <- try({DBI::dbGetQuery(conn, statement = tmp.query)}, silent = TRUE)
-    if(exec && !inherits(Results, "try-error")) {
-      return(invisible(data.frame(DBISCONNECTEDEM = TRUE)))
-    } else if(!exec) {
-      return(invisible(data.frame(DBISCONNECTEDEM = logical())))
-    } else if(exec && inherits(Results, "try-error")) {
-      # not a connection
-      return(invisible(data.frame(DBISCONNECTEDEM = FALSE)))
-    } else {}
 
   } else {
-    stop("Need a \"PostgreSQLConnection\"")
+    return(invisible(data.frame(DBISCONNECTEDEM = FALSE)))
   }
 
   return(invisible(data.frame(DBISCONNECTEDEM = logical())))
@@ -1693,7 +1663,7 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
 #'
 #' @param connName String.  Name of the database connection object. Optional. This may be "passed" instead of  "conn".
 #' @param env Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".
-#' @returns Disconnects "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
+#' @returns Disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
 #' dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv

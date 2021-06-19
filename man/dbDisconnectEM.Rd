@@ -12,7 +12,7 @@ dbDisconnectEM(connName, env)
 \item{env}{Environment. Default is the global environment .GlobalEnv.  Location of the connection object "connName".}
 }
 \value{
-Disconnects "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
+Disconnects "connName" from the database and removes it from the environment "env".
 }
 \description{
 Disconnects.

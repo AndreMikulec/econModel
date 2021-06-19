@@ -4,10 +4,12 @@
 \alias{dbIsConnectedEM}
 \title{Test The RPostgreSQL Connection}
 \usage{
-dbIsConnectedEM(conn, display = TRUE, exec = TRUE)
+dbIsConnectedEM(connName, env, display = TRUE, exec = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection.}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to \code{TRUE}).}
 
@@ -21,6 +23,6 @@ Is the connection not expired or not valid?
 }
 \examples{
 \dontrun{
-isConnectedEM(conn)
+isConnectedEM()
 }
 }
