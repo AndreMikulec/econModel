@@ -1380,39 +1380,49 @@ tryCatchLog::tryCatchLog({
 #' It will not report the working database (econmodel_db_dbname)  (if it does not yet exist).
 #' It will not report the user temporary database (temp_dbname) (if it does not yet exist).
 #'
-#' @param conn PostgreSQL DBI connection
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
 #' @param display	Logical. Whether to display the query (defaults to TRUE).
 #' @param exec	Logical. Whether to execute the query (defaults to TRUE).
-#' @returns R list of Strings of properties.
+#' @returns R data.frame of Strings of properties. Otherwise, an error.
 #' @examples
 #' \dontrun{
-#' dbGetInfoExtraEM(conn)
-#' dbGetInfoExtraEM(get("connEM"))
+#' dbGetInfoExtraEM()
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
-dbGetInfoExtraEM <- function(conn, display = TRUE, exec = TRUE) {
+dbGetInfoExtraEM <- function(connName, env, display = TRUE, exec = TRUE) {
 tryCatchLog::tryCatchLog({
 
-  if(missing(conn)) {
-    stop(paste0("Paramter \"conn\" is required."))
+  if(missing(connName)) {
+    connName <- "connEM"
   }
+
+  if(missing(env)) {
+    env <- .GlobalEnv
+  }
+
+  assign("conn", get(connName, envir = env))
 
   Results <- list()
 
   if(inherits(conn, "PostgreSQLConnection")) {
 
-    Results["current_schema"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT current_schema();", display = display, exec = exec)))
-    Results["search_path"]    <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;", display = display, exec = exec)))
-    InterimResult             <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", display = display, exec = exec)))
+    Results[["current_schema"]] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT current_schema();", display = display, exec = exec)))
+    Results[["search_path"]]    <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW SEARCH_PATH;", display = display, exec = exec)))
+    InterimResult               <- unlist(tolower(dbGetQueryEM(conn, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", display = display, exec = exec)))
     if(length(InterimResult)) {
-      Results["temp_dbname"]  <- InterimResult
+      Results[["temp_dbname"]]  <- InterimResult
+    } else {
+      Results[["temp_dbname"]]  <- NA_character_
     }
     if(length(getOption("econmodel_db_dbname"))) {
-       Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
+      Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
+    } else {
+      Results[["econmodel_db_dbname"]] <- NA_character_
     }
-    Results["client_encoding"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW client_encoding;", display = display, exec = exec)))
-    Results["time_zone"] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW TIMEZONE;", display = display, exec = exec)))
+    Results[["client_encoding"]] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW client_encoding;", display = display, exec = exec)))
+    Results[["time_zone"]] <- unlist(tolower(dbGetQueryEM(conn, Statement = "SHOW TIMEZONE;", display = display, exec = exec)))
   } else {
     stop("Need a \"PostgreSQLConnection\"")
   }

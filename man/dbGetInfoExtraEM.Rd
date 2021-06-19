@@ -4,17 +4,19 @@
 \alias{dbGetInfoExtraEM}
 \title{Extra Information About The RPostgreSQL Connection}
 \usage{
-dbGetInfoExtraEM(conn, display = TRUE, exec = TRUE)
+dbGetInfoExtraEM(connName, env, display = TRUE, exec = TRUE)
 }
 \arguments{
-\item{conn}{PostgreSQL DBI connection}
+\item{connName}{String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".}
+
+\item{env}{Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".}
 
 \item{display}{Logical. Whether to display the query (defaults to TRUE).}
 
 \item{exec}{Logical. Whether to execute the query (defaults to TRUE).}
 }
 \value{
-R list of Strings of properties.
+R data.frame of Strings of properties. Otherwise, an error.
 }
 \description{
 Adds extra information: current_schema, search_path, temp_dbname, econmodel_db_dbname, client_encoding, and time_zone.
@@ -23,7 +25,6 @@ It will not report the user temporary database (temp_dbname) (if it does not yet
 }
 \examples{
 \dontrun{
-dbGetInfoExtraEM(conn)
-dbGetInfoExtraEM(get("connEM"))
+dbGetInfoExtraEM()
 }
 }
