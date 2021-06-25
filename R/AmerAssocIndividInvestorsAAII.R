@@ -1163,6 +1163,17 @@ tryCatchLog::tryCatchLog({
 #' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
 #' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
 #' @returns SQL results.  Otherwise, an error is returned.  The results column names are always in uppercase.
+#' @examples
+#' \dontrun{
+#'
+#' dbGetQueryEM(Statement = "SELECT 1 output;")
+#'
+#' # Query executed:
+#' # SELECT 1 output;
+#' #   OUTPUT
+#' # 1      1
+#'
+#' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbGetQuery
 #' @export
@@ -1341,7 +1352,7 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
-  if(inherits(conn, "PostgreSQLConnection")) {
+  if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
 
     tmp.query <- "SELECT 1;"
     ## Display the query
@@ -1353,9 +1364,9 @@ tryCatchLog::tryCatchLog({
     if(exec) {
       Results <- try({DBI::dbGetQuery(get(connName, envir = env), statement = tmp.query)}, silent = TRUE)
       if(!inherits(Results, "try-error")) {
-        return(invisible(data.frame(DBISCONNECTEDEM = TRUE)))
+        return(data.frame(DBISCONNECTEDEM = TRUE))
       } else{
-        return(invisible(data.frame(DBISCONNECTEDEM = FALSE)))
+        return(data.frame(DBISCONNECTEDEM = FALSE))
       }
     }
 
@@ -1452,10 +1463,11 @@ tryCatchLog::tryCatchLog({
 #' @returns Invisibly a DBI connection in an object named "connEM" is created, connected, and assigned to the environment "env".
 #' @examples
 #' \dontrun{
+#' # In rstudio to a Restart of R
+#' #  also, just after opening R studio, a-new
 #' # by default, this the lowercase name of the tempdir()
 #' options(econmodel_db_storage_name = "postgres")
-#' getOption("econmodel_db_user")
-#' # In rstudio to a Restart of R
+#'
 #' devtools::load_all(".")
 #' getOption("econmodel_db_user")
 #' [1] "postgres"
@@ -1607,6 +1619,9 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
 #' @returns Disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
+#'
+#' # Instead use: dbLogoutEM
+#'
 #' dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
 #' # Tried to disconnect the R object "connEM" and remove it
 #' # from the environment <environment: R_GlobalEnv>.
