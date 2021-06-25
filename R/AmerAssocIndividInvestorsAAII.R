@@ -1702,10 +1702,12 @@ dbLogoutEM <- function(connName, env) {
     # always returns TRUE
     Results <- dbDisconnectEM(connName = connName, env = env)
     if(!inherits(Results, "try-error")) {
-      return(invisible(data.frame(DBLOGOUTEM = unlist(Results))))
+      if(NROW(Results)) {
+        return(data.frame(DBLOGOUTEM = unlist(Results)))
+      }
     } else {
       message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBLOGOUTEM = FALSE)))
+      return(data.frame(DBLOGOUTEM = FALSE))
     }
 
     return(invisible(data.frame(DBLOGOUTEM = logical())))
