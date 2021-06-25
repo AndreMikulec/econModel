@@ -1421,13 +1421,8 @@ tryCatchLog::tryCatchLog({
 
   if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
 
-    if(length(getOption("econmodel_db_dbname"))) {
-      Results[["current_db_dbname"]] <- getOption("econmodel_db_dbname")
-    } else {
-      Results[["current_db_dbname"]] <- NA_character_
-    }
-
-    Results[["current_schema"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_schema();", env = env, display = display, exec = exec)))
+    Results[["current_db_dbname"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_database();", env = env, display = display, exec = exec)))
+    Results[["current_schema"]]    <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_schema();"  , env = env, display = display, exec = exec)))
 
     InterimResult               <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", env = env, display = display, exec = exec)))
     if(length(InterimResult)) {
