@@ -1352,6 +1352,10 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
+  if(!exists(connName, envir = env)) {
+    return(data.frame(DBISCONNECTEDEM = FALSE))
+  }
+
   if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
 
     tmp.query <- "SELECT 1;"
@@ -1371,10 +1375,10 @@ tryCatchLog::tryCatchLog({
     }
 
   } else {
-    return(invisible(data.frame(DBISCONNECTEDEM = FALSE)))
+    return(data.frame(DBISCONNECTEDEM = FALSE))
   }
 
-  return(invisible(data.frame(DBISCONNECTEDEM = logical())))
+  return(data.frame(DBISCONNECTEDEM = logical()))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1411,7 +1415,7 @@ tryCatchLog::tryCatchLog({
 
   Results <- list()
 
-  if(inherits(conn, "PostgreSQLConnection")) {
+  if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
 
     Results[["current_schema"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_schema();", env = env, display = display, exec = exec)))
     Results[["search_path"]]    <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW SEARCH_PATH;", env = env, display = display, exec = exec)))
@@ -1620,7 +1624,7 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
 #' @examples
 #' \dontrun{
 #'
-#' # Instead use: dbLogoutEM
+#' # Instead use: dbLogoutEM()
 #'
 #' dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
 #' # Tried to disconnect the R object "connEM" and remove it
@@ -1643,10 +1647,8 @@ dbDisconnectEM <- function(connName, env) {
     assign("connNameName", connName, envir = env)
     if(exists(connName, envir = env, inherits = FALSE)) {
       with(env, {
-        if(exec) {
-          try(DBI::dbDisconnect(get(connNameName)), silent = TRUE)
-          rm(list = c(connNameName, "connNameName"))
-        }
+        try(DBI::dbDisconnect(get(connNameName)), silent = TRUE)
+        rm(list = c(connNameName, "connNameName"))
       })
       message(paste0("Tried to disconnect the R object \"", connName, "\" and remove it\nfrom the environment ", capture.output(env), "."))
     }
