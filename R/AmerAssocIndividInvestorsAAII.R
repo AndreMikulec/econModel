@@ -2136,7 +2136,7 @@ tryCatchLog::tryCatchLog({
       CurrentUser <- unlist(Results)
     } else {
       message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+      return(data.frame(DBCREATEDBASEEM = FALSE))
     }
   }
 
@@ -2179,10 +2179,10 @@ tryCatchLog::tryCatchLog({
     }
   } else if(exec) {
     message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
   }
 
-  tmp.query <- paste0("ALTER DATABASE ", dbname, " SET TIME ZONE 'UTC';", display = display, exec = exec)
+  tmp.query <- paste0("ALTER DATABASE ", dbname, " SET TIME ZONE 'UTC';")
   Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
   if(exec && !inherits(Results, "try-error")) {
     if(!unlist(Results)) {
@@ -2190,15 +2190,15 @@ tryCatchLog::tryCatchLog({
     }
   } else if(exec) {
     message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
   }
 
   if(exec) {
-    return(invisible(data.frame(DBCREATEDBASEEM = TRUE)))
+    return(data.frame(DBCREATEDBASEEM = TRUE))
   }
 
   if(display) {
-    return(invisible(data.frame(DBCREATEDBASEEM = logical())))
+    return(data.frame(DBCREATEDBASEEM = logical()))
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
