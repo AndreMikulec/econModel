@@ -1980,7 +1980,7 @@ tryCatchLog::tryCatchLog({
     if(!unlist(Results)) {
       return(data.frame(DBCREATESCHEMAEM = unlist(Results)))
     }
-  } else {
+  } else if(exec) {
     message(paste0("Statement failed: ", tmp.query))
     return(data.frame(DBCREATESCHEMAEM = FALSE))
   }
@@ -1994,7 +1994,7 @@ tryCatchLog::tryCatchLog({
     Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
     if(exec && !inherits(Results, "try-error")) {
       SuccessesList <- c(SuccessesList, unlist(Results))
-    } else {
+    } else if(exec) {
       message(paste0("Statement failed: ", tmp.query))
       SuccessesList <- c(SuccessesList, unlist(Results))
     }
@@ -2142,13 +2142,13 @@ tryCatchLog::tryCatchLog({
 
   tmp.query <- paste0("GRANT ", owner, " TO ", CurrentUser, ";")
   Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
-  if(exec) {
-    if(!inherits(Results, "try-error")) {
-      #
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  if(exec && !inherits(Results, "try-error")) {
+    if(!unlist(Results)) {
+      return(data.frame(DBCREATEDBASEEM = unlist(Results)))
     }
+  } else if(exec) {
+    message(paste0("Statement failed: ", tmp.query))
+    return(data.frame(DBCREATEDBASEEM = FALSE))
   }
   # Note: SUPERUSER postgres - does not require THIS
   # (but I am not "filtering out" SUPERUSERs)
@@ -2173,24 +2173,24 @@ tryCatchLog::tryCatchLog({
   RestOfDbCreate <- "ENCODING  = 'UTF-8' LC_COLLATE = 'C' LC_CTYPE  = 'C' CONNECTION_LIMIT = -1"
   tmp.query <- paste0("CREATE DATABASE ", dbname, " ", " WITH OWNER ", owner, " ",  RestOfDbCreate, ";")
   Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
-  if(exec) {
-    if(!inherits(Results, "try-error")) {
-      #
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  if(exec && !inherits(Results, "try-error")) {
+    if(!unlist(Results)) {
+      return(data.frame(DBCREATEDBASEEM = unlist(Results)))
     }
+  } else if(exec) {
+    message(paste0("Statement failed: ", tmp.query))
+    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
   }
 
   tmp.query <- paste0("ALTER DATABASE ", dbname, " SET TIME ZONE 'UTC';", display = display, exec = exec)
   Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
-  if(exec) {
-    if(!inherits(Results, "try-error")) {
-      #
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
+  if(exec && !inherits(Results, "try-error")) {
+    if(!unlist(Results)) {
+      return(data.frame(DBCREATESCHEMAEM = unlist(Results)))
     }
+  } else if(exec) {
+    message(paste0("Statement failed: ", tmp.query))
+    return(invisible(data.frame(DBCREATEDBASEEM = FALSE)))
   }
 
   if(exec) {
