@@ -1413,6 +1413,10 @@ tryCatchLog::tryCatchLog({
     env <- .GlobalEnv
   }
 
+  if(!exists(connName, envir = env)) {
+    return(data.frame())
+  }
+
   Results <- list()
 
   if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
@@ -1467,16 +1471,25 @@ tryCatchLog::tryCatchLog({
 #' @returns Invisibly a DBI connection in an object named "connEM" is created, connected, and assigned to the environment "env".
 #' @examples
 #' \dontrun{
-#' # In rstudio to a Restart of R
-#' #  also, just after opening R studio, a-new
-#' # by default, this the lowercase name of the tempdir()
+#' # In rstudio, do a Restart of R
+#' #   Note, just after opening R studio, a-new
+#' #   by default, this the lowercase name of the tempdir()
+#'
+#' # see the default(s)
 #' options(econmodel_db_storage_name = "postgres")
 #'
+#' # If in rstudio
 #' devtools::load_all(".")
+#'
 #' getOption("econmodel_db_user")
 #' [1] "postgres"
+#'
 #' dbLoginEM()
 #' # User login succeeded
+#'
+#' # Later
+#' dbLoginEM(user = "r_user", password = "r_user")
+#'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbConnect
@@ -1718,7 +1731,7 @@ dbLogoutEM <- function(connName, env) {
 #' @returns Execution of "conn" from the database or disconnects "connName" from the database and removes it from the environment "env".
 #' @examples
 #' \dontrun{
-#' dbExecuteEM(Statement = "CREATE TABLE xyz();")
+#' dbExecuteEM(Statement = "CREATE TEMP TABLE xyz();")
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @export
@@ -1809,10 +1822,10 @@ tryCatchLog::tryCatchLog({
 
   Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
   if(exec && NROW(Results)) {
-   return(invisible(data.frame(DBEXISTSUSEREM = unlist(Results))))
+   return(data.frame(DBEXISTSUSEREM = unlist(Results)))
   }
 
-  return(invisible(data.frame(DBEXISTSUSEREM = logical())))
+  return(data.frame(DBEXISTSUSEREM = logical()))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1832,6 +1845,7 @@ tryCatchLog::tryCatchLog({
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
+#' # Does not check if the user already exists
 #' dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
@@ -1861,14 +1875,14 @@ tryCatchLog::tryCatchLog({
   Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
   if(exec) {
     if(!inherits(Results, "try-error")) {
-      return(invisible(data.frame(DBCREATEUSEREM = unlist(Results))))
+      return(data.frame(DBCREATEUSEREM = unlist(Results)))
     } else {
       message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATEUSEREM = FALSE)))
+      return(data.frame(DBCREATEUSEREM = FALSE))
     }
   }
 
-  return(invisible(data.frame(DBCREATEUSEREM = logical())))
+  return(data.frame(DBCREATEUSEREM = logical()))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1908,13 +1922,13 @@ tryCatchLog::tryCatchLog({
 
   Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
   if(exec && NROW(Results)) {
-    return(invisible(data.frame(DBEXISTSSCHEMAEM = unlist(Results))))
+    return(data.frame(DBEXISTSSCHEMAEM = unlist(Results)))
   } else {
     message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBEXISTSSCHEMAEM = FALSE)))
+    return(data.frame(DBEXISTSSCHEMAEM = FALSE))
   }
 
-  return(invisible(data.frame(DBEXISTSSCHEMAEM = logical())))
+  return(data.frame(DBEXISTSSCHEMAEM = logical()))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1934,7 +1948,9 @@ tryCatchLog::tryCatchLog({
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
+#'  # Does not check if the schema already exists
 #'  dbCreateSchemaEM(schema = "r_user")
+#'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
 #' @importFrom DBI dbExecute dbQuoteLiteral
