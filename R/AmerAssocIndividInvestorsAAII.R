@@ -2252,8 +2252,6 @@ dbExistsDbaseEM <- function(connName, dbname, env, display = TRUE, exec = TRUE) 
 
 
 
-
-
 #' Of a PostgreSQL Object, Get Inherited or Inherit_From Objects
 #'
 #' Of the PostgreSQL object, get the child/parent objects (if any) with the schema.
@@ -2316,7 +2314,7 @@ tryCatchLog::tryCatchLog({
       )
   }
 
-  Statement <- paste0("
+ tmp.query <- paste0("
 SELECT q.* FROM (
   SELECT
       nmsp_parent.nspname::text AS parent_schema,
@@ -2338,15 +2336,16 @@ SELECT q.* FROM (
 ) q
 WHERE", Restriction, ";")
 
-  Results <- dbGetQueryEM(connName, Statement = Statement, env = env, display = display, exec = exec)
-
-  if(NROW(Results)) {
-    return(Results)
-  } else {
-    return(data.frame(list(PARENT_SCHEMA = "", PARENT = "", PARENT_RELKIND = "", PARENT_PART_KEY_DEF = "", PARENT_PART_BOUND = "", INHSEQNO = 0L, CHILD_SCHEMA = "", CHILD = "", CHILD_REL_KIND = "", CHILD_PART_KEY_DEF = "", CHILD_PART_BOUND = ""))[FALSE, , drop = F])
+  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+  if(exec) {
+    if(NROW(Results)) {
+      return(Results)
+    } else {
+      return(data.frame(list(PARENT_SCHEMA = "", PARENT = "", PARENT_RELKIND = "", PARENT_PART_KEY_DEF = "", PARENT_PART_BOUND = "", INHSEQNO = 0L, CHILD_SCHEMA = "", CHILD = "", CHILD_REL_KIND = "", CHILD_PART_KEY_DEF = "", CHILD_PART_BOUND = ""))[FALSE, , drop = F])
+    }
   }
 
-  stop("Can not get inherit information from the database \"conn\".")
+  return(data.frame(list(PARENT_SCHEMA = "", PARENT = "", PARENT_RELKIND = "", PARENT_PART_KEY_DEF = "", PARENT_PART_BOUND = "", INHSEQNO = 0L, CHILD_SCHEMA = "", CHILD = "", CHILD_REL_KIND = "", CHILD_PART_KEY_DEF = "", CHILD_PART_BOUND = ""))[FALSE, , drop = F])
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
