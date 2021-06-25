@@ -19,6 +19,9 @@ Disconnects.
 }
 \examples{
 \dontrun{
+
+# Instead use: dbLogoutEM()
+
 dbDisconnectEM() # default is connection variable "connEM" in the .GlobalEnv
 # Tried to disconnect the R object "connEM" and remove it
 # from the environment <environment: R_GlobalEnv>.

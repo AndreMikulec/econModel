@@ -37,6 +37,11 @@ Create a schema in the database.
 }
 \examples{
 \dontrun{
- dbCreateSchemaEM(schema = "r_user")
+# Does not check if the schema already exists
+dbCreateSchemaEM(schema = "r_user")
+
+# Later
+dbCreateSchemaEM(schema = "r_user_2", role_specification = "r_user", grant_all_roles = "r_user")
+
 }
 }

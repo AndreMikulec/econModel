@@ -39,6 +39,6 @@ The function will just do one or the other, but not both.  Does NOT remove the p
 }
 \examples{
 \dontrun{
-dbExecuteEM(Statement = "CREATE TABLE xyz();")
+dbExecuteEM(Statement = "CREATE TEMP TABLE xyz();")
 }
 }

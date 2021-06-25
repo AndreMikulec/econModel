@@ -37,6 +37,8 @@ Create a user exists in the database.
 }
 \examples{
 \dontrun{
+# Does not check if the user already exists
+# A user who manages a [future] "personal" database . . .
 dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
 }
 }

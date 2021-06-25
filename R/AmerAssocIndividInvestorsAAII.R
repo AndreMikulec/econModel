@@ -1453,6 +1453,20 @@ tryCatchLog::tryCatchLog({
 #' Currently is only implemented to work on PostgreSQL or PostgreSQL-like databases.
 #' Try to connect or try to connect as "user".
 #'
+#' Upon namespace loading, the R option "econmodel_db_storage_name"
+#' is read. From this read value the other R options are
+#' set: "econmodel_db_user", "econmodel_db_password",
+#' and "econmodel_db_dbname".
+#'
+#' See these mentioned defaults and other defaults in zzz.R.
+#'
+#' If the R option "econmodel_db_storage_name" is not set, and
+#' thus the R options "econmodel_db_username", "econmodel_db_password",
+#' and "econmodel_db_dbname" are not set, and the
+#' user does not supply a "username", then "username", "password",
+#' and "dbname" default to the lowercase name of the tempdir().
+#'
+#'
 #' @param driver String. Defaults to getOption("econmodel_db_driver"). String.  Default is "PostgreSQL".  Currently only an implementation exists using PostgreSQL and PostgreSQL-like databases.
 #' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
 #' @param user String. Defaults to getOption("econmodel_db_user").
@@ -1470,24 +1484,53 @@ tryCatchLog::tryCatchLog({
 #' @returns Invisibly a DBI connection in an object named "connEM" is created, connected, and assigned to the environment "env".
 #' @examples
 #' \dontrun{
-#' # In rstudio, do a Restart of R
-#' #   Note, just after opening R studio, a-new
-#' #   by default, this the lowercase name of the tempdir()
 #'
-#' # see the default(s)
-#' options(econmodel_db_storage_name = "postgres")
+#' # Reasons for an error:
+#' #
+#' # No permission
+#' # Object already exists
 #'
-#' # If in rstudio
-#' devtools::load_all(".")
+#' # a typical workflow may follow #
 #'
+#' # To change the default user to "postgres"
 #' getOption("econmodel_db_user")
-#' [1] "postgres"
+#' options(econmodel_db_storage_name = "postgres")
+#' # In rstudio dev, do
+#' #  (1) Session -> "Restart R",
+#' #  (2) devtools::load_all(".")
+#' getOption("econmodel_db_user")
 #'
 #' dbLoginEM()
-#' # User login succeeded
+#' dbIsConnectedEM()
+#' dbGetCurrentUserEM()
+#' # "postgres"
+#' dbGetInfoExtraEM()
+#' dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
+#' dbExistsUserEM(user = "r_user")
+#' dbCreateDbaseEM(dbname = "r_user")
+#' dbLogoutEM()
 #'
-#' # Later
-#' dbLoginEM(user = "r_user", password = "r_user")
+#' dbLoginEM(user = "r_user")
+#' dbIsConnectedEM()
+#' dbGetCurrentUserEM()
+#' # "r_user"
+#' dbGetInfoExtraEM()
+#' dbCreateSchemaEM(schema = "r_user")
+#' dbGetInfoExtraEM()
+#' dbLogoutEM()
+#'
+#' # To change the default user to "r_user"
+#' # if in package dev, in rstudio
+#' # (1) Session -> "Restart R",
+#' # (2) Session -> "Restart R",
+#' # (3) options(econmodel_db_storage_name = "r_user")
+#' # (4) devtools::load_all(".")
+#' # (5) getOption("econmodel_db_user")
+#'
+#' dbLoginEM()
+#' dbGetCurrentUserEM()
+#' dbGetInfoExtraEM()
+#' dbLogoutEM()
 #'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
@@ -1518,21 +1561,23 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
 
     if(missing(user)) {
       user <- getOption("econmodel_db_user")
-      #
-      password <- getOption("econmodel_db_password")
-      dbname   <- getOption("econmodel_db_dbname")
     }
 
     # note: "password" is never missing
     if(missing(password)) {
-      password <- user
+      if(missing(user)) {
+        password <- getOption("econmodel_db_password")
+      }
     }
+
     if(missing(host)) {
       host <- getOption("econmodel_db_host")
     }
     # note: "dbname" is never missing
     if(missing(dbname)) {
-      dbname <- user
+      if(missing(user)) {
+        dbname <-  getOption("econmodel_db_dbname")
+      }
     }
     if(missing(port)) {
       port <- getOption("econmodel_db_port")

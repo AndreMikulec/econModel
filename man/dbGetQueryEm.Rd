@@ -35,3 +35,15 @@ SQL results.  Otherwise, an error is returned.  The results column names are alw
 \description{
 Thin wrapper over R CRAN package DBI function dbGetQuery
 }
+\examples{
+\dontrun{
+
+dbGetQueryEM(Statement = "SELECT 1 output;")
+
+# Query executed:
+# SELECT 1 output;
+#   OUTPUT
+# 1      1
+
+}
+}
