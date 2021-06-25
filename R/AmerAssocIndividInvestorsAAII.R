@@ -1846,6 +1846,7 @@ tryCatchLog::tryCatchLog({
 #' @examples
 #' \dontrun{
 #' # Does not check if the user already exists
+#' # A user who manages a [future] "personal" database . . .
 #' dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
 #' }
 #' @importFrom tryCatchLog tryCatchLog
@@ -1948,8 +1949,11 @@ tryCatchLog::tryCatchLog({
 #' @returns TRUE(success) or Error(failure)
 #' @examples
 #' \dontrun{
-#'  # Does not check if the schema already exists
-#'  dbCreateSchemaEM(schema = "r_user")
+#' # Does not check if the schema already exists
+#' dbCreateSchemaEM(schema = "r_user")
+#'
+#' # Later
+#' dbCreateSchemaEM(schema = "r_user_2", role_specification = "r_user", grant_all_roles = "r_user")
 #'
 #' }
 #' @importFrom tryCatchLog tryCatchLog
@@ -1977,11 +1981,15 @@ tryCatchLog::tryCatchLog({
   # Execute the query
   Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
   if(exec && !inherits(Results, "try-error")) {
-    # return(invisible(data.frame(DBCREATESCHEMAEM = unlist(Results))))
+    if(!unlist(Results)) {
+      return(data.frame(DBCREATESCHEMAEM = unlist(Results)))
+    }
   } else {
     message(paste0("Statement failed: ", tmp.query))
-    return(invisible(data.frame(DBCREATESCHEMAEM = FALSE)))
+    return(data.frame(DBCREATESCHEMAEM = FALSE))
   }
+
+  SuccessesList <- list()
 
   lapply(grant_all_roles, function(grant_all_role) {
 
@@ -1989,14 +1997,16 @@ tryCatchLog::tryCatchLog({
     # Execute the query
     Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
     if(exec && !inherits(Results, "try-error")) {
-      return(invisible(data.frame(DBCREATESCHEMAEM = TRUE)))
+      SuccessesList <- c(SuccessesList, unlist(Results))
     } else {
       message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBCREATESCHEMAEM = FALSE)))
+      SuccessesList <- c(SuccessesList, unlist(Results))
     }
   })
 
-  return(invisible(data.frame(DBCREATESCHEMAEM = logical())))
+  return(data.frame(DBCREATESCHEMAEM  =  all(unlist(SuccessesList))))
+
+  return(data.frame(DBCREATESCHEMAEM  = FALSE))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2036,14 +2046,14 @@ tryCatchLog::tryCatchLog({
   Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
   if(exec) {
     if(NROW(Results)) {
-      return(invisible(data.frame(DBEXISTSDBASEEM = unlist(Results))))
+      return(data.frame(DBEXISTSDBASEEM = unlist(Results)))
     } else {
       message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBEXISTSDBASEEM = FALSE)))
+      return(data.frame(DBEXISTSDBASEEM = FALSE))
     }
   }
 
-  return(invisible(data.frame(DBEXISTSDBASEEM = logical())))
+  return(data.frame(DBEXISTSDBASEEM = logical()))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
