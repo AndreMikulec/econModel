@@ -1782,9 +1782,61 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
 
 
 
+#' User Creation
+#'
+#' Create a user exists in the database.
+#'
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
+#' @param user String. Required.  Potential user in the database.
+#' @param attributes  vector of Strings. User attributes.
+#' @param password String. Defaults to "user".
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @returns TRUE(success) or Error(failure)
+#' @examples
+#' \dontrun{
+#' # Does not check if the user already exists
+#' # A user who manages a [future] "personal" database . . .
+#' dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+#' @importFrom DBI dbExecute dbQuoteLiteral
+dbCreateUserEM <- function(connName, user, attributes = c("LOGIN"), password = user, env, display = TRUE, exec = TRUE) {
+  tryCatchLog::tryCatchLog({
 
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
 
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
 
+    if(missing(user)) {
+      stop("Parameter \"user\" is required.")
+    }
+
+    if(length(attributes)) {
+      attributes <- paste0(attributes , collapse = " ")
+    }
+
+    password <- paste0("password ", DBI::dbQuoteLiteral(get(connName, envir = env), x = password))
+
+    tmp.query <- paste0("CREATE ROLE ", user, " ", attributes, " NOINHERIT ", password, ";")
+    Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
+    if(exec) {
+      if(!inherits(Results, "try-error")) {
+        return(data.frame(DBCREATEUSEREM = unlist(Results)))
+      } else {
+        message(paste0("Statement failed: ", tmp.query))
+        return(data.frame(DBCREATEUSEREM = FALSE))
+      }
+    }
+
+    return(data.frame(DBCREATEUSEREM = logical()))
+
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -1830,62 +1882,6 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
-
-#' User Creation
-#'
-#' Create a user exists in the database.
-#'
-#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
-#' @param user String. Required.  Potential user in the database.
-#' @param attributes  vector of Strings. User attributes.
-#' @param password String. Defaults to "user".
-#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
-#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
-#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns TRUE(success) or Error(failure)
-#' @examples
-#' \dontrun{
-#' # Does not check if the user already exists
-#' # A user who manages a [future] "personal" database . . .
-#' dbCreateUserEM(user = "r_user", attributes = c("LOGIN", "CREATEDB", "CREATEROLE"))
-#' }
-#' @importFrom tryCatchLog tryCatchLog
-#' @importFrom DBI dbExecute dbQuoteLiteral
-dbCreateUserEM <- function(connName, user, attributes = c("LOGIN"), password = user, env, display = TRUE, exec = TRUE) {
-tryCatchLog::tryCatchLog({
-
-  if(missing(connName)) {
-    connName <- "connEM"
-  }
-
-  if(missing(env)) {
-    env <- .GlobalEnv
-  }
-
-  if(missing(user)) {
-    stop("Parameter \"user\" is required.")
-  }
-
-  if(length(attributes)) {
-    attributes <- paste0(attributes , collapse = " ")
-  }
-
-  password <- paste0("password ", DBI::dbQuoteLiteral(get(connName, envir = env), x = password))
-
-  tmp.query <- paste0("CREATE ROLE ", user, " ", attributes, " NOINHERIT ", password, ";")
-  Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
-  if(exec) {
-    if(!inherits(Results, "try-error")) {
-      return(data.frame(DBCREATEUSEREM = unlist(Results)))
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(data.frame(DBCREATEUSEREM = FALSE))
-    }
-  }
-
-  return(data.frame(DBCREATEUSEREM = logical()))
-
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -2011,51 +2007,6 @@ tryCatchLog::tryCatchLog({
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
-
-#' Database Existence?
-#'
-#' Determine if a database exists in the cluster.
-#'
-#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
-#' @param dbname String. Required.  Potential database in the cluster.
-#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
-#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
-#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
-#' @returns TRUE(exists) or FALSE(not exists)
-#' @examples
-#' \dontrun{
-#'  dbExistsDbaseEM(dbname = "r_user")
-#' }
-#' @importFrom tryCatchLog tryCatchLog
-dbExistsDbaseEM <- function(connName, dbname, env, display = TRUE, exec = TRUE) {
-tryCatchLog::tryCatchLog({
-
-    if(missing(connName)) {
-      connName <- "connEM"
-    }
-
-    if(missing(env)) {
-      env <- .GlobalEnv
-    }
-
-  if(missing(dbname)) {
-    stop("Parameter \"dbname\" is required.")
-  }
-
-  tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(get(connName, envir = env), x = dbname), ");")
-  Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
-  if(exec) {
-    if(NROW(Results)) {
-      return(data.frame(DBEXISTSDBASEEM = unlist(Results)))
-    } else {
-      message(paste0("Statement failed: ", tmp.query))
-      return(data.frame(DBEXISTSDBASEEM = FALSE))
-    }
-  }
-
-  return(data.frame(DBEXISTSDBASEEM = logical()))
-
-}, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
 
 
@@ -2251,6 +2202,55 @@ tryCatchLog::tryCatchLog({
   }
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
+
+#' Database Existence?
+#'
+#' Determine if a database exists in the cluster.
+#'
+#' @param connName String.  Default is "connEM". Contains the name of the variable that contains the name of the "connection" in the environment "env".
+#' @param dbname String. Required.  Potential database in the cluster.
+#' @param env Environment.  Default is the .Global environment.  This is the environment to return the connection object "connEM".
+#' @param display Logical. Whether to display the query (defaults to \code{TRUE}).
+#' @param exec Logical. Whether to execute the query (defaults to \code{TRUE}).
+#' @returns TRUE(exists) or FALSE(not exists)
+#' @examples
+#' \dontrun{
+#'  dbExistsDbaseEM(dbname = "r_user")
+#' }
+#' @importFrom tryCatchLog tryCatchLog
+dbExistsDbaseEM <- function(connName, dbname, env, display = TRUE, exec = TRUE) {
+  tryCatchLog::tryCatchLog({
+
+    if(missing(connName)) {
+      connName <- "connEM"
+    }
+
+    if(missing(env)) {
+      env <- .GlobalEnv
+    }
+
+    if(missing(dbname)) {
+      stop("Parameter \"dbname\" is required.")
+    }
+
+    tmp.query <- paste0("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_database WHERE datname = ", DBI::dbQuoteLiteral(get(connName, envir = env), x = dbname), ");")
+    Results <- dbGetQueryEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)
+    if(exec) {
+      if(NROW(Results)) {
+        return(data.frame(DBEXISTSDBASEEM = unlist(Results)))
+      } else {
+        message(paste0("Statement failed: ", tmp.query))
+        return(data.frame(DBEXISTSDBASEEM = FALSE))
+      }
+    }
+
+    return(data.frame(DBEXISTSDBASEEM = FALSE))
+
+  }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
+
+
 
 
 
