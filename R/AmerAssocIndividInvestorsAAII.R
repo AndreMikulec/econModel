@@ -1518,18 +1518,21 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
 
     if(missing(user)) {
       user <- getOption("econmodel_db_user")
+      #
+      password <- getOption("econmodel_db_password")
+      dbname   <- getOption("econmodel_db_dbname")
     }
 
     # note: "password" is never missing
     if(missing(password)) {
-      password <- getOption("econmodel_db_password")
+      password <- user
     }
     if(missing(host)) {
       host <- getOption("econmodel_db_host")
     }
     # note: "dbname" is never missing
     if(missing(dbname)) {
-      dbname <- getOption("econmodel_db_dbname")
+      dbname <- user
     }
     if(missing(port)) {
       port <- getOption("econmodel_db_port")
