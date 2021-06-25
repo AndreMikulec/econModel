@@ -1421,19 +1421,23 @@ tryCatchLog::tryCatchLog({
 
   if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
 
+    if(length(getOption("econmodel_db_dbname"))) {
+      Results[["current_db_dbname"]] <- getOption("econmodel_db_dbname")
+    } else {
+      Results[["current_db_dbname"]] <- NA_character_
+    }
+
     Results[["current_schema"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_schema();", env = env, display = display, exec = exec)))
-    Results[["search_path"]]    <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW SEARCH_PATH;", env = env, display = display, exec = exec)))
+
     InterimResult               <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", env = env, display = display, exec = exec)))
     if(length(InterimResult)) {
       Results[["temp_dbname"]]  <- InterimResult
     } else {
       Results[["temp_dbname"]]  <- NA_character_
     }
-    if(length(getOption("econmodel_db_dbname"))) {
-      Results[["econmodel_db_dbname"]] <- getOption("econmodel_db_dbname")
-    } else {
-      Results[["econmodel_db_dbname"]] <- NA_character_
-    }
+
+    Results[["search_path"]]    <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW SEARCH_PATH;", env = env, display = display, exec = exec)))
+
     Results[["client_encoding"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW client_encoding;", env = env, display = display, exec = exec)))
     Results[["time_zone"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SHOW TIMEZONE;", env = env, display = display, exec = exec)))
   } else {
@@ -1556,7 +1560,7 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
       # SessionConnLoginWorks <- FALSE
       message("User login failed.")
       if(exec) {
-        return(invisible(data.frame(DBLOGINEM = FALSE)))
+        return(data.frame(DBLOGINEM = FALSE))
       }
     } else {
       # SessionConnLoginWorks <- TRUE
@@ -1566,7 +1570,7 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
         #   dbCreateSchemaEM(SessionConn, schema = user, display = display, exec = exec)
         # return(invisible(conn))
         assign(connName, conn, envir = env)
-        return(invisible(data.frame(DBLOGINEM = TRUE)))
+        return(data.frame(DBLOGINEM = TRUE))
       }
     }
 
@@ -1618,7 +1622,7 @@ dbLoginEM <- function(driver, connName, user, password = user, host, dbname = us
     #   }
     # }
 
-    return(invisible(data.frame(DBLOGINEM = logical())))
+    return(data.frame(DBLOGINEM = logical()))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
