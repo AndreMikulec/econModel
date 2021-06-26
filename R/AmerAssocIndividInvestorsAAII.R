@@ -1421,7 +1421,7 @@ tryCatchLog::tryCatchLog({
 
   if(inherits(get(connName, envir = env), "PostgreSQLConnection")) {
 
-    Results[["current_db_dbname"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_database();", env = env, display = display, exec = exec)))
+    Results[["current_dbname"]] <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_database();", env = env, display = display, exec = exec)))
     Results[["current_schema"]]    <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT current_schema();"  , env = env, display = display, exec = exec)))
 
     InterimResult               <- unlist(tolower(dbGetQueryEM(connName, Statement = "SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema();", env = env, display = display, exec = exec)))
