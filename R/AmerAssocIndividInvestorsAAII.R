@@ -1502,7 +1502,9 @@ tryCatchLog::tryCatchLog({
 #' options(econmodel_db_storage_name = "postgres")
 #' # In rstudio dev, do
 #' #  (1) Session -> "Restart R",
-#' #  (2) devtools::load_all(".")
+#' #  (2) Session -> "Restart R",
+#' #  (3) options(econmodel_db_storage_name = "postgres")
+#' #  (4) devtools::load_all(".")
 #' getOption("econmodel_db_user")
 #'
 #' dbLoginEM()
@@ -1817,13 +1819,13 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
 
     Results <- DBI::dbExecute(get(connName, envir = env), statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
     if(exec && !inherits(Results, "try-error")) {
-      return(invisible(data.frame(DBEXECUTEEM = TRUE)))
+      return(data.frame(DBEXECUTEEM = as.vector(unlist(Results))))
     } else if(exec) {
       message(paste0("Statement failed: ", tmp.query))
-      return(invisible(data.frame(DBEXECUTEEM = FALSE)))
+      return(data.frame(DBEXECUTEEM = FALSE))
     }
 
-    return(invisible(data.frame(DBEXECUTEEM = FALSE)))
+    return(data.frame(DBEXECUTEEM = FALSE))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -3164,7 +3166,6 @@ dbAddKeyEM <- function(connName, name, colname, if.not.exists = FALSE, only = FA
     tmp.query <- paste0("ALTER TABLE ", if(only) " ON ONLY ", nameque, " ADD ", if(length(const.name)) paste0(" CONSTRAINT ", const.name, " "), type,
                         if(type != "check") " KEY ",
                         " (", colname, if(type == "check") paste0(" = ", check.by) , ")", references, ";")
-
 
     Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
     if(exec && !inherits(Results, "try-error")) {
