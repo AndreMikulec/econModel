@@ -76,6 +76,11 @@ and "dbname" default to the lowercase name of the tempdir().
 # No permission
 # Object already exists
 
+# Tested with
+# R 4.1.0
+# PostgreSQL 13
+# RStudio 1.4.17.17
+
 # a typical workflow may follow #
 
 # To change the default user to "postgres"
