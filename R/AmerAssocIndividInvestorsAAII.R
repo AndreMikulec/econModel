@@ -1810,6 +1810,23 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
     Sys.setenv(TZ=time_zone)
     on.exit({Sys.setenv(TZ=oldtz)})
 
+    Successes <- list()
+
+    tmp.query = paste0("SET client_encoding TO '", client_encoding, "';")
+
+    if (display) {
+      message(paste0("Query ", ifelse(exec, "", "not "), "executed:"))
+      message(tmp.query)
+    }
+
+    Results <- DBI::dbExecute(get(connName, envir = env), statement =  tmp.query)
+    if(exec && !inherits(Results, "try-error")) {
+      Successes <- c(Successes, if(is.numeric(as.vector(unlist(Results)))) {TRUE} else {FALSE})
+    } else if(exec) {
+      message(paste0("Statement failed: ", tmp.query))
+      return(data.frame(DBEXECUTEEM = FALSE))
+    }
+
     tmp.query <- Statement
 
     if (display) {
@@ -1817,15 +1834,17 @@ dbExecuteEM <- function(connName, Statement, time_zone = "UTC", client_encoding 
       message(tmp.query)
     }
 
-    Results <- DBI::dbExecute(get(connName, envir = env), statement =  paste0("SET client_encoding TO '", client_encoding, "';"))
+    Results <- DBI::dbExecute(get(connName, envir = env), statement = tmp.query)
     if(exec && !inherits(Results, "try-error")) {
-      return(data.frame(DBEXECUTEEM = as.vector(unlist(Results))))
+      Successes <- c(Successes, if(is.numeric(as.vector(unlist(Results)))) {TRUE} else {FALSE})
     } else if(exec) {
       message(paste0("Statement failed: ", tmp.query))
       return(data.frame(DBEXECUTEEM = FALSE))
     }
 
-    return(data.frame(DBEXECUTEEM = FALSE))
+    if(!exec && display) return(data.frame(DBEXECUTEEM = FALSE))
+
+    return(data.frame(DBEXECUTEEM = all(unlist(Successes))))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -1875,9 +1894,7 @@ dbCreateUserEM <- function(connName, user, attributes = c("LOGIN"), password = u
     tmp.query <- paste0("CREATE ROLE ", user, " ", attributes, " NOINHERIT ", password, ";")
     Results <- try({dbExecuteEM(connName, Statement = tmp.query, env = env, display = display, exec = exec)})
     if(exec && !inherits(Results, "try-error")) {
-      if(!as.vector(as.vector(unlist(Results)))) {
-        return(data.frame(DBCREATEUSEREM = as.vector(unlist(Results))))
-      }
+      return(data.frame(DBCREATEUSEREM = as.vector(unlist(Results))))
     } else if(exec) {
       message(paste0("Statement failed: ", tmp.query))
       return(data.frame(DBCREATEUSEREM = FALSE))
@@ -2056,9 +2073,10 @@ tryCatchLog::tryCatchLog({
     }
   })
 
-  return(data.frame(DBCREATESCHEMAEM  =  all(unlist(Successes))))
 
-  return(data.frame(DBCREATESCHEMAEM  = FALSE))
+  if(!exec && display) return(data.frame(DBCREATESCHEMAEM = FALSE))
+
+  return(data.frame(DBCREATESCHEMAEM  =  all(unlist(Successes))))
 
 }, write.error.dump.folder = getOption("econModel.tryCatchLog.write.error.dump.folder"))}
 
@@ -2580,6 +2598,9 @@ tryCatchLog::tryCatchLog({
     message(paste0("Statement failed: ", tmp.query))
     return(invisible(data.frame(DBCREATEPARTBOUNDTABLEEM = FALSE)))
   }
+
+
+  if(!exec && display) return(data.frame(DBCREATEPARTBOUNDTABLEEM = FALSE))
 
   return(data.frame(DBCREATEPARTBOUNDTABLEEM = all(unlist(Successes))))
 
